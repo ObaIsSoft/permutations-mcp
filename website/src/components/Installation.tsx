@@ -42,9 +42,18 @@ export function Installation() {
                             <div className="border-t border-gray-200 pt-6 flex flex-col gap-3">
                                 <div className="text-xs font-mono uppercase font-bold text-gray-500 mb-1">Required Environment Variables:</div>
                                 <span className="font-mono text-xs bg-gray-100 border border-gray-300 px-3 py-2 font-bold flex justify-between">
-                                    <span>MOONSHOT_API_KEY</span>
-                                    <span className="text-red-600">Required</span>
+                                    <span>GROQ_API_KEY</span>
+                                    <span className="text-gray-500">Optional</span>
                                 </span>
+                                <span className="font-mono text-xs bg-gray-100 border border-gray-300 px-3 py-2 font-bold flex justify-between">
+                                    <span>OPENAI_API_KEY</span>
+                                    <span className="text-gray-500">Optional</span>
+                                </span>
+                                <span className="font-mono text-xs bg-gray-100 border border-gray-300 px-3 py-2 font-bold flex justify-between">
+                                    <span>ANTHROPIC_API_KEY</span>
+                                    <span className="text-gray-500">Optional</span>
+                                </span>
+                                <p className="text-[10px] text-gray-500 font-mono mt-1">* At least one valid API key must be provided.</p>
                             </div>
                         </div>
                     </div>
@@ -57,9 +66,9 @@ export function Installation() {
                         </p>
                         <h4 className="font-mono text-xs uppercase text-gray-400 mb-2">Supported Lifeforms (LLMs)</h4>
                         <ul className="font-mono text-xs space-y-2 opacity-80 border-l px-4 border-gray-700">
-                            <li>- Kimi (Moonshot API) - Active</li>
-                            <li>- OpenAI (GPT-4o) - Pending Adaptation</li>
-                            <li>- Anthropic (Claude 3.5) - Pending Adaptation</li>
+                            <li>- <strong>Groq</strong> (llama-3.3-70b) - Recommended</li>
+                            <li>- <strong>OpenAI</strong> (gpt-4o / gpt-4o-mini) - Supported</li>
+                            <li>- <strong>Anthropic</strong> (claude-3-5) - Supported</li>
                         </ul>
                     </div>
                 </div>

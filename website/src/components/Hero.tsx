@@ -5,7 +5,7 @@ export function Hero() {
     return (
         <section className="w-full min-h-[90vh] flex flex-col justify-center px-4 md:px-12 border-b-2 border-black bg-surface relative overflow-hidden">
             {/* V2 Procedural Spatial & Atmosphere DNA */}
-            <div className="absolute inset-0 -z-10 opacity-40">
+            <div className="absolute inset-0 -z-10 opacity-100 hidden md:block">
                 <Procedural3D />
             </div>
             <div className="fx-atmosphere" />
