@@ -80,7 +80,7 @@ export function DNA() {
                             <div className="absolute bottom-0 w-[20%] h-[40%] bg-white left-[75%] hover:h-[80%] transition-all duration-genome"></div>
                         </div>
                         <h3 className="font-display font-bold text-2xl md:text-3xl uppercase leading-[1.1]">
-                            12 Chromosomes. Infinite Biomes.
+                            15 Chromosomes. Infinite Biomes.
                         </h3>
                     </div>
 

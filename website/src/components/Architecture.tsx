@@ -15,7 +15,7 @@ export function Architecture() {
         {
             icon: <Network size={32} />,
             title: "03 / Mathematical Epistasis",
-            desc: "The 12-chromosome sequencer maps the hashes to strict CSS integers, forbidding specific combinations (like rounded edges on a brutalist config)."
+            desc: "The 15-chromosome sequencer maps the hashes to strict CSS integers and 3D material properties, forbidding specific combinations (like rounded edges on a brutalist config)."
         },
         {
             icon: <Code2 size={32} />,
