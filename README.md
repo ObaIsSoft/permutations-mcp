@@ -1,70 +1,47 @@
 # Permutations MCP Engine
 
-A Model Context Protocol (MCP) server that generates unique, content-aware design systems using biological inheritance metaphors. Prevents AI-generated "slop" (generic Tailwind UI) by enforcing mathematical constraints.
+A Model Context Protocol (MCP) server that generates **unique, reproducible design systems** using biological inheritance metaphors. Prevents AI-generated "slop" (identical Tailwind UI) by enforcing mathematical constraints.
 
 **No Templates. No Slop. Only Math.**
 
-## How It Works
+---
 
-### 1. Content Epigenetics
-Upload brand assets (logos, PDFs, images). The engine extracts:
-- **Dominant colors** → Primary hue override
-- **Text patterns** → Typography selection
-- **Image ratios** → Grid logic
+## The Problem
 
-### 2. Functional Archetypes
-No content? Use deterministic archetypes:
-- **Dashboard** → Flat, monospace, no motion
-- **Portfolio** → Deep, spring physics, masonry
-- **Documentation** → Single column, humanist serif
-- **Commerce** → Graph topology, organic edges
+Every AI-generated website looks the same:
+- Inter font + blue-purple gradients
+- Rounded-xl cards in a 3-column grid
+- Generic hero section with "Trusted by" logos
+- Parallax scroll that makes you dizzy
 
-### 3. Unique DNA Generation
-Each project gets a 15-chromosome genome:
-```
-Hash(seed + content) → 15 chromosomes → Tailwind/CSS
-```
+**This isn't a design choice—it's a failure of imagination.** LLMs default to "safe" patterns because they have no constraints forcing creativity.
 
-Same seed = Same design forever. Different seed = Different design guaranteed.
+## The Solution
+
+Permutations treats design like **biological inheritance**. Each project gets a unique 15-chromosome DNA that:
+- ✅ Guarantees unique output (different seed = different design)
+- ✅ Guarantees reproducibility (same seed = same design forever)
+- ✅ Forbids generic patterns (no Inter font, no blue-purple gradients)
+- ✅ Respects functional requirements (dashboards MUST be scannable)
+
+**Output:** A complete design system—Tailwind config, CSS variables, layout topology, WebGL components, atmospheric effects.
+
+---
 
 ## Quick Start
 
-### Installation
+### 1. Install
 
 ```bash
-npm install
-npm run build
+npm install -g permutations-mcp
+# or clone and build
+git clone https://github.com/ObaIsSoft/Permutations.git
+cd Permutations && npm install && npm run build
 ```
 
-### Option 1: With LLM (Content-Aware)
+### 2. Configure Your IDE
 
-Set any supported API key:
-```bash
-export GROQ_API_KEY="gsk_..."
-# OR
-export OPENAI_API_KEY="sk-..."
-# OR
-export ANTHROPIC_API_KEY="sk-ant-..."
-# OR
-export GEMINI_API_KEY="..."
-```
-
-Run the server:
-```bash
-npm start
-```
-
-### Option 2: Archetype Mode (No API Key)
-
-Works offline with deterministic hash generation:
-```bash
-npm start
-# Use generate_from_archetype tool with "dashboard", "portfolio", etc.
-```
-
-## MCP Configuration
-
-Add to your IDE (Cursor, Windsurf, Claude Desktop):
+Add to Cursor/Claude Desktop/Windsurf:
 
 ```json
 {
@@ -73,29 +50,56 @@ Add to your IDE (Cursor, Windsurf, Claude Desktop):
       "command": "node",
       "args": ["/path/to/permutations/dist/server.js"],
       "env": {
-        "GROQ_API_KEY": "your-key-here"
+        "GROQ_API_KEY": "gsk_..."
       }
     }
   }
 }
 ```
 
-## Available Tools
+### 3. Generate DNA
 
-### `generate_design_genome`
-Full content-aware generation with LLM semantic extraction.
+Ask your AI to design something:
+
+```
+"Generate a design genome for a Japanese Y2K football stats dashboard"
+```
+
+Your AI receives:
+- 15-chromosome DNA (colors, typography, motion, grid)
+- Tailwind config
+- CSS atmospheric effects
+- WebGL component specs
+- **Forbidden patterns list** (enforced at generation)
+
+### 4. Build the UI
+
+Your AI generates code using the DNA constraints. The `validate_design` tool checks for slop violations.
+
+---
+
+## Two Modes of Operation
+
+### Mode 1: Content-Aware (With LLM)
+
+Upload brand assets. The engine extracts:
+- **Logo colors** → Primary hue override
+- **PDF content** → Typography tone
+- **Image textures** → Surface quality
 
 ```json
 {
-  "intent": "Japanese Y2K football stats dashboard",
-  "seed": "client-project-v1",
-  "project_context": "Street culture, neon, aggressive energy",
-  "brand_asset_paths": ["/path/to/logo.png"]
+  "intent": "Architect portfolio",
+  "seed": "client-smith-2024",
+  "brand_asset_paths": ["/assets/logo.png", "/assets/brief.pdf"]
 }
 ```
 
-### `generate_from_archetype`
-Offline generation using functional archetypes.
+Requires: Groq, OpenAI, Anthropic, or Gemini API key.
+
+### Mode 2: Archetype (Offline)
+
+No API key? No problem. Use functional archetypes:
 
 ```json
 {
@@ -104,23 +108,34 @@ Offline generation using functional archetypes.
 }
 ```
 
-Available archetypes: `dashboard`, `portfolio`, `documentation`, `commerce`, `landing`, `blog`
+| Archetype | Function | Key Traits |
+|-----------|----------|------------|
+| `dashboard` | Data scanning | Flat, monospace, no motion, sharp edges |
+| `portfolio` | Work showcase | Deep topology, spring physics, masonry |
+| `documentation` | Reading | Single column, humanist serif, static |
+| `commerce` | Product browsing | Graph topology, organic edges, tactile |
+| `landing` | Conversion | Flat, bold display type, high contrast |
+| `blog` | Long-form reading | Deep, high x-height, breathing rhythm |
+
+---
+
+## Available MCP Tools
+
+### `generate_design_genome`
+Full pipeline: content analysis → LLM extraction → DNA sequencing.
+
+### `generate_from_archetype`
+Offline generation using functional archetypes. No API calls.
 
 ### `validate_design`
-Check CSS/HTML against forbidden slop patterns.
-
-```json
-{
-  "genome": { ... },
-  "css": "/* your css */",
-  "html": "<!-- your html -->"
-}
-```
+Check generated CSS/HTML against DNA constraints. Returns slop score.
 
 ### `list_archetypes`
-List all available functional archetypes.
+List all 6 archetypes with descriptions.
 
-## Example Output
+---
+
+## What You Get
 
 ```json
 {
@@ -128,18 +143,80 @@ List all available functional archetypes.
     "dnaHash": "2f51eec6c7043eedf0fc9f69a4181997...",
     "chromosomes": {
       "ch1_structure": { "topology": "flat", "maxNesting": 2 },
+      "ch3_type_display": { "family": "Space Grotesk", "charge": "geometric" },
       "ch5_color_primary": { "hue": 224, "saturation": 0.4, "lightness": 0.6 },
-      "ch8_motion": { "physics": "spring", "durationScale": 0.3 }
+      "ch8_motion": { "physics": "spring", "durationScale": 0.3 },
+      "ch9_grid": { "logic": "masonry", "asymmetry": 0.7 }
     },
     "constraints": {
-      "forbiddenPatterns": ["parallax", "bounce_animations"],
-      "bondingRules": ["High temporal urgency -> No animations"]
-    }
+      "forbiddenPatterns": ["parallax", "bg-gradient-to-r", "rounded-3xl"],
+      "bondingRules": ["High temporal urgency → No animations"]
+    },
+    "viabilityScore": 0.94
   },
   "tailwindConfig": "/* Generated tailwind.config.js */",
-  "topology": { "gridType": "masonry", "sections": [...] }
+  "topology": { "gridType": "masonry", "sections": [...] },
+  "webglComponents": "/* React Three Fiber components */",
+  "fxAtmosphere": "/* CSS atmospheric effects */",
+  "svgBiomarker": "/* Unique SVG generative art */"
 }
 ```
+
+---
+
+## Anti-Slop Pattern Detection
+
+The system detects and forbids:
+
+| Pattern | Why It's Slop |
+|---------|---------------|
+| `font-inter` | Default AI font, overused |
+| `bg-gradient-to-r from-blue-* to-purple-*` | Ultimate SaaS trope |
+| `grid-cols-3` pricing | Most overused layout |
+| `parallax` | Motion sickness trigger |
+| `rounded-xl` cards | Generic component library look |
+
+---
+
+## How It Works
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Content Input  │────▶│  LLM Analysis   │────▶│  15-Chromosome  │
+│  (text/images)  │     │  (5 trait axes) │     │  DNA Generation │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                              ┌──────────────────────────┘
+                              ▼
+                    ┌─────────────────┐
+                    │  Epistasis Rules │  (cross-chromosome constraints)
+                    │  ├─ Warm color → Cool background
+                    │  ├─ Geometric font → Sharp edges
+                    │  └─ Dashboard → No animations
+                    └────────┬────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        ┌──────────┐  ┌──────────┐  ┌──────────┐
+        │ Tailwind │  │   CSS    │  │  WebGL   │
+        │  Config  │  │ Effects  │  │Components│
+        └──────────┘  └──────────┘  └──────────┘
+```
+
+---
+
+## Supported LLM Providers
+
+| Provider | Model | Best For | Environment Variable |
+|----------|-------|----------|---------------------|
+| Groq | llama-3.3-70b-versatile | Speed, cost | `GROQ_API_KEY` |
+| OpenAI | gpt-4o-mini | JSON reliability | `OPENAI_API_KEY` |
+| Anthropic | claude-3-5-sonnet | Reasoning quality | `ANTHROPIC_API_KEY` |
+| Google | gemini-1.5-flash | Lowest latency | `GEMINI_API_KEY` |
+
+Auto-detection priority: Groq → OpenAI → Anthropic → Gemini
+
+---
 
 ## Website Demo
 
@@ -149,43 +226,37 @@ The `website/` directory is built entirely from Permutations DNA:
 cd website
 npm install
 npm run build
+npm run preview
 ```
 
-Live at: [Permutations Demo](http://localhost:4173)
-
-## Architecture
-
-See [DESIGN.md](./DESIGN.md) for full technical architecture.
-
-Key concepts:
-- **15 Chromosomes**: Control every visual aspect
-- **Epistasis Rules**: Prevent invalid combinations
-- **Pattern Detection**: Auto-reject slop (Inter font, blue-purple gradients, etc.)
-- **Multi-LLM**: Groq, OpenAI, Anthropic, Gemini support
-
-## Supported LLM Providers
-
-| Provider | Model | Environment Variable |
-|----------|-------|---------------------|
-| Groq | llama-3.3-70b-versatile | `GROQ_API_KEY` |
-| OpenAI | gpt-4o-mini | `OPENAI_API_KEY` |
-| Anthropic | claude-3-5-sonnet | `ANTHROPIC_API_KEY` |
-| Google | gemini-1.5-flash | `GEMINI_API_KEY` |
-
-Auto-detection: Set any key. The engine routes to available provider.
+---
 
 ## Development
 
 ```bash
-# Run dogfooding script
-GROQ_API_KEY=xxx npx tsx generate-product-dna.ts
+# Run tests
+npm test
+
+# Type check
+npx tsc --noEmit
 
 # Build
 npm run build
 
 # Watch mode
 npm run dev
+
+# Generate DNA for this project
+GROQ_API_KEY=xxx npx tsx generate-product-dna.ts
 ```
+
+---
+
+## Documentation
+
+- **[DESIGN.md](./DESIGN.md)** — Full technical architecture, epistasis rules, 15-chromosome reference
+
+---
 
 ## License
 
