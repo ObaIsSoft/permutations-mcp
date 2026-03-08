@@ -10,13 +10,13 @@ export function Navbar() {
                 <span className="font-display font-bold text-xl uppercase tracking-tighter">PERMUTATIONS.</span>
             </div>
 
-            <div className="flex gap-8 font-mono text-sm uppercase items-center">
-                <a href="#manifesto" className="hover:text-primary transition-colors duration-genome">Manifesto</a>
+            <div className="flex gap-8 font-mono text-sm uppercase items-center hidden md:flex">
+                <a href="#manifesto" className="hover:text-primary transition-colors duration-genome">Story</a>
                 <a href="#engine" className="hover:text-primary transition-colors duration-genome">The Engine</a>
                 <a href="#docs" className="hover:text-primary transition-colors duration-genome">Docs</a>
-                <button className="dna-btn py-2 px-4 text-xs">
+                <a href="#docs" className="dna-btn py-2 px-4 text-xs inline-block">
                     Initialize
-                </button>
+                </a>
             </div>
         </nav>
     );

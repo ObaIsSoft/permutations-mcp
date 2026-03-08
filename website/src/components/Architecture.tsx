@@ -4,13 +4,13 @@ export function Architecture() {
     const steps = [
         {
             icon: <Brain size={32} />,
-            title: "01 / Semantic Extraction",
-            desc: "An LLM intercepts the fuzzy human intent and evaluates it across 4 abstract psychological vectors: Density, Urgency, Temperature, and Playfulness."
+            title: "01 / Planetary Survey",
+            desc: "An LLM intercepts the human intent and evaluates the 'atmospheric conditions' across 4 mathematical vectors: Density, Urgency, Temperature, and Playfulness."
         },
         {
             icon: <Hexagon size={32} />,
-            title: "02 / Genetic Hashing",
-            desc: "The vectors are injected into a deterministic SHA-256 cryptographic hash based on the Project ID, creating a static, infinitely reproducible seed."
+            title: "02 / Genetic Seed",
+            desc: "Instead of searching for a template, the vectors are injected into a deterministic SHA-256 hash. This guarantees the exact same lifeform emerges on the exact same planet, every time."
         },
         {
             icon: <Network size={32} />,
@@ -28,8 +28,8 @@ export function Architecture() {
         <section id="manifesto" className="w-full py-24 px-4 md:px-12 bg-white border-b-2 border-black">
             <div className="max-w-7xl w-full mx-auto">
                 <div className="mb-16 border-b-2 border-black pb-4">
-                    <h2 className="text-4xl md:text-5xl font-bold uppercase tracking-tight text-primary">The Architecture</h2>
-                    <p className="font-mono mt-2 opacity-60">Continuous generation without a database</p>
+                    <h2 className="text-4xl md:text-5xl font-bold uppercase tracking-tight text-primary">Evolutionary Architecture</h2>
+                    <p className="font-mono mt-2 opacity-60">Locating the aesthetic Goldilocks Zone</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
