@@ -35,6 +35,38 @@ export interface ContentTraits {
     spatialDependency: number;   // 0.0 - 1.0 (flat 2D to deep immersive 3D)
 }
 
+export interface TypographyScale {
+    /** Display text for hero/manifesto sections */
+    display: { size: string; lineHeight: string; letterSpacing: string };
+    /** H1 headings */
+    h1: { size: string; lineHeight: string; letterSpacing: string };
+    /** H2 headings */
+    h2: { size: string; lineHeight: string; letterSpacing: string };
+    /** H3 headings */
+    h3: { size: string; lineHeight: string; letterSpacing: string };
+    /** Body text */
+    body: { size: string; lineHeight: string; letterSpacing: string };
+    /** Small/caption text */
+    small: { size: string; lineHeight: string; letterSpacing: string };
+    /** Scale ratio used (major third, perfect fourth, etc) */
+    ratio: number;
+    /** Base size in pixels */
+    baseSize: number;
+}
+
+export interface AccessibilityProfile {
+    /** Minimum contrast ratio enforced */
+    minContrastRatio: number;
+    /** Focus indicator style */
+    focusIndicator: "outline" | "ring" | "underline" | "none";
+    /** Motion preference respected */
+    respectMotionPreference: boolean;
+    /** Minimum touch target size in px */
+    minTouchTarget: number;
+    /** Screen reader optimizations */
+    screenReaderOptimized: boolean;
+}
+
 export interface DesignGenome {
     dnaHash: string;
     traits: ContentTraits;
@@ -54,6 +86,10 @@ export interface DesignGenome {
         ch13_atmosphere: { fx: "glassmorphism" | "crt_noise" | "fluid_mesh" | "none"; intensity: number };
         ch14_physics: { material: "neumorphism" | "metallic" | "glass" | "matte"; roughness: number; transmission: number };
         ch15_biomarker: { geometry: "monolithic" | "organic" | "fractal"; complexity: number };
+        /** DNA-generated typography scale */
+        ch16_typography: TypographyScale;
+        /** WCAG accessibility requirements */
+        ch17_accessibility: AccessibilityProfile;
     };
     constraints: {
         forbiddenPatterns: string[];

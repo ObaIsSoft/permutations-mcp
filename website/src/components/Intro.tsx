@@ -1,17 +1,17 @@
 import { ArrowRight } from 'lucide-react';
 import { Procedural3D } from './Procedural3D';
 
-export function Hero() {
+export function Intro() {
     return (
-        <section className="w-full min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-12 border-b-2 border-black bg-surface relative overflow-hidden">
+        <section className="w-full min-h-[90vh] flex flex-col justify-center px-4 sm:px-6 md:px-12 border-b-2 border-black bg-surface relative overflow-hidden" data-section="intro">
             {/* Permutations Procedural Spatial & Atmosphere DNA - Glass Organism */}
             {/* Mobile: smaller, positioned top-right */}
             <div className="absolute right-0 top-20 w-[40vw] h-[30vh] sm:w-[35vw] sm:h-[35vh] md:w-[45vw] md:h-[60vh] lg:w-[50vw] lg:h-[80vh] lg:top-1/2 lg:-translate-y-1/2 z-0 opacity-60 sm:opacity-70 lg:opacity-90 pointer-events-none">
                 <Procedural3D />
             </div>
             
-            {/* Subtle gradient fade */}
-            <div className="absolute right-0 top-0 bottom-0 w-[50vw] sm:w-[55vw] lg:w-[60vw] bg-gradient-to-l from-transparent via-surface/50 to-surface/95 z-0 pointer-events-none" />
+            {/* Fade overlay */}
+            <div className="absolute right-0 top-0 bottom-0 w-[50vw] sm:w-[55vw] lg:w-[60vw] bg-surface/90 z-0 pointer-events-none" />
             
             <div className="fx-atmosphere" />
 

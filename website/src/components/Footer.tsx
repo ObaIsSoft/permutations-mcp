@@ -47,8 +47,8 @@ export function Footer() {
                     
                     <div className="flex items-center gap-2 text-xs sm:text-sm text-primary">
                         <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full bg-primary opacity-75 rounded-full"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full bg-primary opacity-75" style={{ borderRadius: '50%' }}></span>
+                            <span className="relative inline-flex h-2 w-2 bg-primary" style={{ borderRadius: '50%' }}></span>
                         </span>
                         System Online
                     </div>

@@ -45,6 +45,14 @@ module.exports = {
         'genome': '${ch.ch7_edge.radius}px',
         'none': '0px',
       },
+      fontSize: {
+        'display': ['${ch.ch16_typography.display.size}', { lineHeight: '${ch.ch16_typography.display.lineHeight}', letterSpacing: '${ch.ch16_typography.display.letterSpacing}' }],
+        'h1': ['${ch.ch16_typography.h1.size}', { lineHeight: '${ch.ch16_typography.h1.lineHeight}', letterSpacing: '${ch.ch16_typography.h1.letterSpacing}' }],
+        'h2': ['${ch.ch16_typography.h2.size}', { lineHeight: '${ch.ch16_typography.h2.lineHeight}', letterSpacing: '${ch.ch16_typography.h2.letterSpacing}' }],
+        'h3': ['${ch.ch16_typography.h3.size}', { lineHeight: '${ch.ch16_typography.h3.lineHeight}', letterSpacing: '${ch.ch16_typography.h3.letterSpacing}' }],
+        'body': ['${ch.ch16_typography.body.size}', { lineHeight: '${ch.ch16_typography.body.lineHeight}', letterSpacing: '${ch.ch16_typography.body.letterSpacing}' }],
+        'small': ['${ch.ch16_typography.small.size}', { lineHeight: '${ch.ch16_typography.small.lineHeight}', letterSpacing: '${ch.ch16_typography.small.letterSpacing}' }],
+      },
       transitionTimingFunction: {
         'genome': '${ch.ch8_motion.physics === "spring" ? "cubic-bezier(0.34, 1.56, 0.64, 1)" : ch.ch8_motion.physics === "step" ? "steps(8)" : "cubic-bezier(0.4, 0, 0.2, 1)"}',
       },

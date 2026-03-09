@@ -17,12 +17,16 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.0.1",
+    "css-tree": "^3.2.1",
     "groq-sdk": "^0.37.0",
     "openai": "^4.20.0",
     "pdf-parse": "^1.1.1",
+    "postcss": "^8.5.8",
+    "postcss-safe-parser": "^7.0.1",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@types/css-tree": "^2.3.11",
     "@types/node": "^20.0.0",
     "@types/pdf-parse": "^1.1.5",
     "@vitest/ui": "^3.2.4",

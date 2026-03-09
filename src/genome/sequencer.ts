@@ -2,6 +2,7 @@ import * as crypto from "crypto";
 import { ContentTraits, DesignGenome } from "./types.js";
 import { EpigeneticData } from "./epigenetics.js";
 import { ARCHETYPES, detectArchetype, FunctionalArchetype } from "./archetypes.js";
+import { GenomeConstraintSolver, SolverResult } from "./constraint-solver.js";
 
 export class GenomeSequencer {
     generate(seed: string, traits: ContentTraits, epigenetics?: EpigeneticData): DesignGenome {
@@ -85,6 +86,12 @@ export class GenomeSequencer {
             hue = epigenetics.epigeneticHue;
         }
 
+        // Generate DNA-driven typography scale
+        const typographyScale = this.generateTypographyScale(traits, b);
+
+        // Generate accessibility profile based on traits
+        const accessibilityProfile = this.generateAccessibilityProfile(traits, b);
+
         // Assemble Genome
         const genome: DesignGenome = {
             dnaHash: hash,
@@ -104,7 +111,9 @@ export class GenomeSequencer {
                 ch12_signature: { entropy: b(17), uniqueMutation: hash.slice(0, 8) },
                 ch13_atmosphere: { fx, intensity: b(18) * traits.spatialDependency },
                 ch14_physics: { material, roughness: b(19) * (1 - traits.playfulness), transmission: material === "glass" ? 0.8 + b(20) * 0.2 : 0 },
-                ch15_biomarker: { geometry, complexity: b(21) * traits.informationDensity }
+                ch15_biomarker: { geometry, complexity: b(21) * traits.informationDensity },
+                ch16_typography: typographyScale,
+                ch17_accessibility: accessibilityProfile
             },
             constraints: {
                 forbiddenPatterns: [],
@@ -114,7 +123,17 @@ export class GenomeSequencer {
             viabilityScore: 1.0
         };
 
-        return this.applyViabilityConstraints(genome);
+        // Apply constraint solver for proper conflict resolution
+        const solver = new GenomeConstraintSolver();
+        const result = solver.solve(genome);
+        
+        // Log rationale for debugging
+        if (result.rationale.length > 0) {
+            console.log("[Constraint Solver] Decisions:");
+            result.rationale.forEach(r => console.log(`  ${r}`));
+        }
+
+        return result.genome;
     }
 
     private selectFromHash<T>(byte: number, options: T[]): T {
@@ -134,27 +153,148 @@ export class GenomeSequencer {
         return "Inter, Roboto, sans-serif";
     }
 
-    private applyViabilityConstraints(genome: DesignGenome): DesignGenome {
-        // Determine strict required/forbidden patterns based on mathematical traits
-        if (genome.traits.temporalUrgency > 0.8) {
-            genome.constraints.forbiddenPatterns.push("scroll_animations", "parallax", "heavy_blur_effects");
-            genome.constraints.requiredPatterns.push("high_contrast_text", "tabular_numerals");
-            genome.constraints.bondingRules.push("High Temporal Urgency -> Forbidden complex animations.");
+    /**
+     * Generate DNA-driven typography scale based on content traits.
+     * 
+     * High information density → smaller sizes, tighter leading, compact scale
+     * Low temporal urgency (reading) → larger sizes, generous leading
+     * High emotional temperature → more dramatic scale ratios
+     */
+    private generateTypographyScale(
+        traits: ContentTraits, 
+        b: (index: number) => number
+    ): import("./types.js").TypographyScale {
+        // Select scale ratio based on emotional temperature
+        // Warm/emotional = dramatic ratios (golden ratio, perfect fifth)
+        // Cool/clinical = conservative ratios (major second, minor third)
+        let ratio: number;
+        if (traits.emotionalTemperature > 0.7) {
+            ratio = 1.618; // Golden ratio - dramatic
+        } else if (traits.emotionalTemperature > 0.4) {
+            ratio = 1.5; // Perfect fifth - balanced
+        } else {
+            ratio = 1.25; // Major third - conservative
         }
 
-        if (genome.traits.informationDensity > 0.8) {
-            genome.constraints.forbiddenPatterns.push("large_hero_images", "generous_whitespace", "rounded_cards");
-            genome.constraints.requiredPatterns.push("compact_base_spacing");
-            genome.constraints.bondingRules.push("High Information Density -> Forced compact rhythm.");
+        // Base size varies by information density
+        // Dense interfaces need smaller base text to fit more content
+        let baseSize: number;
+        if (traits.informationDensity > 0.8) {
+            baseSize = 14; // Dashboard/data-dense
+        } else if (traits.informationDensity > 0.5) {
+            baseSize = 16; // Standard
+        } else {
+            baseSize = 18; // Editorial/long-form
         }
 
-        if (genome.traits.playfulness < 0.2) {
-            genome.chromosomes.ch7_edge.radius = 0;
-            genome.constraints.forbiddenPatterns.push("bounce_animations", "comic_sans");
-            genome.constraints.bondingRules.push("Low Playfulness -> Forced brutalist radius (0px).");
+        // Line height varies by temporal urgency
+        // Fast scanning needs tighter lines, reading needs more breathing room
+        const getLineHeight = (tightness: number) => {
+            if (traits.temporalUrgency > 0.7) return (1.2 + tightness * 0.2).toFixed(2);
+            if (traits.temporalUrgency > 0.4) return (1.4 + tightness * 0.2).toFixed(2);
+            return (1.6 + tightness * 0.2).toFixed(2); // Relaxed for reading
+        };
+
+        // Letter spacing varies by density and urgency
+        const getLetterSpacing = (emphasis: number) => {
+            if (traits.informationDensity > 0.7) return `${-0.02 * emphasis}em`; // Tight for dense
+            if (traits.temporalUrgency > 0.7) return `${0.01 * emphasis}em`; // Slight spread for scanning
+            return "0em";
+        };
+
+        // Calculate sizes using the ratio
+        const sizes = {
+            display: Math.round(baseSize * Math.pow(ratio, 4)),
+            h1: Math.round(baseSize * Math.pow(ratio, 3)),
+            h2: Math.round(baseSize * Math.pow(ratio, 2)),
+            h3: Math.round(baseSize * ratio),
+            body: baseSize,
+            small: Math.round(baseSize / Math.sqrt(ratio))
+        };
+
+        return {
+            display: {
+                size: `${sizes.display}px`,
+                lineHeight: getLineHeight(0),
+                letterSpacing: getLetterSpacing(0.5)
+            },
+            h1: {
+                size: `${sizes.h1}px`,
+                lineHeight: getLineHeight(0.2),
+                letterSpacing: getLetterSpacing(0.3)
+            },
+            h2: {
+                size: `${sizes.h2}px`,
+                lineHeight: getLineHeight(0.4),
+                letterSpacing: getLetterSpacing(0.2)
+            },
+            h3: {
+                size: `${sizes.h3}px`,
+                lineHeight: getLineHeight(0.6),
+                letterSpacing: getLetterSpacing(0.1)
+            },
+            body: {
+                size: `${sizes.body}px`,
+                lineHeight: getLineHeight(1.0),
+                letterSpacing: getLetterSpacing(0)
+            },
+            small: {
+                size: `${sizes.small}px`,
+                lineHeight: getLineHeight(0.8),
+                letterSpacing: getLetterSpacing(0.2)
+            },
+            ratio,
+            baseSize
+        };
+    }
+
+    /**
+     * Generate WCAG accessibility profile based on content traits.
+     * 
+     * High temporal urgency → stronger focus indicators, larger touch targets
+     * High information density → higher contrast requirements
+     * Low playfulness (serious) → respect motion preferences strictly
+     */
+    private generateAccessibilityProfile(
+        traits: ContentTraits,
+        b: (index: number) => number
+    ): import("./types.js").AccessibilityProfile {
+        // Contrast ratio: higher for data-dense interfaces
+        const minContrastRatio = traits.informationDensity > 0.7 ? 7.0 : 
+                                  traits.informationDensity > 0.4 ? 4.5 : 3.0;
+
+        // Focus indicator: more prominent for urgent/fast-scanning interfaces
+        let focusIndicator: "outline" | "ring" | "underline" | "none" = "outline";
+        if (traits.temporalUrgency > 0.8) {
+            focusIndicator = "ring"; // Very prominent for urgent interfaces
+        } else if (traits.playfulness > 0.6) {
+            focusIndicator = "underline"; // Subtle for playful interfaces
         }
 
-        return genome;
+        // Motion preference: strict for serious/professional, relaxed for playful
+        const respectMotionPreference = traits.playfulness < 0.5;
+
+        // Touch target: larger for urgent interfaces (fast interactions)
+        const minTouchTarget = traits.temporalUrgency > 0.7 ? 48 : 44;
+
+        // Screen reader optimization: important for dense data interfaces
+        const screenReaderOptimized = traits.informationDensity > 0.6;
+
+        return {
+            minContrastRatio,
+            focusIndicator,
+            respectMotionPreference,
+            minTouchTarget,
+            screenReaderOptimized
+        };
+    }
+
+    /**
+     * @deprecated Use GenomeConstraintSolver instead
+     */
+    private applyViabilityConstraints(genome: DesignGenome): SolverResult {
+        const solver = new GenomeConstraintSolver();
+        return solver.solve(genome);
     }
 
     /**

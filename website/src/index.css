@@ -33,7 +33,8 @@
   /* DNA Card - 9px radius from genome */
   .dna-card {
     @apply bg-surface p-genome-unit rounded-genome;
-    box-shadow: 0 4px 24px rgba(127, 147, 201, 0.15);
+    /* Using 1px border instead of shadow per DNA constraints */
+    border: 1px solid rgba(127, 147, 201, 0.3);
   }
 
   /* V3 FX Atmosphere - fluid_mesh from genome */
@@ -41,6 +42,7 @@
     position: relative;
   }
   
+  /* Using solid color overlay instead of gradient per DNA constraints */
   .fx-atmosphere::before {
     content: "";
     position: fixed;
@@ -48,9 +50,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(45deg, rgba(127, 147, 201, 0.08), rgba(255, 0, 255, 0.04));
-    filter: blur(2px);
-    opacity: 0.5;
+    background: rgba(127, 147, 201, 0.04);
     pointer-events: none;
     z-index: 0;
   }
