@@ -67,6 +67,17 @@ export interface AccessibilityProfile {
     screenReaderOptimized: boolean;
 }
 
+export interface RenderingStrategy {
+    /** Primary rendering approach */
+    primary: "webgl" | "css" | "static" | "svg";
+    /** Fallback if primary fails or unsupported */
+    fallback: "css" | "static" | "none";
+    /** Whether to animate (respects accessibility settings) */
+    animate: boolean;
+    /** Complexity level - affects performance vs quality tradeoff */
+    complexity: "minimal" | "balanced" | "rich";
+}
+
 export interface DesignGenome {
     dnaHash: string;
     traits: ContentTraits;
@@ -86,10 +97,9 @@ export interface DesignGenome {
         ch13_atmosphere: { fx: "glassmorphism" | "crt_noise" | "fluid_mesh" | "none"; intensity: number };
         ch14_physics: { material: "neumorphism" | "metallic" | "glass" | "matte"; roughness: number; transmission: number };
         ch15_biomarker: { geometry: "monolithic" | "organic" | "fractal"; complexity: number };
-        /** DNA-generated typography scale */
-        ch16_typography: TypographyScale;
-        /** WCAG accessibility requirements */
-        ch17_accessibility: AccessibilityProfile;
+        ch16_typography: TypographyScale; /** DNA-generated typography scale */
+        ch17_accessibility: AccessibilityProfile;  /** WCAG accessibility requirements */
+        ch18_rendering: RenderingStrategy; /** Rendering strategy - how to render visual elements */
     };
     constraints: {
         forbiddenPatterns: string[];

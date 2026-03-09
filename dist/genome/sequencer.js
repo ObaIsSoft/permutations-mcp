@@ -94,6 +94,8 @@ export class GenomeSequencer {
         const typographyScale = this.generateTypographyScale(traits, b);
         // Generate accessibility profile based on traits
         const accessibilityProfile = this.generateAccessibilityProfile(traits, b);
+        // Generate rendering strategy based on traits
+        const renderingStrategy = this.generateRenderingStrategy(traits, b);
         // Assemble Genome
         const genome = {
             dnaHash: hash,
@@ -115,7 +117,8 @@ export class GenomeSequencer {
                 ch14_physics: { material, roughness: b(19) * (1 - traits.playfulness), transmission: material === "glass" ? 0.8 + b(20) * 0.2 : 0 },
                 ch15_biomarker: { geometry, complexity: b(21) * traits.informationDensity },
                 ch16_typography: typographyScale,
-                ch17_accessibility: accessibilityProfile
+                ch17_accessibility: accessibilityProfile,
+                ch18_rendering: renderingStrategy
             },
             constraints: {
                 forbiddenPatterns: [],
@@ -278,6 +281,62 @@ export class GenomeSequencer {
             respectMotionPreference,
             minTouchTarget,
             screenReaderOptimized
+        };
+    }
+    /**
+     * Generate rendering strategy based on content traits.
+     *
+     * High spatial dependency + playfulness → WebGL for immersive 3D
+     * Low spatial dependency → CSS for performance
+     * High information density → Static for simplicity
+     * Low playfulness + high density → SVG for precision
+     */
+    generateRenderingStrategy(traits, b) {
+        // Determine primary renderer based on spatial needs
+        let primary = "css";
+        if (traits.spatialDependency > 0.6 && traits.playfulness > 0.4) {
+            primary = "webgl"; // 3D immersive experience
+        }
+        else if (traits.spatialDependency > 0.4 && traits.playfulness > 0.3) {
+            primary = "css"; // CSS 3D transforms
+        }
+        else if (traits.informationDensity > 0.8 && traits.playfulness < 0.3) {
+            primary = "svg"; // Precision for data viz
+        }
+        else if (traits.informationDensity > 0.9) {
+            primary = "static"; // Maximal performance
+        }
+        // Determine fallback based on primary and accessibility
+        let fallback = "css";
+        if (primary === "webgl") {
+            // WebGL → CSS animated fallback
+            fallback = "css";
+        }
+        else if (primary === "css") {
+            // CSS → static fallback if motion not allowed
+            fallback = traits.playfulness < 0.2 ? "static" : "css";
+        }
+        else {
+            // SVG/static → no fallback needed
+            fallback = "none";
+        }
+        // Animation depends on accessibility and urgency
+        const animate = !(traits.temporalUrgency > 0.9 || // Too urgent for motion
+            (traits.playfulness < 0.3 && traits.informationDensity > 0.7) // Serious + dense
+        );
+        // Complexity based on information density and device capability assumptions
+        let complexity = "balanced";
+        if (traits.informationDensity > 0.8) {
+            complexity = "minimal"; // Keep it simple for dense UIs
+        }
+        else if (traits.spatialDependency > 0.6 && traits.playfulness > 0.5) {
+            complexity = "rich"; // Go all out for immersive playful
+        }
+        return {
+            primary,
+            fallback,
+            animate,
+            complexity
         };
     }
     /**
