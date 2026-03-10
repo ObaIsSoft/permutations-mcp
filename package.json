@@ -11,7 +11,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsc --watch",
-    "test": "node --max-old-space-size=4096 tests/genome.test.mjs",
+    "test": "node tests/genome.test.mjs && node tests/production.test.mjs",
+    "test:genome": "node tests/genome.test.mjs",
+    "test:production": "node tests/production.test.mjs",
     "test:unit": "node tests/sequencer.test.js"
   },
   "dependencies": {

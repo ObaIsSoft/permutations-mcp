@@ -19,6 +19,7 @@ import { PatternDetector } from "./constraints/pattern-detector.js";
 import { EcosystemGenerator } from "./genome/ecosystem.js";
 import { CivilizationGenerator } from "./genome/civilization.js";
 import { generateCivilizationOutput } from "./generators/civilization-generators.js";
+import { ContentExtractor } from "./genome/extractor.js";
 
 class DesignGenomeServer {
     private server: Server;
@@ -33,6 +34,7 @@ class DesignGenomeServer {
     private patternDetector: PatternDetector;
     private ecosystemGen: EcosystemGenerator;
     private civilizationGen: CivilizationGenerator;
+    private contentExtractor: ContentExtractor;
 
     constructor() {
         this.server = new Server(
@@ -51,6 +53,7 @@ class DesignGenomeServer {
         this.patternDetector = new PatternDetector();
         this.ecosystemGen = new EcosystemGenerator();
         this.civilizationGen = new CivilizationGenerator();
+        this.contentExtractor = new ContentExtractor();
 
         this.setupHandlers();
     }
@@ -144,8 +147,8 @@ class DesignGenomeServer {
                             intent: { type: "string", description: "Natural language design intent. Use complex keywords: dashboard, platform, 3D, real-time, collaborative" },
                             seed: { type: "string", description: "Unique project seed" },
                             project_context: { type: "string", description: "Detailed project context (longer = more sophisticated)" },
-                            min_tier: { 
-                                type: "string", 
+                            min_tier: {
+                                type: "string",
                                 enum: ["sentient", "civilized", "advanced"],
                                 description: "Minimum civilization tier to generate (optional - forces complexity)"
                             },
@@ -164,25 +167,61 @@ class DesignGenomeServer {
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const args = request.params.arguments as any;
 
+            // === Input Validation Helpers ===
+            const validateArgs = (
+                fields: { name: string; required: boolean; maxLength?: number }[]
+            ) => {
+                for (const field of fields) {
+                    const val = args[field.name];
+                    if (field.required && (val === undefined || val === null || val === "")) {
+                        throw new McpError(
+                            ErrorCode.InvalidParams,
+                            `Missing required parameter: '${field.name}'`
+                        );
+                    }
+                    if (val !== undefined && typeof val === "string" && field.maxLength && val.length > field.maxLength) {
+                        throw new McpError(
+                            ErrorCode.InvalidParams,
+                            `Parameter '${field.name}' exceeds maximum length of ${field.maxLength} characters`
+                        );
+                    }
+                }
+            };
+            const sanitize = (s: string): string => s.trim().replace(/\0/g, "");
+
             try {
                 switch (request.params.name) {
                     case "generate_design_genome": {
-                        if (!args.intent || !args.seed) {
-                            throw new McpError(ErrorCode.InvalidParams, "Missing intent or seed");
-                        }
+                        validateArgs([
+                            { name: "intent", required: true, maxLength: 32_768 },
+                            { name: "seed", required: true, maxLength: 256 },
+                            { name: "project_context", required: false, maxLength: 16_384 },
+                        ]);
+                        const intent = sanitize(args.intent);
+                        const seed = sanitize(args.seed);
+                        const context = args.project_context ? sanitize(args.project_context) : undefined;
 
                         // 1. Epigenetic Parsing (if assets provided)
                         let epigeneticData = undefined;
-                        if (args.brand_asset_paths && args.brand_asset_paths.length > 0) {
-                            epigeneticData = await this.epigeneticParser.parseAssets(args.brand_asset_paths);
+                        if (args.brand_asset_paths && Array.isArray(args.brand_asset_paths) && args.brand_asset_paths.length > 0) {
+                            epigeneticData = await this.epigeneticParser.parseAssets(
+                                args.brand_asset_paths.slice(0, 10) // cap at 10 files
+                            );
                         }
 
-                        // 2. Semantic Extraction (Context overrides)
-                        const finalContext = epigeneticData?.brandContext || args.project_context;
-                        const traits = await this.extractor.extractTraits(args.intent, finalContext);
+                        // 2. Semantic Extraction
+                        const finalContext = epigeneticData?.brandContext || context;
+                        const traits = await this.extractor.extractTraits(intent, finalContext);
 
-                        // 3. DNA Sequencing (Hash + Traits + Config + Epigenetics)
-                        const genome = this.sequencer.generate(args.seed, traits, { primarySector: "technology" }, epigeneticData);
+                        // 3. Sector Detection
+                        const contentForSector = [intent, finalContext].filter(Boolean).join(" ");
+                        const contentAnalysis = this.contentExtractor.analyze(contentForSector);
+                        const detectedSector = contentAnalysis.success && contentAnalysis.content
+                            ? contentAnalysis.content.sector.primary
+                            : "technology";
+
+                        // 4. DNA Sequencing
+                        const genome = this.sequencer.generate(seed, traits, { primarySector: detectedSector }, epigeneticData);
 
                         // 4. Component Generation
                         const tailwindConfig = this.cssGen.generate(genome, { format: "compressed" });
@@ -351,17 +390,22 @@ class DesignGenomeServer {
 
                         // Generate civilization tier
                         const tier = this.civilizationGen.generate(
-                            args.intent, 
-                            context, 
-                            traits, 
+                            args.intent,
+                            context,
+                            traits,
                             args.min_tier
                         );
 
                         // Generate code if requested
                         let codeOutputs = null;
                         if (args.generate_code !== false) {
-                            // Get base genome for the tier
-                            const baseGenome = this.sequencer.generate(args.seed, traits, { primarySector: "technology" });
+                            // Detect sector for accurate genome generation
+                            const civContentForSector = [args.intent, context].filter(Boolean).join(" ");
+                            const civContentAnalysis = this.contentExtractor.analyze(civContentForSector);
+                            const civSector = civContentAnalysis.success && civContentAnalysis.content
+                                ? civContentAnalysis.content.sector.primary
+                                : "technology";
+                            const baseGenome = this.sequencer.generate(args.seed, traits, { primarySector: civSector });
                             codeOutputs = generateCivilizationOutput(tier, baseGenome);
                         }
 
@@ -411,3 +455,13 @@ class DesignGenomeServer {
 
 const server = new DesignGenomeServer();
 server.run().catch(console.error);
+
+// === Startup environment check ===
+if (!SemanticTraitExtractor.isAvailable()) {
+    console.error(
+        "[WARNING] No LLM API key found in environment. " +
+        "Set GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY. " +
+        "Tools requiring trait extraction will return neutral fallbacks."
+    );
+}
+

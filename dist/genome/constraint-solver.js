@@ -165,6 +165,166 @@ export class GenomeConstraintSolver {
                 reason: "Dashboards require monospace for tabular data alignment"
             });
         }
+        // ─── Ch19: Hero Type Epistasis ───────────────────────────────────────────
+        // High density + high urgency → stats_counter is the only appropriate hero
+        // (not an aspirational big image that wastes viewport)
+        if (traits.informationDensity > 0.75 && traits.temporalUrgency > 0.65) {
+            this.addConstraint({
+                id: "dashboard_hero_stats",
+                target: "chromosomes.ch19_hero_type.type",
+                value: "stats_counter",
+                priority: 8,
+                source: `informationDensity: ${traits.informationDensity.toFixed(2)}, temporalUrgency: ${traits.temporalUrgency.toFixed(2)}`,
+                reason: "Dense real-time interfaces need scannable stats, not aspirational imagery"
+            });
+            this.addConstraint({
+                id: "dashboard_no_video_hero",
+                target: "constraints.forbiddenPatterns",
+                value: "video_hero",
+                priority: 7,
+                source: `temporalUrgency: ${traits.temporalUrgency.toFixed(2)}`,
+                reason: "Video heroes create load latency in time-critical dashboard interfaces"
+            });
+        }
+        // High conversion focus → search/discovery or editorial hero (drives action)
+        if (traits.conversionFocus > 0.7) {
+            this.addConstraint({
+                id: "conversion_hero_type",
+                target: "chromosomes.ch19_hero_type.type",
+                value: "search_discovery",
+                priority: 7,
+                source: `conversionFocus: ${traits.conversionFocus.toFixed(2)}`,
+                reason: "High conversion focus benefits from immediate search/action hero"
+            });
+            this.addConstraint({
+                id: "conversion_has_cta",
+                target: "constraints.requiredPatterns",
+                value: "primary_cta",
+                priority: 8,
+                source: `conversionFocus: ${traits.conversionFocus.toFixed(2)}`,
+                reason: "High conversion focus requires prominent primary call-to-action"
+            });
+        }
+        // High spatial dependency → configurator_3d hero is appropriate
+        if (traits.spatialDependency > 0.75) {
+            this.addConstraint({
+                id: "spatial_hero_3d",
+                target: "chromosomes.ch19_hero_type.type",
+                value: "configurator_3d",
+                priority: 6, // Lower priority — sector may override this
+                source: `spatialDependency: ${traits.spatialDependency.toFixed(2)}`,
+                reason: "High spatial dependency enables 3D/immersive hero experience"
+            });
+        }
+        // ─── Ch20: Visual Treatment Epistasis ────────────────────────────────────
+        // High visual emphasis → rich visual treatment required
+        if (traits.visualEmphasis > 0.7) {
+            this.addConstraint({
+                id: "visual_emphasis_treatment",
+                target: "constraints.requiredPatterns",
+                value: "full_bleed_imagery",
+                priority: 6,
+                source: `visualEmphasis: ${traits.visualEmphasis.toFixed(2)}`,
+                reason: "High visual emphasis requires full-bleed imagery treatment"
+            });
+        }
+        // Low visual emphasis + high density → no decorative imagery
+        if (traits.visualEmphasis < 0.3 && traits.informationDensity > 0.6) {
+            this.addConstraint({
+                id: "data_no_decorative_imagery",
+                target: "constraints.forbiddenPatterns",
+                value: "decorative_imagery",
+                priority: 7,
+                source: `visualEmphasis: ${traits.visualEmphasis.toFixed(2)}, informationDensity: ${traits.informationDensity.toFixed(2)}`,
+                reason: "Data-dense interfaces with low visual emphasis should avoid decorative imagery that wastes space"
+            });
+        }
+        // ─── Ch21: Trust Signals Epistasis ───────────────────────────────────────
+        // High trust requirement → force prominent trust signals
+        if (traits.trustRequirement > 0.65) {
+            this.addConstraint({
+                id: "trust_prominent",
+                target: "chromosomes.ch21_trust_signals.prominence",
+                value: "prominent",
+                priority: 8,
+                source: `trustRequirement: ${traits.trustRequirement.toFixed(2)}`,
+                reason: "High trust requirement mandates visible credentials and proof signals"
+            });
+            this.addConstraint({
+                id: "trust_credentials_approach",
+                target: "chromosomes.ch21_trust_signals.approach",
+                value: "credentials",
+                priority: 7,
+                source: `trustRequirement: ${traits.trustRequirement.toFixed(2)}`,
+                reason: "High-stakes interfaces need hard credentials over social testimonials"
+            });
+            this.addConstraint({
+                id: "trust_required_pattern",
+                target: "constraints.requiredPatterns",
+                value: "trust_indicators",
+                priority: 8,
+                source: `trustRequirement: ${traits.trustRequirement.toFixed(2)}`,
+                reason: "Trust-critical interfaces must include certifications, security, or authority signals"
+            });
+        }
+        // Very low trust requirement → subtle trust signals only (don't over-engineer)
+        if (traits.trustRequirement < 0.25) {
+            this.addConstraint({
+                id: "low_trust_subtle",
+                target: "chromosomes.ch21_trust_signals.prominence",
+                value: "subtle",
+                priority: 5,
+                source: `trustRequirement: ${traits.trustRequirement.toFixed(2)}`,
+                reason: "Casual interfaces don't need prominent trust machinery"
+            });
+        }
+        // ─── Ch22: Social Proof Epistasis ─────────────────────────────────────────
+        // High conversion + high trust → testimonials grid required
+        if (traits.conversionFocus > 0.65 && traits.trustRequirement > 0.55) {
+            this.addConstraint({
+                id: "conversion_trust_testimonials",
+                target: "chromosomes.ch22_social_proof.type",
+                value: "testimonials_grid",
+                priority: 7,
+                source: `conversionFocus: ${traits.conversionFocus.toFixed(2)}, trustRequirement: ${traits.trustRequirement.toFixed(2)}`,
+                reason: "Sales-focused, trust-heavy interfaces benefit from testimonial grids for conversion"
+            });
+        }
+        // ─── Ch23: Content Depth + Personalization Epistasis ─────────────────────
+        // Very high density → minimal sections (no fluff), data-dashboard IA pattern
+        if (traits.informationDensity > 0.85) {
+            this.addConstraint({
+                id: "extreme_density_ia",
+                target: "chromosomes.ch23_information_architecture.pattern",
+                value: "data_dashboard",
+                priority: 8,
+                source: `informationDensity: ${traits.informationDensity.toFixed(2)}`,
+                reason: "Extremely dense interfaces require data-dashboard information architecture"
+            });
+        }
+        // ─── Ch24: Personalization Epistasis ─────────────────────────────────────
+        // High density → behavior-based personalization (content adapts to usage)
+        if (traits.informationDensity > 0.7) {
+            this.addConstraint({
+                id: "density_behavior_personalization",
+                target: "chromosomes.ch24_personalization.approach",
+                value: "behavior_based",
+                priority: 6,
+                source: `informationDensity: ${traits.informationDensity.toFixed(2)}`,
+                reason: "Dense data interfaces benefit from behavior-based content personalization"
+            });
+        }
+        // Low density + low conversion = static content (no personalization needed)
+        if (traits.informationDensity < 0.35 && traits.conversionFocus < 0.35) {
+            this.addConstraint({
+                id: "editorial_static",
+                target: "chromosomes.ch24_personalization.approach",
+                value: "static",
+                priority: 5,
+                source: `informationDensity: ${traits.informationDensity.toFixed(2)}, conversionFocus: ${traits.conversionFocus.toFixed(2)}`,
+                reason: "Editorial/portfolio interfaces with no conversion goal can be fully static"
+            });
+        }
     }
     /**
      * Collect WCAG accessibility constraints based on genome traits.

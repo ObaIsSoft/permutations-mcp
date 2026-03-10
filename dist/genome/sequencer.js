@@ -113,7 +113,7 @@ export class GenomeSequencer {
         const ch12_signature = isForced('ch12_signature') || {
             entropy: b(17),
             uniqueMutation: hash.slice(0, 8),
-            variantSeed: b(17) // Use existing byte, SHA256 only has 32 bytes
+            variantSeed: b(18) // Byte 18 — distinct from entropy (byte 17)
         };
         const ch13_atmosphere = isForced('ch13_atmosphere') || this.generateAtmosphere(traits, b, isDisabled('ch13_atmosphere'));
         const ch14_physics = isForced('ch14_physics') || this.generatePhysics(traits, b, isDisabled('ch14_physics'));
@@ -137,13 +137,28 @@ export class GenomeSequencer {
             layout: heroVariant,
             elements: this.getHeroElements(heroType),
             alignment: this.selectFromHash(b(103), ["left", "center", "right"]),
-            textPosition: this.selectFromHash(b(104), ["overlay", "adjacent", "below"])
+            textPosition: this.selectFromHash(b(104), ["overlay", "adjacent", "below"]),
+            height: traits.spatialDependency > 0.6 ? "full" : traits.informationDensity > 0.7 ? "compact" : "large",
+            backgroundTreatment: heroType === "product_video" || heroType === "aspirational_imagery"
+                ? (b(118) > 0.5 ? "video" : "image")
+                : traits.spatialDependency > 0.6 ? "mesh" : "solid",
+            overlayOpacity: 0.3 + b(119) * 0.5,
+            mobileBehavior: traits.informationDensity > 0.7
+                ? "stack"
+                : this.selectFromHash(b(120), ["stack", "collapse_image", "full_bleed"])
         };
         const ch20_visual_treatment = isForced('ch20_visual_treatment') || {
             treatment: this.selectVisualTreatment(primaryProfile, b(105)),
             videoStrategy: this.selectVideoStrategy(primaryProfile, b(106)),
             imageTreatment: this.selectFromHash(b(107), ["natural", "high_contrast", "warm", "cool", "monochrome"]),
-            hasVideo: b(106) > 0.7
+            hasVideo: b(106) > 0.7,
+            imageAspectRatio: this.selectFromHash(b(121), ["16:9", "4:3", "1:1", "portrait"]),
+            colorGrading: traits.emotionalTemperature > 0.7
+                ? "vibrant"
+                : traits.emotionalTemperature < 0.3
+                    ? "desaturated"
+                    : this.selectFromHash(b(122), ["natural", "natural", "desaturated", "duotone"]),
+            imageCount: traits.informationDensity > 0.7 ? 1 : traits.visualEmphasis > 0.6 ? "many" : 3
         };
         // Trust & Social Chromosomes (21-22)
         const forcedTrust = isForced('ch21_trust_signals');
@@ -154,23 +169,51 @@ export class GenomeSequencer {
             prominence: this.selectTrustProminence(traits, primaryProfile),
             layoutVariant: `trust_${trustApproach}_${Math.floor(b(109) * 5)}`,
             contentProvided: false,
-            suggestedStats: this.suggestStats(primaryProfile)
+            suggestedStats: this.suggestStats(primaryProfile),
+            animationType: traits.informationDensity > 0.7
+                ? "count_up"
+                : traits.temporalUrgency > 0.6
+                    ? "fade_in"
+                    : "none"
         };
+        // Populate trust content with sector-specific template tokens
+        const sectorStats = this.suggestStats(primaryProfile);
         const ch21_trust_content = isForced('ch21_trust_content') || {
-            credentials: [],
-            testimonials: [],
-            stats: [],
-            securityBadges: []
+            credentials: primaryProfile.sector === "healthcare" || primaryProfile.sector === "legal"
+                ? ["{{CREDENTIAL_1}}", "{{CREDENTIAL_2}}"]
+                : [],
+            testimonials: traits.trustRequirement > 0.5
+                ? ["{{TESTIMONIAL_1}}", "{{TESTIMONIAL_2}}"]
+                : [],
+            stats: sectorStats.slice(0, 3).map(key => ({ label: `{{LABEL_${key.toUpperCase()}}}`, value: `{{VALUE_${key.toUpperCase()}}}` })),
+            securityBadges: traits.trustRequirement > 0.7
+                ? ["{{BADGE_ISO}}", "{{BADGE_SOC2}}"]
+                : []
         };
         const ch22_social_proof = isForced('ch22_social_proof') || {
             type: this.selectSocialProofType(b(110), primaryProfile),
             prominence: this.selectTrustProminence(traits, primaryProfile),
-            layout: this.selectFromHash(b(111), ["grid", "marquee", "carousel", "static"])
+            layout: this.selectFromHash(b(111), ["grid", "marquee", "carousel", "static"]),
+            logoCount: (traits.conversionFocus > 0.6 ? 8 : traits.informationDensity > 0.5 ? 5 : 3),
+            updateFrequency: traits.temporalUrgency > 0.7 ? "realtime" : traits.temporalUrgency > 0.4 ? "daily" : "static",
+            displayStyle: traits.trustRequirement > 0.6
+                ? "full_testimonial"
+                : traits.informationDensity > 0.6
+                    ? "logos_only"
+                    : "logos_with_name"
         };
         const ch22_impact_demonstration = isForced('ch22_impact_demonstration') || {
             type: this.selectImpactType(b(112), primaryProfile),
             realTime: b(113) > 0.7,
-            interactive: b(114) > 0.6
+            interactive: b(114) > 0.6,
+            animationTrigger: traits.temporalUrgency > 0.6
+                ? "page_load"
+                : this.selectFromHash(b(123), ["scroll_enter", "scroll_enter", "page_load", "hover"]),
+            counterFormat: traits.informationDensity > 0.7
+                ? "abbreviated"
+                : traits.conversionFocus > 0.6
+                    ? "full"
+                    : "abbreviated"
         };
         // Content Structure Chromosomes (23-24)
         const ch23_content_depth = isForced('ch23_content_depth') || {
@@ -190,7 +233,9 @@ export class GenomeSequencer {
         const ch24_personalization = isForced('ch24_personalization') || {
             approach: this.selectPersonalization(traits),
             dynamicContent: b(117) > 0.7,
-            userSegmentation: traits.informationDensity > 0.7
+            userSegmentation: traits.informationDensity > 0.7,
+            abTestingReady: traits.conversionFocus > 0.5,
+            segmentCount: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 3 : 2)
         };
         return {
             ch0_sector_primary,
@@ -231,16 +276,166 @@ export class GenomeSequencer {
      * Classify sub-sector from content traits
      */
     classifySubSectorFromTraits(traits, primarySector) {
-        // In a real implementation, this would analyze actual content
-        // For now, use trait heuristics
-        const { subSector, confidence } = classifySubSector("", primarySector);
+        const contentHints = [];
+        // === Information Density signals ===
+        if (traits.informationDensity > 0.8)
+            contentHints.push("dashboard data analytics monitoring reporting metrics kpi");
+        else if (traits.informationDensity > 0.6)
+            contentHints.push("data analytics reporting structured");
+        else if (traits.informationDensity < 0.3)
+            contentHints.push("minimal sparse editorial gallery portfolio luxury");
+        // === Temporal Urgency signals ===
+        if (traits.temporalUrgency > 0.8)
+            contentHints.push("real-time live feed emergency alert critical ticker");
+        else if (traits.temporalUrgency > 0.6)
+            contentHints.push("live dynamic news breaking feed");
+        else if (traits.temporalUrgency < 0.3)
+            contentHints.push("archival editorial long-form evergreen static portfolio");
+        // === Emotional Temperature signals ===
+        if (traits.emotionalTemperature > 0.8)
+            contentHints.push("wellness lifestyle community empathy care warmth healing");
+        else if (traits.emotionalTemperature > 0.6)
+            contentHints.push("lifestyle humanist warm brand story");
+        else if (traits.emotionalTemperature < 0.3)
+            contentHints.push("enterprise B2B clinical diagnostic precision instrument");
+        else if (traits.emotionalTemperature < 0.4)
+            contentHints.push("corporate professional institutional");
+        // === Playfulness signals ===
+        if (traits.playfulness > 0.8)
+            contentHints.push("gaming entertainment creative media interactive experimental playful children");
+        else if (traits.playfulness > 0.6)
+            contentHints.push("creative agency startup playful brand culture");
+        else if (traits.playfulness < 0.2)
+            contentHints.push("legal compliance regulatory formal institutional");
+        // === Spatial Dependency signals ===
+        if (traits.spatialDependency > 0.8)
+            contentHints.push("immersive 3d webgl spatial depth metaverse ar vr configurator");
+        else if (traits.spatialDependency > 0.6)
+            contentHints.push("interactive 3d animation particles depth");
+        else if (traits.spatialDependency < 0.2)
+            contentHints.push("flat text-heavy document whitepaper");
+        // === Trust Requirement signals ===
+        if (traits.trustRequirement > 0.8)
+            contentHints.push("security compliance certification credentials HIPAA SOC2 ISO audit regulated");
+        else if (traits.trustRequirement > 0.6)
+            contentHints.push("trusted secure verified credentials");
+        // === Visual Emphasis signals ===
+        if (traits.visualEmphasis > 0.8)
+            contentHints.push("photography visual imagery aesthetic lookbook fashion editorial studio");
+        else if (traits.visualEmphasis > 0.6)
+            contentHints.push("visual imagery photography showcase");
+        else if (traits.visualEmphasis < 0.2)
+            contentHints.push("text-first documentation technical");
+        // === Conversion Focus signals ===
+        if (traits.conversionFocus > 0.8)
+            contentHints.push("checkout payment cart ecommerce retail fast-fashion marketplace acquisition");
+        else if (traits.conversionFocus > 0.6)
+            contentHints.push("sales conversion cta pricing subscription");
+        else if (traits.conversionFocus < 0.2)
+            contentHints.push("informational educational non-profit awareness");
+        // === Sector-specific sub-sector hints ===
+        const sectorHints = {
+            healthcare: "medical surgical pediatric geriatric cosmetic dental wellness diagnostic imaging pharmacy",
+            fintech: "consumer banking trading lending payments wealth management crypto institutional",
+            automotive: "luxury electric commercial economy dealership fleet motorsport",
+            education: "k12 higher university corporate professional creative vocational",
+            commerce: "luxury fast-fashion marketplace b2b wholesale dropship",
+            entertainment: "streaming gaming music film sports media podcast broadcast",
+            manufacturing: "industrial aerospace defense automotive chemical pharmaceutical",
+            legal: "litigation corporate immigration family criminal ip real-estate",
+            real_estate: "residential commercial luxury rental investment construction",
+            travel: "luxury budget adventure business family cruise airline hotel",
+            food: "restaurant delivery catering bakery healthy organic gourmet",
+            sports: "professional amateur fitness gym outdoor team",
+            technology: "saas developer api infrastructure security ai ml cloud"
+        };
+        if (sectorHints[primarySector])
+            contentHints.push(sectorHints[primarySector]);
+        const syntheticContent = contentHints.join(" ");
+        const { subSector, confidence } = classifySubSector(syntheticContent, primarySector);
         return { subSector: subSector, confidence };
     }
     /**
-     * Extract keywords from traits (placeholder)
+     * Extract keyword hints from trait values
      */
     extractKeywords(traits) {
-        return [];
+        const keywords = [];
+        // === Information Density ===
+        if (traits.informationDensity > 0.8)
+            keywords.push("data-dense", "dashboard", "analytics", "kpi", "metrics", "reporting");
+        else if (traits.informationDensity > 0.6)
+            keywords.push("data-rich", "structured", "tabular");
+        else if (traits.informationDensity < 0.3)
+            keywords.push("minimal", "sparse", "luxurious", "whitespace", "gallery");
+        // === Temporal Urgency ===
+        if (traits.temporalUrgency > 0.8)
+            keywords.push("real-time", "live", "urgent", "breaking", "alert", "ticker");
+        else if (traits.temporalUrgency > 0.6)
+            keywords.push("dynamic", "current", "news-feed");
+        else if (traits.temporalUrgency < 0.3)
+            keywords.push("editorial", "long-form", "archival", "evergreen", "timeless");
+        else if (traits.temporalUrgency < 0.5)
+            keywords.push("static", "documentation", "reference");
+        // === Emotional Temperature ===
+        if (traits.emotionalTemperature > 0.8)
+            keywords.push("warm", "humanist", "community", "wellness", "empathetic", "organic");
+        else if (traits.emotionalTemperature > 0.6)
+            keywords.push("friendly", "approachable", "lifestyle");
+        else if (traits.emotionalTemperature < 0.3)
+            keywords.push("clinical", "brutalist", "enterprise", "precision", "cold");
+        else if (traits.emotionalTemperature < 0.5)
+            keywords.push("professional", "corporate", "neutral");
+        // === Playfulness ===
+        if (traits.playfulness > 0.8)
+            keywords.push("playful", "whimsical", "experimental", "creative", "y2k", "organic-shapes");
+        else if (traits.playfulness > 0.6)
+            keywords.push("creative", "expressive", "brand-forward");
+        else if (traits.playfulness < 0.2)
+            keywords.push("strict", "corporate", "legal", "formal", "institutional");
+        else if (traits.playfulness < 0.4)
+            keywords.push("clean", "structured", "restrained");
+        // === Spatial Dependency ===
+        if (traits.spatialDependency > 0.8)
+            keywords.push("immersive", "3d", "webgl", "spatial", "depth", "particles", "vr", "ar");
+        else if (traits.spatialDependency > 0.6)
+            keywords.push("interactive", "animated", "dimensional", "parallax");
+        else if (traits.spatialDependency < 0.2)
+            keywords.push("flat", "text-heavy", "document", "print");
+        // === Trust Requirement ===
+        if (traits.trustRequirement > 0.8)
+            keywords.push("regulated", "compliance", "security", "certification", "HIPAA", "SOC2", "credentials");
+        else if (traits.trustRequirement > 0.6)
+            keywords.push("trusted", "verified", "secure", "professional");
+        else if (traits.trustRequirement < 0.2)
+            keywords.push("casual", "social", "informal");
+        // === Visual Emphasis ===
+        if (traits.visualEmphasis > 0.8)
+            keywords.push("photography", "visual-storytelling", "lookbook", "editorial-imagery", "fashion", "studio");
+        else if (traits.visualEmphasis > 0.6)
+            keywords.push("image-forward", "visual", "showcase");
+        else if (traits.visualEmphasis < 0.2)
+            keywords.push("text-first", "typographic", "minimal-imagery");
+        // === Conversion Focus ===
+        if (traits.conversionFocus > 0.8)
+            keywords.push("ecommerce", "checkout", "conversion", "sales", "cta-heavy", "acquisition");
+        else if (traits.conversionFocus > 0.6)
+            keywords.push("lead-gen", "pricing", "subscription", "trial");
+        else if (traits.conversionFocus < 0.2)
+            keywords.push("informational", "educational", "awareness", "non-profit");
+        // === Cross-trait aesthetic signals ===
+        if (traits.emotionalTemperature < 0.3 && traits.playfulness < 0.3)
+            keywords.push("bauhaus", "swiss-design", "grid-system");
+        if (traits.playfulness > 0.7 && traits.visualEmphasis > 0.7)
+            keywords.push("editorial", "magazine", "avant-garde");
+        if (traits.spatialDependency > 0.7 && traits.playfulness > 0.6)
+            keywords.push("generative", "creative-coding", "motion-design");
+        if (traits.temporalUrgency < 0.3 && traits.visualEmphasis > 0.6)
+            keywords.push("luxury", "premium", "art-direction");
+        if (traits.informationDensity > 0.7 && traits.temporalUrgency > 0.7)
+            keywords.push("trading", "fintech", "realtime-data");
+        if (traits.trustRequirement > 0.7 && traits.emotionalTemperature > 0.6)
+            keywords.push("healthcare", "wellness-brand", "care");
+        return [...new Set(keywords)]; // Deduplicate
     }
     /**
      * Calculate sub-sector confidence
@@ -265,7 +460,16 @@ export class GenomeSequencer {
         return {
             topology,
             maxNesting: Math.floor(b(3) * 4) + 1,
-            sectionCount: this.estimateSections(traits)
+            sectionCount: this.estimateSections(traits),
+            scrollBehavior: traits.informationDensity > 0.7
+                ? "continuous"
+                : this.selectFromHash(b(22), ["continuous", "paginated", "snap"]),
+            breakpointStrategy: traits.temporalUrgency > 0.6
+                ? "mobile_first"
+                : this.selectFromHash(b(23), ["mobile_first", "desktop_first", "fluid"]),
+            contentFlow: traits.informationDensity > 0.6
+                ? "f_pattern"
+                : this.selectFromHash(b(24), ["reading_order", "z_pattern", "f_pattern"])
         };
     }
     /**
@@ -283,7 +487,10 @@ export class GenomeSequencer {
         return {
             density,
             baseSpacing,
-            sectionSpacing: baseSpacing * 4
+            sectionSpacing: baseSpacing * 4,
+            componentSpacing: Math.floor(baseSpacing * 0.5),
+            verticalRhythm: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 8 : 12),
+            negativeSpaceRatio: 1 - traits.informationDensity
         };
     }
     /**
@@ -303,8 +510,16 @@ export class GenomeSequencer {
         return {
             family: this.selectDisplayFont(b(5), charge),
             charge,
-            weight: [400, 700, 900][b(6) % 3],
-            fallback: "system-ui, -apple-system, sans-serif"
+            weight: [400, 700, 900][Math.floor(b(6) * 3) % 3],
+            fallback: "system-ui, -apple-system, sans-serif",
+            tracking: traits.informationDensity > 0.7
+                ? "tight"
+                : traits.emotionalTemperature > 0.7
+                    ? "wide"
+                    : this.selectFromHash(b(25), ["normal", "tight", "wide", "ultra"]),
+            casing: traits.emotionalTemperature < 0.3
+                ? "uppercase"
+                : this.selectFromHash(b(26), ["normal", "normal", "uppercase", "small_caps"])
         };
     }
     /**
@@ -316,7 +531,14 @@ export class GenomeSequencer {
             family: this.selectBodyFont(b(7), charge),
             xHeightRatio: 0.5 + b(8) * 0.2,
             contrast: 0.8 + b(9) * 0.4,
-            fallback: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+            fallback: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            optimalLineLength: traits.informationDensity > 0.7
+                ? "narrow"
+                : traits.informationDensity < 0.35
+                    ? "wide"
+                    : "medium",
+            paragraphSpacing: traits.temporalUrgency > 0.6 ? 1.2 : 1.6,
+            hyphenation: traits.temporalUrgency < 0.4 && traits.informationDensity < 0.5
         };
     }
     /**
@@ -388,11 +610,23 @@ export class GenomeSequencer {
         if (primaryTemp === "warm") {
             backgroundTemp = b(13) > 0.5 ? "neutral" : "cool";
         }
+        const isDark = backgroundTemp === "cool";
+        // Accent: primary hue +30° rotation
+        const primaryHue = Math.floor(b(13) * 360);
+        const accentHue = (primaryHue + 30) % 360;
+        const accentHex = this.hslToHex(accentHue, 65, isDark ? 60 : 45);
+        // 4-level surface stack
+        const surfaceStack = isDark
+            ? ["#0a0a0a", "#141414", "#1e1e1e", "#282828"]
+            : ["#ffffff", "#f4f4f4", "#e8e8e8", "#dcdcdc"];
         return {
             backgroundTemp,
             contrastRatio: 4.5 + b(13) * 10,
-            surfaceColor: backgroundTemp === "cool" ? "#141414" : "#ffffff",
-            elevatedSurface: backgroundTemp === "cool" ? "#1e1e1e" : "#f4f4f4"
+            surfaceColor: isDark ? "#141414" : "#ffffff",
+            elevatedSurface: isDark ? "#1e1e1e" : "#f4f4f4",
+            isDark,
+            accentColor: accentHex,
+            surfaceStack
         };
     }
     /**
@@ -412,7 +646,10 @@ export class GenomeSequencer {
         return {
             radius,
             style: radius === 0 ? "sharp" : (radius > 16 ? "organic" : "soft"),
-            variableRadius: traits.playfulness > 0.6
+            variableRadius: traits.playfulness > 0.6,
+            componentRadius: Math.round(radius * 0.6), // smaller for buttons/inputs
+            imageRadius: Math.round(radius * 0.4), // even smaller for image crops
+            asymmetric: traits.playfulness > 0.8 && b(27) > 0.6
         };
     }
     /**
@@ -427,10 +664,24 @@ export class GenomeSequencer {
             physics = "spring";
         else if (traits.emotionalTemperature < 0.3)
             physics = "step";
+        // Enter direction from physics + traits
+        let enterDirection = "up";
+        if (physics === "none")
+            enterDirection = "fade";
+        else if (physics === "spring" && traits.playfulness > 0.6)
+            enterDirection = "scale";
+        else if (traits.informationDensity > 0.7)
+            enterDirection = "fade"; // dashboards fade, don't slide
+        else
+            enterDirection = this.selectFromHash(b(28), ["up", "up", "left", "right", "scale"]);
         return {
             physics,
             durationScale: 0.2 + b(14) * 1.8,
-            staggerDelay: b(15) * 0.1
+            staggerDelay: b(15) * 0.1,
+            enterDirection,
+            exitBehavior: physics === "none" ? "none" : (traits.temporalUrgency > 0.6 ? "fade" : "slide"),
+            hoverIntensity: traits.playfulness > 0.6 ? 0.6 + b(29) * 0.4 : traits.playfulness * 0.5,
+            reducedMotionFallback: traits.playfulness > 0.5 ? "fade" : "none"
         };
     }
     /**
@@ -443,7 +694,9 @@ export class GenomeSequencer {
                 : this.selectFromHash(b(15), ["column", "masonry", "broken"]),
             asymmetry: 0.5 + (b(2) * 1.5 * traits.playfulness),
             columns: traits.informationDensity > 0.7 ? 4 : (traits.informationDensity > 0.4 ? 3 : 2),
-            gap: Math.floor(b(16) * 24) + 8
+            gap: Math.floor(b(16) * 24) + 8,
+            mobileColumns: (traits.informationDensity > 0.7 ? 2 : 1),
+            alignment: this.selectFromHash(b(30), ["stretch", "stretch", "center", "start"])
         };
     }
     /**
@@ -453,7 +706,16 @@ export class GenomeSequencer {
         return {
             depth: traits.informationDensity > 0.7 ? "flat" : "overlapping",
             zIndexBehavior: "isolation",
-            layerBlur: b(17) * 10
+            layerBlur: b(17) * 10,
+            elevationSystem: traits.emotionalTemperature < 0.3
+                ? "flat"
+                : traits.playfulness > 0.5
+                    ? "neumorphic"
+                    : "material",
+            shadowScale: traits.spatialDependency > 0.5 ? 0.4 + b(31) * 0.6 : b(31) * 0.4,
+            depthCues: traits.spatialDependency > 0.6
+                ? this.selectFromHash(b(32), ["blur", "scale", "opacity", "blur"])
+                : "none"
         };
     }
     /**
@@ -463,7 +725,13 @@ export class GenomeSequencer {
         return {
             surface: traits.emotionalTemperature > 0.6 ? "grain" : "flat",
             noiseLevel: b(16) * 0.5,
-            pattern: null
+            grainFrequency: traits.emotionalTemperature > 0.6 ? 0.3 + b(33) * 0.5 : b(33) * 0.3,
+            overlayBlend: traits.emotionalTemperature > 0.6
+                ? "multiply"
+                : traits.emotionalTemperature < 0.3
+                    ? "screen"
+                    : "overlay",
+            animatedTexture: traits.playfulness > 0.7 && traits.temporalUrgency < 0.5
         };
     }
     /**
@@ -485,7 +753,17 @@ export class GenomeSequencer {
         return {
             fx,
             intensity: b(18) * traits.spatialDependency,
-            enabled: fx !== "none"
+            enabled: fx !== "none",
+            coverage: traits.spatialDependency > 0.7
+                ? "full"
+                : traits.spatialDependency > 0.4
+                    ? "section"
+                    : "element",
+            performanceBudget: traits.spatialDependency > 0.7
+                ? "high"
+                : traits.spatialDependency > 0.4
+                    ? "medium"
+                    : "low"
         };
     }
     /**
@@ -512,7 +790,9 @@ export class GenomeSequencer {
         return {
             material,
             roughness: b(19) * (1 - traits.playfulness),
+            metalness: material === "metallic" ? 0.7 + b(34) * 0.3 : b(34) * 0.2,
             transmission: material === "glass" ? 0.8 + b(20) * 0.2 : 0,
+            emissive: traits.spatialDependency > 0.8 && traits.playfulness > 0.6,
             enabled: material !== "matte"
         };
     }
@@ -525,11 +805,27 @@ export class GenomeSequencer {
         if (disabled || !shouldGenerate3D) {
             return {
                 geometry: "monolithic",
-                complexity: 0.5,
+                shapeFamily: "geometric",
+                animationStyle: "static",
+                polycount: "low",
+                colorTreatment: "monochrome",
+                complexity: 0,
                 enabled: false,
                 usage: "none"
             };
         }
+        // Shape family from sector
+        const shapeFamilyBySector = {
+            healthcare: "biological", fintech: "crystalline", technology: "geometric",
+            commerce: "geometric", education: "fluid", entertainment: "fluid",
+            automotive: "architectural", manufacturing: "geometric", legal: "architectural",
+            real_estate: "architectural", travel: "fluid", food: "biological", sports: "fluid"
+        };
+        const shapeFamily = shapeFamilyBySector[profile.sector] ?? "geometric";
+        // Animation style from motion physics
+        const animStyleMap = {
+            spring: "breathe", step: "rotate", glitch: "morph", none: "static"
+        };
         let geometry = "monolithic";
         if (traits.playfulness > 0.6)
             geometry = "organic";
@@ -537,6 +833,14 @@ export class GenomeSequencer {
             geometry = "fractal";
         return {
             geometry,
+            shapeFamily,
+            animationStyle: animStyleMap[profile.motionPreference] ?? "breathe",
+            polycount: traits.spatialDependency > 0.7 ? "high" : traits.spatialDependency > 0.4 ? "medium" : "low",
+            colorTreatment: traits.emotionalTemperature > 0.6
+                ? "primary"
+                : traits.emotionalTemperature < 0.3
+                    ? "monochrome"
+                    : "complementary",
             complexity: b(21) * traits.informationDensity,
             enabled: true,
             usage: "decorative"
@@ -868,23 +1172,112 @@ export class GenomeSequencer {
     }
     // ==================== UTILITY FUNCTIONS ====================
     selectFromHash(byte, options) {
-        return options[byte % options.length];
+        // byte is a float in [0.0, 1.0) from b(n) = buffer[n] / 255
+        // Using modulo on a <1 float always returns near-0, causing options[0] every time.
+        // Fix: scale to index range first, then modulo for safety.
+        return options[Math.floor(byte * options.length) % options.length];
     }
     selectDisplayFont(byte, charge) {
-        if (charge === "monospace")
-            return "Space Mono, JetBrains Mono, monospace";
-        if (charge === "humanist")
-            return "Fraunces, Playfair Display, serif";
-        if (charge === "geometric")
-            return "Space Grotesk, system-ui, sans-serif";
-        return "system-ui, -apple-system, sans-serif";
+        const fonts = {
+            // Geometric: clean, modernist, swiss-influenced
+            geometric: [
+                "Space Grotesk",
+                "DM Sans",
+                "Outfit",
+                "Cabinet Grotesk",
+                "Plus Jakarta Sans",
+                "Barlow",
+                "Syne",
+                "Unbounded"
+            ],
+            // Humanist: warm editorial, literary, serif-adjacent
+            humanist: [
+                "Fraunces",
+                "Playfair Display",
+                "Cormorant",
+                "Lora",
+                "Libre Baskerville",
+                "Spectral",
+                "DM Serif Display",
+                "Gloock"
+            ],
+            // Monospace: brutalist, technical, data-driven
+            monospace: [
+                "Space Mono",
+                "JetBrains Mono",
+                "Fira Code",
+                "IBM Plex Mono",
+                "Geist Mono",
+                "Commit Mono",
+                "Martian Mono"
+            ],
+            // Transitional: classic editorial, newspaper, academic
+            transitional: [
+                "Libre Baskerville",
+                "Cardo",
+                "EB Garamond",
+                "Literata",
+                "Newsreader",
+                "Source Serif 4",
+                "Bitter"
+            ]
+        };
+        const fallbacks = {
+            geometric: "system-ui, -apple-system, sans-serif",
+            humanist: "Georgia, 'Times New Roman', serif",
+            monospace: "'Courier New', Courier, monospace",
+            transitional: "Georgia, serif"
+        };
+        const pool = fonts[charge] ?? fonts.geometric;
+        const fallback = fallbacks[charge] ?? fallbacks.geometric;
+        const selected = pool[Math.floor(byte * pool.length) % pool.length];
+        return `${selected}, ${fallback}`;
     }
     selectBodyFont(byte, charge) {
-        if (charge === "monospace")
-            return "IBM Plex Mono, Courier, monospace";
-        if (charge === "humanist")
-            return "Merriweather, Georgia, serif";
-        return "system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+        const fonts = {
+            // Geometric body: clean, high-legibility
+            geometric: [
+                "DM Sans",
+                "Inter", // Only acceptable as BODY font (not display)
+                "Geist",
+                "Nunito",
+                "Atkinson Hyperlegible"
+            ],
+            // Humanist body: literary, warm, editorial
+            humanist: [
+                "Merriweather",
+                "Source Serif 4",
+                "Lora",
+                "Literata",
+                "Palatino Linotype"
+            ],
+            // Monospace body: for highly technical, code-adjacent sites
+            monospace: [
+                "IBM Plex Mono",
+                "Fira Code",
+                "JetBrains Mono",
+                "Geist Mono",
+                "Commit Mono"
+            ],
+            // Transitional body: news, academic, documentation
+            transitional: [
+                "Georgia",
+                "Newsreader",
+                "EB Garamond",
+                "Cardo",
+                "Libre Baskerville"
+            ]
+        };
+        const fallbacks = {
+            geometric: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            humanist: "Georgia, serif",
+            monospace: "'Courier New', monospace",
+            transitional: "Georgia, 'Times New Roman', serif"
+        };
+        const pool = fonts[charge] ?? fonts.geometric;
+        const fallback = fallbacks[charge] ?? fallbacks.geometric;
+        const selected = pool[Math.floor(byte * pool.length) % pool.length];
+        return `${selected}, ${fallback}`;
     }
     isColorAppropriateForSector(hue, sector) {
         // Simple appropriateness check

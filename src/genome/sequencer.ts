@@ -6,10 +6,10 @@
  */
 
 import * as crypto from "crypto";
-import { 
-    ContentTraits, 
-    DesignGenome, 
-    PrimarySector, 
+import {
+    ContentTraits,
+    DesignGenome,
+    PrimarySector,
     SecondarySector,
     SubSector,
     HeroType,
@@ -36,9 +36,9 @@ import {
 import { EpigeneticData } from "./epigenetics.js";
 import { ARCHETYPES, detectArchetype, FunctionalArchetype } from "./archetypes.js";
 import { GenomeConstraintSolver, SolverResult } from "./constraint-solver.js";
-import { 
-    SECTOR_PROFILES, 
-    getSectorProfile, 
+import {
+    SECTOR_PROFILES,
+    getSectorProfile,
     classifySubSector,
     selectColorFromProfile,
     colorNameToHSL,
@@ -65,23 +65,23 @@ export class GenomeSequencer {
         const hash = crypto.createHash("sha256").update(seed).digest("hex");
         const bytes = Buffer.from(hash, 'hex');
         const b = (index: number) => bytes[index % 32] / 255; // Wrap around 32-byte hash
-        
+
         const { primarySector, secondarySector, brand, options } = config;
-        
+
         // Get sector profiles
         const primaryProfile = getSectorProfile(primarySector);
         const secondaryProfile = secondarySector ? getSectorProfile(secondarySector) : null;
-        
+
         // Classify sub-sector from content
         const { subSector, confidence: subSectorConfidenceValue } = this.classifySubSectorFromTraits(
-            traits, 
+            traits,
             primarySector
         );
-        
+
         // Determine weights (brand vs sector vs content)
         const brandWeight = options?.brandWeight ?? brand?.weight ?? 0.7;
         const sectorWeight = options?.sectorWeight ?? 0.5;
-        
+
         // Generate chromosomes
         const chromosomes = this.generateChromosomes({
             hash,
@@ -98,7 +98,7 @@ export class GenomeSequencer {
             epigenetics,
             options
         });
-        
+
         // Build genome
         const genome: DesignGenome = {
             dnaHash: hash,
@@ -124,17 +124,17 @@ export class GenomeSequencer {
                 rationale: []
             }
         };
-        
+
         // Apply constraint solver
         const solver = new GenomeConstraintSolver();
         const result = solver.solve(genome);
-        
+
         // Add generation rationale
         genome.generation.rationale = result.rationale;
-        
+
         return result.genome;
     }
-    
+
     /**
      * Generate all chromosomes
      */
@@ -153,37 +153,37 @@ export class GenomeSequencer {
         epigenetics?: EpigeneticData;
         options?: GenerationOptions;
     }): DesignGenome['chromosomes'] {
-        const { 
+        const {
             hash, bytes, b, traits, primaryProfile, secondaryProfile,
-            subSector, subSectorConfidence, brand, brandWeight, sectorWeight, epigenetics, options 
+            subSector, subSectorConfidence, brand, brandWeight, sectorWeight, epigenetics, options
         } = params;
-        
+
         // Check if chromosomes are disabled
         const isDisabled = (ch: string) => options?.disabledChromosomes?.includes(ch) ?? false;
         const isForced = (ch: string) => options?.forcedChromosomes?.[ch as keyof typeof options.forcedChromosomes];
-        
+
         // Sector Chromosomes
         const ch0_sector_primary = isForced('ch0_sector_primary') as any || {
             sector: primaryProfile.sector,
             influence: sectorWeight
         };
-        
+
         const ch0_sector_secondary = isForced('ch0_sector_secondary') as any || {
             sector: secondaryProfile?.sector || null,
             influence: secondaryProfile ? (1 - sectorWeight) * 0.3 : 0
         };
-        
+
         const ch0_sub_sector = isForced('ch0_sub_sector') as any || {
             classification: subSector,
             confidence: subSectorConfidence,
             keywords: this.extractKeywords(traits)
         };
-        
+
         const ch0_brand_weight = isForced('ch0_brand_weight') as any || {
             brandVsSector: brandWeight,
             appliedOverrides: []
         };
-        
+
         // Original Chromosomes (1-18)
         const ch1_structure = isForced('ch1_structure') as any || this.generateStructure(traits, b);
         const ch2_rhythm = isForced('ch2_rhythm') as any || this.generateRhythm(traits, b);
@@ -203,7 +203,7 @@ export class GenomeSequencer {
         const ch12_signature = isForced('ch12_signature') as any || {
             entropy: b(17),
             uniqueMutation: hash.slice(0, 8),
-            variantSeed: b(17) // Use existing byte, SHA256 only has 32 bytes
+            variantSeed: b(18) // Byte 18 — distinct from entropy (byte 17)
         };
         const ch13_atmosphere = isForced('ch13_atmosphere') as any || this.generateAtmosphere(
             traits, b, isDisabled('ch13_atmosphere')
@@ -217,67 +217,110 @@ export class GenomeSequencer {
         const ch16_typography = isForced('ch16_typography') as any || this.generateTypography(traits, b);
         const ch17_accessibility = isForced('ch17_accessibility') as any || this.generateAccessibility(traits, b);
         const ch18_rendering = isForced('ch18_rendering') as any || this.generateRendering(traits, b);
-        
+
         // Hero & Visual Chromosomes (19-20)
         const forcedHero = isForced('ch19_hero_type') as any;
-        const heroType: HeroType = forcedHero?.type || 
+        const heroType: HeroType = forcedHero?.type ||
             this.selectHeroType(b(101), primaryProfile, secondaryProfile);
         const heroVariant: HeroLayoutVariant = forcedHero?.variant ||
             this.selectHeroVariant(heroType, b(102));
-        
+
         const ch19_hero_type = forcedHero || {
             type: heroType,
             variant: heroVariant,
             variantIndex: Math.floor(b(30) * 10) % 10, // Use byte 30, wrap to 0-9
             contentSource: undefined
         };
-        
+
         const ch19_hero_variant_detail = isForced('ch19_hero_variant_detail') as any || {
             layout: heroVariant,
             elements: this.getHeroElements(heroType),
             alignment: this.selectFromHash(b(103), ["left", "center", "right"]),
-            textPosition: this.selectFromHash(b(104), ["overlay", "adjacent", "below"])
+            textPosition: this.selectFromHash(b(104), ["overlay", "adjacent", "below"]),
+            height: traits.spatialDependency > 0.6 ? "full" : traits.informationDensity > 0.7 ? "compact" : "large" as "full" | "large" | "medium" | "compact",
+            backgroundTreatment: heroType === "product_video" || heroType === "aspirational_imagery"
+                ? (b(118) > 0.5 ? "video" : "image")
+                : traits.spatialDependency > 0.6 ? "mesh" : "solid" as "solid" | "image" | "video" | "mesh",
+            overlayOpacity: 0.3 + b(119) * 0.5,
+            mobileBehavior: traits.informationDensity > 0.7
+                ? "stack"
+                : this.selectFromHash(b(120), ["stack", "collapse_image", "full_bleed"]) as "stack" | "collapse_image" | "full_bleed"
         };
-        
+
         const ch20_visual_treatment = isForced('ch20_visual_treatment') as any || {
             treatment: this.selectVisualTreatment(primaryProfile, b(105)),
             videoStrategy: this.selectVideoStrategy(primaryProfile, b(106)),
             imageTreatment: this.selectFromHash(b(107), ["natural", "high_contrast", "warm", "cool", "monochrome"]),
-            hasVideo: b(106) > 0.7
+            hasVideo: b(106) > 0.7,
+            imageAspectRatio: this.selectFromHash(b(121), ["16:9", "4:3", "1:1", "portrait"]) as "16:9" | "4:3" | "1:1" | "portrait",
+            colorGrading: traits.emotionalTemperature > 0.7
+                ? "vibrant"
+                : traits.emotionalTemperature < 0.3
+                    ? "desaturated"
+                    : this.selectFromHash(b(122), ["natural", "natural", "desaturated", "duotone"]) as "natural" | "desaturated" | "vibrant" | "duotone",
+            imageCount: traits.informationDensity > 0.7 ? 1 : traits.visualEmphasis > 0.6 ? "many" : 3 as 1 | 3 | 5 | "many"
         };
-        
+
         // Trust & Social Chromosomes (21-22)
         const forcedTrust = isForced('ch21_trust_signals') as any;
         const trustApproach: TrustApproach = forcedTrust?.approach ||
             this.selectTrustApproach(b(108), primaryProfile);
-        
+
         const ch21_trust_signals = forcedTrust || {
             approach: trustApproach,
             prominence: this.selectTrustProminence(traits, primaryProfile),
             layoutVariant: `trust_${trustApproach}_${Math.floor(b(109) * 5)}`,
             contentProvided: false,
-            suggestedStats: this.suggestStats(primaryProfile)
+            suggestedStats: this.suggestStats(primaryProfile),
+            animationType: traits.informationDensity > 0.7
+                ? "count_up"
+                : traits.temporalUrgency > 0.6
+                    ? "fade_in"
+                    : "none" as "count_up" | "fade_in" | "none"
         };
-        
+
+        // Populate trust content with sector-specific template tokens
+        const sectorStats = this.suggestStats(primaryProfile);
         const ch21_trust_content = isForced('ch21_trust_content') as any || {
-            credentials: [],
-            testimonials: [],
-            stats: [],
-            securityBadges: []
+            credentials: primaryProfile.sector === "healthcare" || primaryProfile.sector === "legal"
+                ? ["{{CREDENTIAL_1}}", "{{CREDENTIAL_2}}"]
+                : [],
+            testimonials: traits.trustRequirement > 0.5
+                ? ["{{TESTIMONIAL_1}}", "{{TESTIMONIAL_2}}"]
+                : [],
+            stats: sectorStats.slice(0, 3).map(key => ({ label: `{{LABEL_${key.toUpperCase()}}}`, value: `{{VALUE_${key.toUpperCase()}}}` })),
+            securityBadges: traits.trustRequirement > 0.7
+                ? ["{{BADGE_ISO}}", "{{BADGE_SOC2}}"]
+                : []
         };
-        
+
         const ch22_social_proof = isForced('ch22_social_proof') as any || {
             type: this.selectSocialProofType(b(110), primaryProfile),
             prominence: this.selectTrustProminence(traits, primaryProfile),
-            layout: this.selectFromHash(b(111), ["grid", "marquee", "carousel", "static"])
+            layout: this.selectFromHash(b(111), ["grid", "marquee", "carousel", "static"]),
+            logoCount: (traits.conversionFocus > 0.6 ? 8 : traits.informationDensity > 0.5 ? 5 : 3) as 3 | 5 | 8 | "marquee",
+            updateFrequency: traits.temporalUrgency > 0.7 ? "realtime" : traits.temporalUrgency > 0.4 ? "daily" : "static" as "static" | "daily" | "realtime",
+            displayStyle: traits.trustRequirement > 0.6
+                ? "full_testimonial"
+                : traits.informationDensity > 0.6
+                    ? "logos_only"
+                    : "logos_with_name" as "logos_only" | "logos_with_name" | "full_testimonial"
         };
-        
+
         const ch22_impact_demonstration = isForced('ch22_impact_demonstration') as any || {
             type: this.selectImpactType(b(112), primaryProfile),
             realTime: b(113) > 0.7,
-            interactive: b(114) > 0.6
+            interactive: b(114) > 0.6,
+            animationTrigger: traits.temporalUrgency > 0.6
+                ? "page_load"
+                : this.selectFromHash(b(123), ["scroll_enter", "scroll_enter", "page_load", "hover"]) as "scroll_enter" | "page_load" | "hover",
+            counterFormat: traits.informationDensity > 0.7
+                ? "abbreviated"
+                : traits.conversionFocus > 0.6
+                    ? "full"
+                    : "abbreviated" as "abbreviated" | "full" | "percentage"
         };
-        
+
         // Content Structure Chromosomes (23-24)
         const ch23_content_depth = isForced('ch23_content_depth') as any || {
             level: this.selectContentDepth(traits, primaryProfile),
@@ -288,19 +331,21 @@ export class GenomeSequencer {
             hasFAQ: traits.informationDensity > 0.6,
             hasTestimonials: traits.trustRequirement > 0.6
         };
-        
+
         const ch23_information_architecture = isForced('ch23_information_architecture') as any || {
             pattern: this.selectInfoArchitecture(traits, primaryProfile),
             navigationType: this.selectFromHash(b(115), ["header", "sidebar", "floating", "minimal"]),
             footerType: this.selectFromHash(b(116), ["full", "minimal", "none"])
         };
-        
+
         const ch24_personalization = isForced('ch24_personalization') as any || {
             approach: this.selectPersonalization(traits),
             dynamicContent: b(117) > 0.7,
-            userSegmentation: traits.informationDensity > 0.7
+            userSegmentation: traits.informationDensity > 0.7,
+            abTestingReady: traits.conversionFocus > 0.5,
+            segmentCount: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 3 : 2) as 2 | 3 | 4
         };
-        
+
         return {
             ch0_sector_primary,
             ch0_sector_secondary,
@@ -336,37 +381,149 @@ export class GenomeSequencer {
             ch24_personalization
         };
     }
-    
+
     /**
      * Classify sub-sector from content traits
      */
     private classifySubSectorFromTraits(traits: ContentTraits, primarySector: PrimarySector): { subSector: SubSector; confidence: number } {
-        // In a real implementation, this would analyze actual content
-        // For now, use trait heuristics
-        const { subSector, confidence } = classifySubSector("", primarySector);
+        const contentHints: string[] = [];
+
+        // === Information Density signals ===
+        if (traits.informationDensity > 0.8) contentHints.push("dashboard data analytics monitoring reporting metrics kpi");
+        else if (traits.informationDensity > 0.6) contentHints.push("data analytics reporting structured");
+        else if (traits.informationDensity < 0.3) contentHints.push("minimal sparse editorial gallery portfolio luxury");
+
+        // === Temporal Urgency signals ===
+        if (traits.temporalUrgency > 0.8) contentHints.push("real-time live feed emergency alert critical ticker");
+        else if (traits.temporalUrgency > 0.6) contentHints.push("live dynamic news breaking feed");
+        else if (traits.temporalUrgency < 0.3) contentHints.push("archival editorial long-form evergreen static portfolio");
+
+        // === Emotional Temperature signals ===
+        if (traits.emotionalTemperature > 0.8) contentHints.push("wellness lifestyle community empathy care warmth healing");
+        else if (traits.emotionalTemperature > 0.6) contentHints.push("lifestyle humanist warm brand story");
+        else if (traits.emotionalTemperature < 0.3) contentHints.push("enterprise B2B clinical diagnostic precision instrument");
+        else if (traits.emotionalTemperature < 0.4) contentHints.push("corporate professional institutional");
+
+        // === Playfulness signals ===
+        if (traits.playfulness > 0.8) contentHints.push("gaming entertainment creative media interactive experimental playful children");
+        else if (traits.playfulness > 0.6) contentHints.push("creative agency startup playful brand culture");
+        else if (traits.playfulness < 0.2) contentHints.push("legal compliance regulatory formal institutional");
+
+        // === Spatial Dependency signals ===
+        if (traits.spatialDependency > 0.8) contentHints.push("immersive 3d webgl spatial depth metaverse ar vr configurator");
+        else if (traits.spatialDependency > 0.6) contentHints.push("interactive 3d animation particles depth");
+        else if (traits.spatialDependency < 0.2) contentHints.push("flat text-heavy document whitepaper");
+
+        // === Trust Requirement signals ===
+        if (traits.trustRequirement > 0.8) contentHints.push("security compliance certification credentials HIPAA SOC2 ISO audit regulated");
+        else if (traits.trustRequirement > 0.6) contentHints.push("trusted secure verified credentials");
+
+        // === Visual Emphasis signals ===
+        if (traits.visualEmphasis > 0.8) contentHints.push("photography visual imagery aesthetic lookbook fashion editorial studio");
+        else if (traits.visualEmphasis > 0.6) contentHints.push("visual imagery photography showcase");
+        else if (traits.visualEmphasis < 0.2) contentHints.push("text-first documentation technical");
+
+        // === Conversion Focus signals ===
+        if (traits.conversionFocus > 0.8) contentHints.push("checkout payment cart ecommerce retail fast-fashion marketplace acquisition");
+        else if (traits.conversionFocus > 0.6) contentHints.push("sales conversion cta pricing subscription");
+        else if (traits.conversionFocus < 0.2) contentHints.push("informational educational non-profit awareness");
+
+        // === Sector-specific sub-sector hints ===
+        const sectorHints: Partial<Record<PrimarySector, string>> = {
+            healthcare: "medical surgical pediatric geriatric cosmetic dental wellness diagnostic imaging pharmacy",
+            fintech: "consumer banking trading lending payments wealth management crypto institutional",
+            automotive: "luxury electric commercial economy dealership fleet motorsport",
+            education: "k12 higher university corporate professional creative vocational",
+            commerce: "luxury fast-fashion marketplace b2b wholesale dropship",
+            entertainment: "streaming gaming music film sports media podcast broadcast",
+            manufacturing: "industrial aerospace defense automotive chemical pharmaceutical",
+            legal: "litigation corporate immigration family criminal ip real-estate",
+            real_estate: "residential commercial luxury rental investment construction",
+            travel: "luxury budget adventure business family cruise airline hotel",
+            food: "restaurant delivery catering bakery healthy organic gourmet",
+            sports: "professional amateur fitness gym outdoor team",
+            technology: "saas developer api infrastructure security ai ml cloud"
+        };
+        if (sectorHints[primarySector]) contentHints.push(sectorHints[primarySector]!);
+
+        const syntheticContent = contentHints.join(" ");
+        const { subSector, confidence } = classifySubSector(syntheticContent, primarySector);
         return { subSector: subSector as SubSector, confidence };
     }
-    
+
     /**
-     * Extract keywords from traits (placeholder)
+     * Extract keyword hints from trait values
      */
     private extractKeywords(traits: ContentTraits): string[] {
-        return [];
+        const keywords: string[] = [];
+
+        // === Information Density ===
+        if (traits.informationDensity > 0.8) keywords.push("data-dense", "dashboard", "analytics", "kpi", "metrics", "reporting");
+        else if (traits.informationDensity > 0.6) keywords.push("data-rich", "structured", "tabular");
+        else if (traits.informationDensity < 0.3) keywords.push("minimal", "sparse", "luxurious", "whitespace", "gallery");
+
+        // === Temporal Urgency ===
+        if (traits.temporalUrgency > 0.8) keywords.push("real-time", "live", "urgent", "breaking", "alert", "ticker");
+        else if (traits.temporalUrgency > 0.6) keywords.push("dynamic", "current", "news-feed");
+        else if (traits.temporalUrgency < 0.3) keywords.push("editorial", "long-form", "archival", "evergreen", "timeless");
+        else if (traits.temporalUrgency < 0.5) keywords.push("static", "documentation", "reference");
+
+        // === Emotional Temperature ===
+        if (traits.emotionalTemperature > 0.8) keywords.push("warm", "humanist", "community", "wellness", "empathetic", "organic");
+        else if (traits.emotionalTemperature > 0.6) keywords.push("friendly", "approachable", "lifestyle");
+        else if (traits.emotionalTemperature < 0.3) keywords.push("clinical", "brutalist", "enterprise", "precision", "cold");
+        else if (traits.emotionalTemperature < 0.5) keywords.push("professional", "corporate", "neutral");
+
+        // === Playfulness ===
+        if (traits.playfulness > 0.8) keywords.push("playful", "whimsical", "experimental", "creative", "y2k", "organic-shapes");
+        else if (traits.playfulness > 0.6) keywords.push("creative", "expressive", "brand-forward");
+        else if (traits.playfulness < 0.2) keywords.push("strict", "corporate", "legal", "formal", "institutional");
+        else if (traits.playfulness < 0.4) keywords.push("clean", "structured", "restrained");
+
+        // === Spatial Dependency ===
+        if (traits.spatialDependency > 0.8) keywords.push("immersive", "3d", "webgl", "spatial", "depth", "particles", "vr", "ar");
+        else if (traits.spatialDependency > 0.6) keywords.push("interactive", "animated", "dimensional", "parallax");
+        else if (traits.spatialDependency < 0.2) keywords.push("flat", "text-heavy", "document", "print");
+
+        // === Trust Requirement ===
+        if (traits.trustRequirement > 0.8) keywords.push("regulated", "compliance", "security", "certification", "HIPAA", "SOC2", "credentials");
+        else if (traits.trustRequirement > 0.6) keywords.push("trusted", "verified", "secure", "professional");
+        else if (traits.trustRequirement < 0.2) keywords.push("casual", "social", "informal");
+
+        // === Visual Emphasis ===
+        if (traits.visualEmphasis > 0.8) keywords.push("photography", "visual-storytelling", "lookbook", "editorial-imagery", "fashion", "studio");
+        else if (traits.visualEmphasis > 0.6) keywords.push("image-forward", "visual", "showcase");
+        else if (traits.visualEmphasis < 0.2) keywords.push("text-first", "typographic", "minimal-imagery");
+
+        // === Conversion Focus ===
+        if (traits.conversionFocus > 0.8) keywords.push("ecommerce", "checkout", "conversion", "sales", "cta-heavy", "acquisition");
+        else if (traits.conversionFocus > 0.6) keywords.push("lead-gen", "pricing", "subscription", "trial");
+        else if (traits.conversionFocus < 0.2) keywords.push("informational", "educational", "awareness", "non-profit");
+
+        // === Cross-trait aesthetic signals ===
+        if (traits.emotionalTemperature < 0.3 && traits.playfulness < 0.3) keywords.push("bauhaus", "swiss-design", "grid-system");
+        if (traits.playfulness > 0.7 && traits.visualEmphasis > 0.7) keywords.push("editorial", "magazine", "avant-garde");
+        if (traits.spatialDependency > 0.7 && traits.playfulness > 0.6) keywords.push("generative", "creative-coding", "motion-design");
+        if (traits.temporalUrgency < 0.3 && traits.visualEmphasis > 0.6) keywords.push("luxury", "premium", "art-direction");
+        if (traits.informationDensity > 0.7 && traits.temporalUrgency > 0.7) keywords.push("trading", "fintech", "realtime-data");
+        if (traits.trustRequirement > 0.7 && traits.emotionalTemperature > 0.6) keywords.push("healthcare", "wellness-brand", "care");
+
+        return [...new Set(keywords)]; // Deduplicate
     }
-    
+
     /**
      * Calculate sub-sector confidence
      */
     private subSectorConfidence(traits: ContentTraits): number {
         return 0.5 + (traits.informationDensity * 0.3);
     }
-    
+
     /**
      * Generate structure chromosome
      */
     private generateStructure(traits: ContentTraits, b: (index: number) => number) {
         let topology: "flat" | "deep" | "graph" | "radial" = "flat";
-        
+
         if (traits.informationDensity > 0.7 && traits.temporalUrgency > 0.6) {
             topology = "flat"; // Dashboard
         } else if (traits.temporalUrgency < 0.4 && traits.informationDensity < 0.6) {
@@ -374,39 +531,51 @@ export class GenomeSequencer {
         } else {
             topology = this.selectFromHash(b(0), ["flat", "deep", "graph", "radial"]);
         }
-        
+
         return {
             topology,
             maxNesting: Math.floor(b(3) * 4) + 1,
-            sectionCount: this.estimateSections(traits)
+            sectionCount: this.estimateSections(traits),
+            scrollBehavior: traits.informationDensity > 0.7
+                ? "continuous"
+                : this.selectFromHash(b(22), ["continuous", "paginated", "snap"]) as "paginated" | "continuous" | "snap",
+            breakpointStrategy: traits.temporalUrgency > 0.6
+                ? "mobile_first"
+                : this.selectFromHash(b(23), ["mobile_first", "desktop_first", "fluid"]) as "mobile_first" | "desktop_first" | "fluid",
+            contentFlow: traits.informationDensity > 0.6
+                ? "f_pattern"
+                : this.selectFromHash(b(24), ["reading_order", "z_pattern", "f_pattern"]) as "reading_order" | "z_pattern" | "f_pattern"
         };
     }
-    
+
     /**
      * Generate rhythm chromosome
      */
     private generateRhythm(traits: ContentTraits, b: (index: number) => number) {
         let density: "airtight" | "breathing" | "maximal" | "empty" = "breathing";
-        
+
         if (traits.informationDensity > 0.8) density = "maximal";
         else if (traits.informationDensity > 0.6) density = "airtight";
         else if (traits.informationDensity < 0.3) density = "empty";
-        
+
         const baseSpacing = Math.floor(b(4) * 16) + 4;
-        
+
         return {
             density,
             baseSpacing,
-            sectionSpacing: baseSpacing * 4
+            sectionSpacing: baseSpacing * 4,
+            componentSpacing: Math.floor(baseSpacing * 0.5),
+            verticalRhythm: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 8 : 12) as 4 | 8 | 12,
+            negativeSpaceRatio: 1 - traits.informationDensity
         };
     }
-    
+
     /**
      * Generate display typography
      */
     private generateDisplayType(traits: ContentTraits, b: (index: number) => number, profile: ReturnType<typeof getSectorProfile>) {
         let charge: TypeCharge = profile.defaultTypography;
-        
+
         if (traits.temporalUrgency > 0.7 && traits.informationDensity > 0.6) {
             charge = "monospace";
         } else if (traits.emotionalTemperature > 0.7) {
@@ -414,29 +583,44 @@ export class GenomeSequencer {
         } else if (traits.emotionalTemperature < 0.4) {
             charge = "geometric";
         }
-        
+
         return {
             family: this.selectDisplayFont(b(5), charge),
             charge,
-            weight: [400, 700, 900][b(6) % 3],
-            fallback: "system-ui, -apple-system, sans-serif"
+            weight: [400, 700, 900][Math.floor(b(6) * 3) % 3],
+            fallback: "system-ui, -apple-system, sans-serif",
+            tracking: traits.informationDensity > 0.7
+                ? "tight"
+                : traits.emotionalTemperature > 0.7
+                    ? "wide"
+                    : this.selectFromHash(b(25), ["normal", "tight", "wide", "ultra"]) as "tight" | "normal" | "wide" | "ultra",
+            casing: traits.emotionalTemperature < 0.3
+                ? "uppercase"
+                : this.selectFromHash(b(26), ["normal", "normal", "uppercase", "small_caps"]) as "normal" | "uppercase" | "small_caps"
         };
     }
-    
+
     /**
      * Generate body typography
      */
     private generateBodyType(traits: ContentTraits, b: (index: number) => number, profile: ReturnType<typeof getSectorProfile>) {
         const charge = profile.defaultTypography;
-        
+
         return {
             family: this.selectBodyFont(b(7), charge),
             xHeightRatio: 0.5 + b(8) * 0.2,
             contrast: 0.8 + b(9) * 0.4,
-            fallback: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+            fallback: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            optimalLineLength: traits.informationDensity > 0.7
+                ? "narrow"
+                : traits.informationDensity < 0.35
+                    ? "wide"
+                    : "medium",
+            paragraphSpacing: traits.temporalUrgency > 0.6 ? 1.2 : 1.6,
+            hyphenation: traits.temporalUrgency < 0.4 && traits.informationDensity < 0.5
         };
     }
-    
+
     /**
      * Generate primary color with sector psychology and brand integration
      */
@@ -452,10 +636,10 @@ export class GenomeSequencer {
         if (brand?.colors?.primary && brandWeight > 0.5) {
             const brandHSL = this.hexToHSL(brand.colors.primary);
             const isAppropriate = this.isColorAppropriateForSector(
-                brandHSL.h, 
+                brandHSL.h,
                 primaryProfile.sector
             );
-            
+
             return {
                 hue: brandHSL.h,
                 saturation: brandHSL.s / 100,
@@ -465,7 +649,7 @@ export class GenomeSequencer {
                 sectorAppropriate: isAppropriate
             };
         }
-        
+
         // Check for epigenetic override (uploaded brand assets)
         if (epigenetics?.epigeneticHue !== undefined) {
             const hue = epigenetics.epigeneticHue;
@@ -478,14 +662,14 @@ export class GenomeSequencer {
                 sectorAppropriate: true
             };
         }
-        
+
         // Select from sector color profile
         const colorName = selectColorFromProfile(
             primaryProfile.colorProfile.primary,
             Math.floor(b(10) * 255)
         );
         const hsl = colorNameToHSL(colorName);
-        
+
         // Blend with secondary sector if present
         if (secondaryProfile && b(11) > 0.5) {
             const secondaryColor = selectColorFromProfile(
@@ -493,17 +677,17 @@ export class GenomeSequencer {
                 Math.floor(b(12) * 255)
             );
             const secondaryHSL = colorNameToHSL(secondaryColor);
-            
+
             // Blend 70% primary, 30% secondary
             hsl.h = this.blendHue(hsl.h, secondaryHSL.h, 0.3);
             hsl.s = hsl.s * 0.7 + secondaryHSL.s * 0.3;
             hsl.l = hsl.l * 0.7 + secondaryHSL.l * 0.3;
         }
-        
+
         // Add entropy variation (±15 degrees)
         const variation = (b(13) - 0.5) * 30;
         hsl.h = (hsl.h + variation + 360) % 360;
-        
+
         return {
             hue: Math.round(hsl.h),
             saturation: Math.round(hsl.s) / 100,
@@ -513,7 +697,7 @@ export class GenomeSequencer {
             sectorAppropriate: true
         };
     }
-    
+
     /**
      * Generate color temperature
      */
@@ -524,37 +708,50 @@ export class GenomeSequencer {
     ) {
         // Use sector warmth bias
         let backgroundTemp: "warm" | "cool" | "neutral" = primaryTemp;
-        
+
         if (profile.colorProfile.warmthBias > 0.3) {
             backgroundTemp = "warm";
         } else if (profile.colorProfile.warmthBias < -0.3) {
             backgroundTemp = "cool";
         }
-        
+
         // Epistasis: Warm primary forces neutral/cool background
         if (primaryTemp === "warm") {
             backgroundTemp = b(13) > 0.5 ? "neutral" : "cool";
         }
-        
+
+        const isDark = backgroundTemp === "cool";
+        // Accent: primary hue +30° rotation
+        const primaryHue = Math.floor(b(13) * 360);
+        const accentHue = (primaryHue + 30) % 360;
+        const accentHex = this.hslToHex(accentHue, 65, isDark ? 60 : 45);
+        // 4-level surface stack
+        const surfaceStack = isDark
+            ? ["#0a0a0a", "#141414", "#1e1e1e", "#282828"]
+            : ["#ffffff", "#f4f4f4", "#e8e8e8", "#dcdcdc"];
+
         return {
             backgroundTemp,
             contrastRatio: 4.5 + b(13) * 10,
-            surfaceColor: backgroundTemp === "cool" ? "#141414" : "#ffffff",
-            elevatedSurface: backgroundTemp === "cool" ? "#1e1e1e" : "#f4f4f4"
+            surfaceColor: isDark ? "#141414" : "#ffffff",
+            elevatedSurface: isDark ? "#1e1e1e" : "#f4f4f4",
+            isDark,
+            accentColor: accentHex,
+            surfaceStack
         };
     }
-    
+
     /**
      * Generate edge radius
      */
     private generateEdge(
-        traits: ContentTraits, 
+        traits: ContentTraits,
         b: (index: number) => number,
         profile: ReturnType<typeof getSectorProfile>
     ) {
         const maxRadius = 32;
         const baseRadius = Math.round(b(1) * maxRadius * traits.playfulness);
-        
+
         // Apply sector preference
         let radius = baseRadius;
         if (profile.edgePreference === "sharp") {
@@ -562,14 +759,17 @@ export class GenomeSequencer {
         } else if (profile.edgePreference === "organic") {
             radius = Math.max(radius, 8);
         }
-        
+
         return {
             radius,
             style: radius === 0 ? "sharp" : (radius > 16 ? "organic" : "soft") as EdgeStyle,
-            variableRadius: traits.playfulness > 0.6
+            variableRadius: traits.playfulness > 0.6,
+            componentRadius: Math.round(radius * 0.6),   // smaller for buttons/inputs
+            imageRadius: Math.round(radius * 0.4),        // even smaller for image crops
+            asymmetric: traits.playfulness > 0.8 && b(27) > 0.6
         };
     }
-    
+
     /**
      * Generate motion physics
      */
@@ -579,33 +779,46 @@ export class GenomeSequencer {
         profile: ReturnType<typeof getSectorProfile>
     ) {
         let physics: MotionPhysics = profile.motionPreference;
-        
+
         // Trait overrides
         if (traits.temporalUrgency > 0.8) physics = "none";
         else if (traits.playfulness > 0.7) physics = "spring";
         else if (traits.emotionalTemperature < 0.3) physics = "step";
-        
+
+        // Enter direction from physics + traits
+        let enterDirection: "up" | "down" | "left" | "right" | "scale" | "fade" = "up";
+        if (physics === "none") enterDirection = "fade";
+        else if (physics === "spring" && traits.playfulness > 0.6) enterDirection = "scale";
+        else if (traits.informationDensity > 0.7) enterDirection = "fade"; // dashboards fade, don't slide
+        else enterDirection = this.selectFromHash(b(28), ["up", "up", "left", "right", "scale"]) as typeof enterDirection;
+
         return {
             physics,
             durationScale: 0.2 + b(14) * 1.8,
-            staggerDelay: b(15) * 0.1
+            staggerDelay: b(15) * 0.1,
+            enterDirection,
+            exitBehavior: physics === "none" ? "none" : (traits.temporalUrgency > 0.6 ? "fade" : "slide") as "fade" | "slide" | "none",
+            hoverIntensity: traits.playfulness > 0.6 ? 0.6 + b(29) * 0.4 : traits.playfulness * 0.5,
+            reducedMotionFallback: traits.playfulness > 0.5 ? "fade" : "none"
         };
     }
-    
+
     /**
      * Generate grid
      */
     private generateGrid(traits: ContentTraits, b: (index: number) => number) {
         return {
-            logic: traits.informationDensity > 0.8 
-                ? "column" 
+            logic: traits.informationDensity > 0.8
+                ? "column"
                 : this.selectFromHash(b(15), ["column", "masonry", "broken"]),
             asymmetry: 0.5 + (b(2) * 1.5 * traits.playfulness),
             columns: traits.informationDensity > 0.7 ? 4 : (traits.informationDensity > 0.4 ? 3 : 2),
-            gap: Math.floor(b(16) * 24) + 8
+            gap: Math.floor(b(16) * 24) + 8,
+            mobileColumns: (traits.informationDensity > 0.7 ? 2 : 1) as 1 | 2,
+            alignment: this.selectFromHash(b(30), ["stretch", "stretch", "center", "start"]) as "stretch" | "center" | "start"
         };
     }
-    
+
     /**
      * Generate hierarchy
      */
@@ -613,10 +826,19 @@ export class GenomeSequencer {
         return {
             depth: traits.informationDensity > 0.7 ? "flat" : "overlapping" as "flat" | "overlapping" | "3d-stack",
             zIndexBehavior: "isolation",
-            layerBlur: b(17) * 10
+            layerBlur: b(17) * 10,
+            elevationSystem: traits.emotionalTemperature < 0.3
+                ? "flat"
+                : traits.playfulness > 0.5
+                    ? "neumorphic"
+                    : "material",
+            shadowScale: traits.spatialDependency > 0.5 ? 0.4 + b(31) * 0.6 : b(31) * 0.4,
+            depthCues: traits.spatialDependency > 0.6
+                ? this.selectFromHash(b(32), ["blur", "scale", "opacity", "blur"]) as "blur" | "scale" | "opacity" | "none"
+                : "none"
         };
     }
-    
+
     /**
      * Generate texture
      */
@@ -624,10 +846,16 @@ export class GenomeSequencer {
         return {
             surface: traits.emotionalTemperature > 0.6 ? "grain" : "flat" as "flat" | "grain" | "glass" | "chrome",
             noiseLevel: b(16) * 0.5,
-            pattern: null
+            grainFrequency: traits.emotionalTemperature > 0.6 ? 0.3 + b(33) * 0.5 : b(33) * 0.3,
+            overlayBlend: traits.emotionalTemperature > 0.6
+                ? "multiply"
+                : traits.emotionalTemperature < 0.3
+                    ? "screen"
+                    : "overlay",
+            animatedTexture: traits.playfulness > 0.7 && traits.temporalUrgency < 0.5
         };
     }
-    
+
     /**
      * Generate atmosphere FX
      */
@@ -639,22 +867,32 @@ export class GenomeSequencer {
         if (disabled) {
             return { fx: "none" as "glassmorphism" | "crt_noise" | "fluid_mesh" | "none", intensity: 0, enabled: false };
         }
-        
+
         let fx: "glassmorphism" | "crt_noise" | "fluid_mesh" | "none" = "none";
-        
+
         if (traits.spatialDependency > 0.4) {
             if (traits.emotionalTemperature > 0.5 && traits.informationDensity < 0.6) fx = "glassmorphism";
             else if (traits.playfulness > 0.7) fx = "fluid_mesh";
             else if (traits.informationDensity > 0.6) fx = "crt_noise";
         }
-        
+
         return {
             fx,
             intensity: b(18) * traits.spatialDependency,
-            enabled: fx !== "none"
+            enabled: fx !== "none",
+            coverage: traits.spatialDependency > 0.7
+                ? "full"
+                : traits.spatialDependency > 0.4
+                    ? "section"
+                    : "element",
+            performanceBudget: traits.spatialDependency > 0.7
+                ? "high"
+                : traits.spatialDependency > 0.4
+                    ? "medium"
+                    : "low"
         };
     }
-    
+
     /**
      * Generate physics material
      */
@@ -664,30 +902,32 @@ export class GenomeSequencer {
         disabled: boolean
     ) {
         if (disabled) {
-            return { 
-                material: "matte" as "neumorphism" | "metallic" | "glass" | "matte", 
-                roughness: 0.5, 
+            return {
+                material: "matte" as "neumorphism" | "metallic" | "glass" | "matte",
+                roughness: 0.5,
                 transmission: 0,
-                enabled: false 
+                enabled: false
             };
         }
-        
+
         let material: "neumorphism" | "metallic" | "glass" | "matte" = "matte";
-        
+
         if (traits.spatialDependency > 0.4) {
             if (traits.emotionalTemperature > 0.6 && traits.playfulness < 0.5) material = "neumorphism";
             else if (traits.emotionalTemperature < 0.4) material = "metallic";
             else material = "glass";
         }
-        
+
         return {
             material,
             roughness: b(19) * (1 - traits.playfulness),
+            metalness: material === "metallic" ? 0.7 + b(34) * 0.3 : b(34) * 0.2,
             transmission: material === "glass" ? 0.8 + b(20) * 0.2 : 0,
+            emissive: traits.spatialDependency > 0.8 && traits.playfulness > 0.6,
             enabled: material !== "matte"
         };
     }
-    
+
     /**
      * Generate biomarker with sector awareness
      */
@@ -700,28 +940,54 @@ export class GenomeSequencer {
     ) {
         // Check if 3D is appropriate for this sector
         const shouldGenerate3D = enable3D ?? profile.generate3D;
-        
+
         if (disabled || !shouldGenerate3D) {
             return {
                 geometry: "monolithic" as "monolithic" | "organic" | "fractal",
-                complexity: 0.5,
+                shapeFamily: "geometric" as "geometric" | "biological" | "crystalline" | "fluid" | "architectural",
+                animationStyle: "static" as "rotate" | "breathe" | "morph" | "static",
+                polycount: "low" as "low" | "medium" | "high",
+                colorTreatment: "monochrome" as "primary" | "complementary" | "monochrome",
+                complexity: 0,
                 enabled: false,
                 usage: "none" as "hero" | "decorative" | "none"
             };
         }
-        
+
+        // Shape family from sector
+        const shapeFamilyBySector: Record<string, "geometric" | "biological" | "crystalline" | "fluid" | "architectural"> = {
+            healthcare: "biological", fintech: "crystalline", technology: "geometric",
+            commerce: "geometric", education: "fluid", entertainment: "fluid",
+            automotive: "architectural", manufacturing: "geometric", legal: "architectural",
+            real_estate: "architectural", travel: "fluid", food: "biological", sports: "fluid"
+        };
+        const shapeFamily = shapeFamilyBySector[profile.sector] ?? "geometric";
+
+        // Animation style from motion physics
+        const animStyleMap: Record<string, "rotate" | "breathe" | "morph" | "static"> = {
+            spring: "breathe", step: "rotate", glitch: "morph", none: "static"
+        };
+
         let geometry: "monolithic" | "organic" | "fractal" = "monolithic";
         if (traits.playfulness > 0.6) geometry = "organic";
         else if (traits.informationDensity > 0.7) geometry = "fractal";
-        
+
         return {
             geometry,
+            shapeFamily,
+            animationStyle: animStyleMap[profile.motionPreference] ?? "breathe",
+            polycount: traits.spatialDependency > 0.7 ? "high" : traits.spatialDependency > 0.4 ? "medium" : "low",
+            colorTreatment: traits.emotionalTemperature > 0.6
+                ? "primary"
+                : traits.emotionalTemperature < 0.3
+                    ? "monochrome"
+                    : "complementary",
             complexity: b(21) * traits.informationDensity,
             enabled: true,
             usage: "decorative" as "hero" | "decorative" | "none"
         };
     }
-    
+
     /**
      * Generate typography scale
      */
@@ -730,24 +996,24 @@ export class GenomeSequencer {
         if (traits.emotionalTemperature > 0.7) ratio = 1.618; // Golden ratio
         else if (traits.emotionalTemperature > 0.4) ratio = 1.5;
         else ratio = 1.25;
-        
+
         let baseSize: number;
         if (traits.informationDensity > 0.8) baseSize = 14;
         else if (traits.informationDensity > 0.5) baseSize = 16;
         else baseSize = 18;
-        
+
         const getLineHeight = (tightness: number) => {
             if (traits.temporalUrgency > 0.7) return (1.2 + tightness * 0.2).toFixed(2);
             if (traits.temporalUrgency > 0.4) return (1.4 + tightness * 0.2).toFixed(2);
             return (1.6 + tightness * 0.2).toFixed(2);
         };
-        
+
         const getLetterSpacing = (emphasis: number) => {
             if (traits.informationDensity > 0.7) return `${-0.02 * emphasis}em`;
             if (traits.temporalUrgency > 0.7) return `${0.01 * emphasis}em`;
             return "0em";
         };
-        
+
         const sizes = {
             display: Math.round(baseSize * Math.pow(ratio, 4)),
             h1: Math.round(baseSize * Math.pow(ratio, 3)),
@@ -756,7 +1022,7 @@ export class GenomeSequencer {
             body: baseSize,
             small: Math.round(baseSize / Math.sqrt(ratio))
         };
-        
+
         return {
             display: { size: `${sizes.display}px`, lineHeight: getLineHeight(0), letterSpacing: getLetterSpacing(0.5) },
             h1: { size: `${sizes.h1}px`, lineHeight: getLineHeight(0.2), letterSpacing: getLetterSpacing(0.3) },
@@ -768,18 +1034,18 @@ export class GenomeSequencer {
             baseSize
         };
     }
-    
+
     /**
      * Generate accessibility profile
      */
     private generateAccessibility(traits: ContentTraits, b: (index: number) => number): AccessibilityProfile {
-        const minContrastRatio = traits.informationDensity > 0.7 ? 7.0 : 
-                                  traits.informationDensity > 0.4 ? 4.5 : 3.0;
-        
+        const minContrastRatio = traits.informationDensity > 0.7 ? 7.0 :
+            traits.informationDensity > 0.4 ? 4.5 : 3.0;
+
         let focusIndicator: "outline" | "ring" | "underline" | "none" = "outline";
         if (traits.temporalUrgency > 0.8) focusIndicator = "ring";
         else if (traits.playfulness > 0.6) focusIndicator = "underline";
-        
+
         return {
             minContrastRatio,
             focusIndicator,
@@ -788,29 +1054,29 @@ export class GenomeSequencer {
             screenReaderOptimized: traits.informationDensity > 0.6
         };
     }
-    
+
     /**
      * Generate rendering strategy
      */
     private generateRendering(traits: ContentTraits, b: (index: number) => number): RenderingStrategy {
         let primary: "webgl" | "css" | "static" | "svg" = "css";
-        
+
         if (traits.spatialDependency > 0.6 && traits.playfulness > 0.4) primary = "webgl";
         else if (traits.spatialDependency > 0.4 && traits.playfulness > 0.3) primary = "css";
         else if (traits.informationDensity > 0.8 && traits.playfulness < 0.3) primary = "svg";
         else if (traits.informationDensity > 0.9) primary = "static";
-        
+
         return {
             primary,
             fallback: primary === "webgl" ? "css" : (traits.playfulness < 0.2 ? "static" : "css"),
             animate: !(traits.temporalUrgency > 0.9 || (traits.playfulness < 0.3 && traits.informationDensity > 0.7)),
-            complexity: traits.informationDensity > 0.8 ? "minimal" : 
-                       (traits.spatialDependency > 0.6 && traits.playfulness > 0.5) ? "rich" : "balanced"
+            complexity: traits.informationDensity > 0.8 ? "minimal" :
+                (traits.spatialDependency > 0.6 && traits.playfulness > 0.5) ? "rich" : "balanced"
         };
     }
-    
+
     // ==================== HERO TYPE SELECTION ====================
-    
+
     private selectHeroType(
         byte: number,
         primaryProfile: ReturnType<typeof getSectorProfile>,
@@ -818,28 +1084,28 @@ export class GenomeSequencer {
     ): HeroType {
         // Blend primary and secondary sector weights
         const weights = { ...primaryProfile.heroTypeWeights };
-        
+
         if (secondaryProfile) {
             for (const [type, weight] of Object.entries(secondaryProfile.heroTypeWeights)) {
                 weights[type as HeroType] = weights[type as HeroType] * 0.7 + weight * 0.3;
             }
         }
-        
+
         // Normalize and select
         const total = Object.values(weights).reduce((a, b) => a + b, 0);
         const threshold = (byte / 255) * total;
         let cumulative = 0;
-        
+
         for (const [type, weight] of Object.entries(weights)) {
             cumulative += weight;
             if (cumulative >= threshold) {
                 return type as HeroType;
             }
         }
-        
+
         return "product_ui";
     }
-    
+
     private selectHeroVariant(heroType: HeroType, byte: number): HeroLayoutVariant {
         const variantsByType: Record<HeroType, HeroLayoutVariant[]> = {
             product_ui: ["centered", "split_right", "full_bleed", "floating_cards"],
@@ -855,11 +1121,11 @@ export class GenomeSequencer {
             aspirational_imagery: ["full_bleed", "overlay", "minimal"],
             testimonial_focus: ["centered", "split_left", "split_right"]
         };
-        
+
         const variants = variantsByType[heroType] || ["centered"];
         return variants[Math.floor(byte * variants.length) % variants.length];
     }
-    
+
     private getHeroElements(heroType: HeroType): string[] {
         const elementsByType: Record<HeroType, string[]> = {
             product_ui: ["screenshot", "headline", "subheadline", "cta_primary", "cta_secondary"],
@@ -875,12 +1141,12 @@ export class GenomeSequencer {
             aspirational_imagery: ["image", "headline", "subheadline", "cta_primary"],
             testimonial_focus: ["testimonial", "headline", "cta_primary"]
         };
-        
+
         return elementsByType[heroType] || ["headline", "cta_primary"];
     }
-    
+
     // ==================== TRUST SIGNALS ====================
-    
+
     private selectTrustApproach(
         byte: number,
         profile: ReturnType<typeof getSectorProfile>
@@ -889,17 +1155,17 @@ export class GenomeSequencer {
         const total = Object.values(weights).reduce((a, b) => a + b, 0);
         const threshold = (byte / 255) * total;
         let cumulative = 0;
-        
+
         for (const [approach, weight] of Object.entries(weights)) {
             cumulative += weight;
             if (cumulative >= threshold) {
                 return approach as TrustApproach;
             }
         }
-        
+
         return "credentials";
     }
-    
+
     private selectTrustProminence(
         traits: ContentTraits,
         profile: ReturnType<typeof getSectorProfile>
@@ -909,7 +1175,7 @@ export class GenomeSequencer {
         if (traits.trustRequirement > 0.4) return "integrated";
         return "subtle";
     }
-    
+
     private suggestStats(profile: ReturnType<typeof getSectorProfile>): string[] {
         const statsBySector: Record<PrimarySector, string[]> = {
             healthcare: ["patients_served", "success_rate", "years_experience", "awards"],
@@ -926,10 +1192,10 @@ export class GenomeSequencer {
             sports: ["members", "championships", "athletes", "facilities"],
             technology: ["users", "uptime", "performance", "integrations"]
         };
-        
+
         return statsBySector[profile.sector] || ["customers", "years_experience"];
     }
-    
+
     private selectSocialProofType(byte: number, profile: ReturnType<typeof getSectorProfile>): SocialProofType {
         const weights: Record<PrimarySector, Record<SocialProofType, number>> = {
             healthcare: { customer_logos: 0.1, user_count: 0.2, rating_stars: 0.3, testimonials_grid: 0.3, community_size: 0.05, press_mentions: 0.05 },
@@ -946,22 +1212,22 @@ export class GenomeSequencer {
             sports: { customer_logos: 0.15, user_count: 0.3, rating_stars: 0.2, testimonials_grid: 0.15, community_size: 0.15, press_mentions: 0.05 },
             technology: { customer_logos: 0.25, user_count: 0.25, rating_stars: 0.15, testimonials_grid: 0.15, community_size: 0.1, press_mentions: 0.1 }
         };
-        
+
         const sectorWeights = weights[profile.sector];
         const total = Object.values(sectorWeights).reduce((a, b) => a + b, 0);
         const threshold = (byte / 255) * total;
         let cumulative = 0;
-        
+
         for (const [type, weight] of Object.entries(sectorWeights)) {
             cumulative += weight;
             if (cumulative >= threshold) {
                 return type as SocialProofType;
             }
         }
-        
+
         return "testimonials_grid";
     }
-    
+
     private selectImpactType(byte: number, profile: ReturnType<typeof getSectorProfile>): ImpactDemonstration {
         const weights: Record<PrimarySector, Record<ImpactDemonstration, number>> = {
             healthcare: { live_counter: 0.1, cumulative_stats: 0.3, before_after: 0.3, roi_calculator: 0.1, timeline_progress: 0.2 },
@@ -978,38 +1244,38 @@ export class GenomeSequencer {
             sports: { live_counter: 0.4, cumulative_stats: 0.3, before_after: 0.05, roi_calculator: 0.05, timeline_progress: 0.2 },
             technology: { live_counter: 0.3, cumulative_stats: 0.3, before_after: 0.1, roi_calculator: 0.15, timeline_progress: 0.15 }
         };
-        
+
         const sectorWeights = weights[profile.sector];
         const total = Object.values(sectorWeights).reduce((a, b) => a + b, 0);
         const threshold = (byte / 255) * total;
         let cumulative = 0;
-        
+
         for (const [type, weight] of Object.entries(sectorWeights)) {
             cumulative += weight;
             if (cumulative >= threshold) {
                 return type as ImpactDemonstration;
             }
         }
-        
+
         return "cumulative_stats";
     }
-    
+
     // ==================== CONTENT STRUCTURE ====================
-    
+
     private selectContentDepth(traits: ContentTraits, profile: ReturnType<typeof getSectorProfile>): ContentDepth {
         if (traits.informationDensity > 0.8) return "comprehensive";
         if (traits.informationDensity > 0.6) return "extensive";
         if (traits.informationDensity > 0.4) return "moderate";
         return "minimal";
     }
-    
+
     private estimateSections(traits: ContentTraits): number {
         if (traits.informationDensity > 0.8) return 10;
         if (traits.informationDensity > 0.6) return 7;
         if (traits.informationDensity > 0.4) return 5;
         return 3;
     }
-    
+
     private selectInfoArchitecture(
         traits: ContentTraits,
         profile: ReturnType<typeof getSectorProfile>
@@ -1020,16 +1286,16 @@ export class GenomeSequencer {
         if (traits.informationDensity < 0.4) return "hub_spoke";
         return "modular_sections";
     }
-    
+
     private selectPersonalization(traits: ContentTraits): PersonalizationApproach {
         if (traits.informationDensity > 0.8) return "behavior_based";
         if (traits.informationDensity > 0.6) return "segment_based";
         if (traits.temporalUrgency > 0.7) return "location_based";
         return "static";
     }
-    
+
     // ==================== VISUAL TREATMENT ====================
-    
+
     private selectVisualTreatment(
         profile: ReturnType<typeof getSectorProfile>,
         byte: number
@@ -1049,17 +1315,17 @@ export class GenomeSequencer {
             sports: ["candid_moment", "lifestyle_photography", "documentary"],
             technology: ["product_screenshots", "abstract_gradient", "illustration"]
         };
-        
+
         const treatments = treatmentsBySector[profile.sector] || ["lifestyle_photography"];
         return treatments[Math.floor(byte * treatments.length) % treatments.length];
     }
-    
+
     private selectVideoStrategy(
         profile: ReturnType<typeof getSectorProfile>,
         byte: number
     ): VideoStrategy {
         if (byte < 0.3) return "none";
-        
+
         const strategiesBySector: Record<PrimarySector, VideoStrategy[]> = {
             healthcare: ["testimonial", "brand_story", "tutorial_walkthrough"],
             fintech: ["product_demo", "brand_story", "testimonial"],
@@ -1075,30 +1341,128 @@ export class GenomeSequencer {
             sports: ["background_ambient", "brand_story", "live_feed"],
             technology: ["product_demo", "brand_story", "tutorial_walkthrough"]
         };
-        
+
         const strategies = strategiesBySector[profile.sector] || ["brand_story"];
         return strategies[Math.floor(byte * strategies.length) % strategies.length];
     }
-    
+
     // ==================== UTILITY FUNCTIONS ====================
-    
+
     private selectFromHash<T>(byte: number, options: T[]): T {
-        return options[byte % options.length];
+        // byte is a float in [0.0, 1.0) from b(n) = buffer[n] / 255
+        // Using modulo on a <1 float always returns near-0, causing options[0] every time.
+        // Fix: scale to index range first, then modulo for safety.
+        return options[Math.floor(byte * options.length) % options.length];
     }
-    
+
     private selectDisplayFont(byte: number, charge: string): string {
-        if (charge === "monospace") return "Space Mono, JetBrains Mono, monospace";
-        if (charge === "humanist") return "Fraunces, Playfair Display, serif";
-        if (charge === "geometric") return "Space Grotesk, system-ui, sans-serif";
-        return "system-ui, -apple-system, sans-serif";
+        const fonts: Record<string, string[]> = {
+            // Geometric: clean, modernist, swiss-influenced
+            geometric: [
+                "Space Grotesk",
+                "DM Sans",
+                "Outfit",
+                "Cabinet Grotesk",
+                "Plus Jakarta Sans",
+                "Barlow",
+                "Syne",
+                "Unbounded"
+            ],
+            // Humanist: warm editorial, literary, serif-adjacent
+            humanist: [
+                "Fraunces",
+                "Playfair Display",
+                "Cormorant",
+                "Lora",
+                "Libre Baskerville",
+                "Spectral",
+                "DM Serif Display",
+                "Gloock"
+            ],
+            // Monospace: brutalist, technical, data-driven
+            monospace: [
+                "Space Mono",
+                "JetBrains Mono",
+                "Fira Code",
+                "IBM Plex Mono",
+                "Geist Mono",
+                "Commit Mono",
+                "Martian Mono"
+            ],
+            // Transitional: classic editorial, newspaper, academic
+            transitional: [
+                "Libre Baskerville",
+                "Cardo",
+                "EB Garamond",
+                "Literata",
+                "Newsreader",
+                "Source Serif 4",
+                "Bitter"
+            ]
+        };
+
+        const fallbacks: Record<string, string> = {
+            geometric: "system-ui, -apple-system, sans-serif",
+            humanist: "Georgia, 'Times New Roman', serif",
+            monospace: "'Courier New', Courier, monospace",
+            transitional: "Georgia, serif"
+        };
+
+        const pool = fonts[charge] ?? fonts.geometric;
+        const fallback = fallbacks[charge] ?? fallbacks.geometric;
+        const selected = pool[Math.floor(byte * pool.length) % pool.length];
+        return `${selected}, ${fallback}`;
     }
-    
+
     private selectBodyFont(byte: number, charge: string): string {
-        if (charge === "monospace") return "IBM Plex Mono, Courier, monospace";
-        if (charge === "humanist") return "Merriweather, Georgia, serif";
-        return "system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+        const fonts: Record<string, string[]> = {
+            // Geometric body: clean, high-legibility
+            geometric: [
+                "DM Sans",
+                "Inter",        // Only acceptable as BODY font (not display)
+                "Geist",
+                "Nunito",
+                "Atkinson Hyperlegible"
+            ],
+            // Humanist body: literary, warm, editorial
+            humanist: [
+                "Merriweather",
+                "Source Serif 4",
+                "Lora",
+                "Literata",
+                "Palatino Linotype"
+            ],
+            // Monospace body: for highly technical, code-adjacent sites
+            monospace: [
+                "IBM Plex Mono",
+                "Fira Code",
+                "JetBrains Mono",
+                "Geist Mono",
+                "Commit Mono"
+            ],
+            // Transitional body: news, academic, documentation
+            transitional: [
+                "Georgia",
+                "Newsreader",
+                "EB Garamond",
+                "Cardo",
+                "Libre Baskerville"
+            ]
+        };
+
+        const fallbacks: Record<string, string> = {
+            geometric: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            humanist: "Georgia, serif",
+            monospace: "'Courier New', monospace",
+            transitional: "Georgia, 'Times New Roman', serif"
+        };
+
+        const pool = fonts[charge] ?? fonts.geometric;
+        const fallback = fallbacks[charge] ?? fallbacks.geometric;
+        const selected = pool[Math.floor(byte * pool.length) % pool.length];
+        return `${selected}, ${fallback}`;
     }
-    
+
     private isColorAppropriateForSector(hue: number, sector: PrimarySector): boolean {
         // Simple appropriateness check
         // Healthcare: blues, greens (180-240)
@@ -1119,11 +1483,11 @@ export class GenomeSequencer {
             sports: [[0, 60], [200, 260]], // Red/orange, blue
             technology: [[200, 280]] // Blues, purples
         };
-        
+
         const ranges = appropriateRanges[sector];
         return ranges.some(([min, max]) => hue >= min && hue <= max);
     }
-    
+
     private getTemperatureFromHue(hue: number): "warm" | "cool" | "neutral" {
         if (hue >= 0 && hue < 60) return "warm";
         if (hue >= 60 && hue < 170) return "neutral";
@@ -1131,7 +1495,7 @@ export class GenomeSequencer {
         if (hue >= 260 && hue < 330) return "neutral";
         return "warm";
     }
-    
+
     private blendHue(h1: number, h2: number, weight: number): number {
         // Handle circular hue blending
         let diff = h2 - h1;
@@ -1139,16 +1503,16 @@ export class GenomeSequencer {
         if (diff < -180) diff += 360;
         return (h1 + diff * weight + 360) % 360;
     }
-    
+
     private hexToHSL(hex: string): { h: number; s: number; l: number } {
         const r = parseInt(hex.slice(1, 3), 16) / 255;
         const g = parseInt(hex.slice(3, 5), 16) / 255;
         const b = parseInt(hex.slice(5, 7), 16) / 255;
-        
+
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         let h = 0, s = 0, l = (max + min) / 2;
-        
+
         if (max !== min) {
             const d = max - min;
             s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
@@ -1158,10 +1522,10 @@ export class GenomeSequencer {
                 case b: h = ((r - g) / d + 4) / 6; break;
             }
         }
-        
+
         return { h: h * 360, s: s * 100, l: l * 100 };
     }
-    
+
     private hslToHex(h: number, s: number, l: number): string {
         l /= 100;
         const a = s * Math.min(l, 1 - l) / 100;
@@ -1172,7 +1536,7 @@ export class GenomeSequencer {
         };
         return `#${f(0)}${f(8)}${f(4)}`;
     }
-    
+
     /**
      * Legacy API for backwards compatibility
      */
@@ -1186,9 +1550,9 @@ export class GenomeSequencer {
             landing: "technology",
             blog: "entertainment"
         };
-        
+
         const sector = sectorMap[archetypeName] || "technology";
-        
+
         // Generate neutral traits
         const traits: ContentTraits = {
             informationDensity: 0.5,
@@ -1200,7 +1564,7 @@ export class GenomeSequencer {
             visualEmphasis: 0.5,
             conversionFocus: 0.5
         };
-        
+
         return this.generate(seed, traits, {
             primarySector: sector,
             options: { creativityLevel: "balanced" }

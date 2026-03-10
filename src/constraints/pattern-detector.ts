@@ -118,22 +118,28 @@ export class PatternDetector {
     detect(css: string, html?: string): PatternViolation[] {
         const violations: PatternViolation[] = [];
         const source = html ? `${css}\n${html}` : css;
-        const lines = source.split('\n');
 
-        FORBIDDEN_PATTERNS.forEach((pattern) => {
-            pattern.regex.lastIndex = 0;
-            let match;
-            while ((match = pattern.regex.exec(source)) !== null) {
-                const lineIndex = source.substring(0, match.index).split('\n').length - 1;
+        for (const pattern of FORBIDDEN_PATTERNS) {
+            // IMPORTANT: regex.exec() with non-global regex never advances lastIndex
+            // → infinite loop → OOM. Force global flag so matchAll() terminates.
+            const flags = pattern.regex.flags.includes('g')
+                ? pattern.regex.flags
+                : pattern.regex.flags + 'g';
+            const globalRegex = new RegExp(pattern.regex.source, flags);
+
+            for (const match of source.matchAll(globalRegex)) {
+                const lineIndex = source.substring(0, match.index!).split('\n').length - 1;
                 violations.push({
-                    type: pattern.category === "layout" || pattern.category === "component" ? "structural" : "visual",
+                    type: pattern.category === "layout" || pattern.category === "component"
+                        ? "structural"
+                        : "visual",
                     pattern: pattern.id,
                     severity: pattern.severity,
                     line: lineIndex + 1,
                     suggestion: pattern.suggestion
                 });
             }
-        });
+        }
 
         return violations;
     }
