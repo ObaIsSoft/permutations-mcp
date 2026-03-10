@@ -515,7 +515,23 @@ export class GenomeSequencer {
      * Calculate sub-sector confidence
      */
     private subSectorConfidence(traits: ContentTraits): number {
-        return 0.5 + (traits.informationDensity * 0.3);
+        // Each trait that is clearly extreme (>0.75 or <0.25) adds a +0.1 signal weight.
+        // Neutral traits (0.35–0.65) add nothing — low confidence means either classification.
+        // Normalised to a 0.35–0.95 range so we never return false certainty.
+        const traitValues = [
+            traits.informationDensity,
+            traits.temporalUrgency,
+            traits.emotionalTemperature,
+            traits.playfulness,
+            traits.spatialDependency,
+            traits.trustRequirement,
+            traits.visualEmphasis,
+            traits.conversionFocus,
+        ];
+        const extremeCount = traitValues.filter(v => v > 0.75 || v < 0.25).length;
+        const moderateCount = traitValues.filter(v => (v > 0.6 && v <= 0.75) || (v >= 0.25 && v < 0.4)).length;
+        const signal = (extremeCount * 0.1) + (moderateCount * 0.04);
+        return Math.min(0.95, 0.35 + signal);
     }
 
     /**
@@ -1538,35 +1554,172 @@ export class GenomeSequencer {
     }
 
     /**
-     * Legacy API for backwards compatibility
+     * Generate a genome from a named archetype.
+     * Each archetype maps to a semantically correct sector AND a bespoke trait preset
+     * so the output is immediately appropriate — not just a neutral genome with a sector label.
      */
     generateFromArchetype(archetypeName: string, seed: string): DesignGenome {
-        // Map archetype to sector
-        const sectorMap: Record<string, PrimarySector> = {
-            dashboard: "technology",
-            portfolio: "technology",
-            documentation: "education",
-            commerce: "commerce",
-            landing: "technology",
-            blog: "entertainment"
+        type ArchetypeConfig = { sector: PrimarySector; traits: ContentTraits };
+
+        const archetypes: Record<string, ArchetypeConfig> = {
+            // ── Data & Tooling ──────────────────────────────────────────────
+            dashboard: {
+                sector: "technology",
+                traits: {
+                    informationDensity: 0.9, temporalUrgency: 0.8, emotionalTemperature: 0.2,
+                    playfulness: 0.1, spatialDependency: 0.2, trustRequirement: 0.6,
+                    visualEmphasis: 0.3, conversionFocus: 0.2
+                }
+            },
+            documentation: {
+                sector: "education",
+                traits: {
+                    informationDensity: 0.8, temporalUrgency: 0.2, emotionalTemperature: 0.3,
+                    playfulness: 0.1, spatialDependency: 0.1, trustRequirement: 0.5,
+                    visualEmphasis: 0.2, conversionFocus: 0.1
+                }
+            },
+            "dev-tool": {
+                sector: "technology",
+                traits: {
+                    informationDensity: 0.7, temporalUrgency: 0.5, emotionalTemperature: 0.2,
+                    playfulness: 0.3, spatialDependency: 0.2, trustRequirement: 0.6,
+                    visualEmphasis: 0.2, conversionFocus: 0.5
+                }
+            },
+
+            // ── Portfolios ───────────────────────────────────────────────────
+            portfolio: {
+                sector: "entertainment",  // creative portfolio → entertainment, not technology
+                traits: {
+                    informationDensity: 0.3, temporalUrgency: 0.2, emotionalTemperature: 0.7,
+                    playfulness: 0.8, spatialDependency: 0.6, trustRequirement: 0.2,
+                    visualEmphasis: 0.9, conversionFocus: 0.2
+                }
+            },
+            "agency-portfolio": {
+                sector: "entertainment",
+                traits: {
+                    informationDensity: 0.4, temporalUrgency: 0.3, emotionalTemperature: 0.7,
+                    playfulness: 0.75, spatialDependency: 0.7, trustRequirement: 0.4,
+                    visualEmphasis: 0.9, conversionFocus: 0.5
+                }
+            },
+
+            // ── Commerce ─────────────────────────────────────────────────────
+            commerce: {
+                sector: "commerce",
+                traits: {
+                    informationDensity: 0.55, temporalUrgency: 0.6, emotionalTemperature: 0.6,
+                    playfulness: 0.4, spatialDependency: 0.3, trustRequirement: 0.7,
+                    visualEmphasis: 0.8, conversionFocus: 0.9
+                }
+            },
+            "luxury-commerce": {
+                sector: "commerce",
+                traits: {
+                    informationDensity: 0.2, temporalUrgency: 0.1, emotionalTemperature: 0.6,
+                    playfulness: 0.3, spatialDependency: 0.5, trustRequirement: 0.6,
+                    visualEmphasis: 0.95, conversionFocus: 0.6
+                }
+            },
+
+            // ── SaaS / Product Landings ───────────────────────────────────────
+            landing: {
+                sector: "technology",   // generic: assume tech SaaS
+                traits: {
+                    informationDensity: 0.5, temporalUrgency: 0.5, emotionalTemperature: 0.5,
+                    playfulness: 0.4, spatialDependency: 0.4, trustRequirement: 0.6,
+                    visualEmphasis: 0.6, conversionFocus: 0.8
+                }
+            },
+            "saas-landing": {
+                sector: "technology",
+                traits: {
+                    informationDensity: 0.6, temporalUrgency: 0.5, emotionalTemperature: 0.45,
+                    playfulness: 0.35, spatialDependency: 0.5, trustRequirement: 0.7,
+                    visualEmphasis: 0.65, conversionFocus: 0.85
+                }
+            },
+            "fintech-landing": {
+                sector: "fintech",
+                traits: {
+                    informationDensity: 0.65, temporalUrgency: 0.6, emotionalTemperature: 0.35,
+                    playfulness: 0.2, spatialDependency: 0.35, trustRequirement: 0.9,
+                    visualEmphasis: 0.5, conversionFocus: 0.85
+                }
+            },
+            "medical-landing": {
+                sector: "healthcare",
+                traits: {
+                    informationDensity: 0.55, temporalUrgency: 0.3, emotionalTemperature: 0.7,
+                    playfulness: 0.2, spatialDependency: 0.25, trustRequirement: 0.95,
+                    visualEmphasis: 0.55, conversionFocus: 0.65
+                }
+            },
+
+            // ── Editorial / Content ───────────────────────────────────────────
+            blog: {
+                sector: "entertainment",
+                traits: {
+                    informationDensity: 0.5, temporalUrgency: 0.4, emotionalTemperature: 0.65,
+                    playfulness: 0.5, spatialDependency: 0.15, trustRequirement: 0.3,
+                    visualEmphasis: 0.6, conversionFocus: 0.15
+                }
+            },
+            magazine: {
+                sector: "entertainment",
+                traits: {
+                    informationDensity: 0.65, temporalUrgency: 0.6, emotionalTemperature: 0.65,
+                    playfulness: 0.55, spatialDependency: 0.25, trustRequirement: 0.3,
+                    visualEmphasis: 0.8, conversionFocus: 0.2
+                }
+            },
+
+            // ── Other verticals ───────────────────────────────────────────────
+            "real-estate": {
+                sector: "real_estate",
+                traits: {
+                    informationDensity: 0.5, temporalUrgency: 0.4, emotionalTemperature: 0.6,
+                    playfulness: 0.25, spatialDependency: 0.55, trustRequirement: 0.75,
+                    visualEmphasis: 0.85, conversionFocus: 0.7
+                }
+            },
+            restaurant: {
+                sector: "food",
+                traits: {
+                    informationDensity: 0.35, temporalUrgency: 0.4, emotionalTemperature: 0.8,
+                    playfulness: 0.5, spatialDependency: 0.35, trustRequirement: 0.4,
+                    visualEmphasis: 0.9, conversionFocus: 0.6
+                }
+            },
+            "non-profit": {
+                sector: "healthcare",   // closest — trust + warmth without sales pressure
+                traits: {
+                    informationDensity: 0.45, temporalUrgency: 0.35, emotionalTemperature: 0.85,
+                    playfulness: 0.4, spatialDependency: 0.2, trustRequirement: 0.75,
+                    visualEmphasis: 0.7, conversionFocus: 0.3
+                }
+            },
         };
 
-        const sector = sectorMap[archetypeName] || "technology";
+        const config = archetypes[archetypeName];
 
-        // Generate neutral traits
-        const traits: ContentTraits = {
-            informationDensity: 0.5,
-            temporalUrgency: 0.5,
-            emotionalTemperature: 0.5,
-            playfulness: 0.5,
-            spatialDependency: 0.3,
-            trustRequirement: 0.5,
-            visualEmphasis: 0.5,
-            conversionFocus: 0.5
-        };
+        if (!config) {
+            // Unknown archetype: use a safe neutral preset rather than hardcoding 'technology'
+            console.error(`[generateFromArchetype] Unknown archetype '${archetypeName}', using neutral technology defaults`);
+            return this.generate(seed,
+                {
+                    informationDensity: 0.5, temporalUrgency: 0.5, emotionalTemperature: 0.5,
+                    playfulness: 0.5, spatialDependency: 0.3, trustRequirement: 0.5,
+                    visualEmphasis: 0.5, conversionFocus: 0.5
+                },
+                { primarySector: "technology", options: { creativityLevel: "balanced" } }
+            );
+        }
 
-        return this.generate(seed, traits, {
-            primarySector: sector,
+        return this.generate(seed, config.traits, {
+            primarySector: config.sector,
             options: { creativityLevel: "balanced" }
         });
     }
