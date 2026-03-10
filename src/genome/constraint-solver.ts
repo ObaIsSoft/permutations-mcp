@@ -492,11 +492,12 @@ export class GenomeConstraintSolver {
     private applyConstraints(genome: DesignGenome): void {
         // Ensure constraints object and arrays exist
         if (!genome.constraints) {
-            genome.constraints = { forbiddenPatterns: [], requiredPatterns: [], bondingRules: [] };
+            genome.constraints = { forbiddenPatterns: [], requiredPatterns: [], bondingRules: [], compensatorySignals: [] };
         }
         if (!Array.isArray(genome.constraints.forbiddenPatterns)) genome.constraints.forbiddenPatterns = [];
         if (!Array.isArray(genome.constraints.requiredPatterns)) genome.constraints.requiredPatterns = [];
         if (!Array.isArray(genome.constraints.bondingRules)) genome.constraints.bondingRules = [];
+        if (!Array.isArray(genome.constraints.compensatorySignals)) genome.constraints.compensatorySignals = [];
 
         for (const constraint of this.constraints) {
             if (constraint.priority < 0) continue; // Skip overridden constraints

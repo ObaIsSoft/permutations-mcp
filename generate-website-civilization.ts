@@ -18,7 +18,7 @@ async function generateWebsiteCivilization() {
 
     // Intent that will trigger high complexity
     const intent = "A sophisticated product marketing website with immersive storytelling, interactive demonstrations, and generative design elements";
-    
+
     const projectContext = "The Permutations Engine: A biological, planetary adaptation system where designs emerge as living organisms. Technical manifesto—avant-garde, uncompromising, deeply parametric. Multi-section layout with hero, feature blocks, documentation, and footer. Rich animations, dark mode support, and accessible navigation.";
 
     console.log("🧬 GENERATING WEBSITE CIVILIZATION\n");
@@ -32,7 +32,7 @@ async function generateWebsiteCivilization() {
 
         // Generate civilization tier (force at least civilized)
         const tier = civGen.generate(intent, projectContext, traits, 'civilized');
-        
+
         console.log("\n🏛️ CIVILIZATION TIER ACHIEVED\n");
         console.log("Tier:", tier.tier.toUpperCase());
         console.log("Complexity:", tier.complexity.toFixed(3));
@@ -41,8 +41,8 @@ async function generateWebsiteCivilization() {
         console.log("Animation Physics:", tier.animations.physics);
 
         // Generate base genome for color/motion values
-        const genome = sequencer.generate("Permutations Website v2", traits);
-        
+        const genome = sequencer.generate("Permutations Website v2", traits, { primarySector: "technology" });
+
         console.log("\n🎨 GENOME DNA");
         console.log("Hash:", genome.dnaHash.slice(0, 24) + "...");
         console.log("Primary Hue:", genome.chromosomes.ch5_color_primary.hue);

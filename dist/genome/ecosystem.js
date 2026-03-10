@@ -13,7 +13,7 @@ export class EcosystemGenerator {
             ...options
         };
         // Generate base planet DNA
-        const baseGenome = this.sequencer.generate(seed, traits);
+        const baseGenome = this.sequencer.generate(seed, traits, { primarySector: "technology" });
         // Calculate habitability
         const habitabilityScore = this.calculateHabitability(traits);
         // Generate divergent life forms
@@ -61,10 +61,13 @@ export class EcosystemGenerator {
                 temporalUrgency: this.mutate(traits.temporalUrgency, 0.05),
                 emotionalTemperature: this.mutate(traits.emotionalTemperature, 0.08),
                 playfulness: Math.max(0, traits.playfulness - (i * 0.05)), // Stabilize over generations
-                spatialDependency: this.mutate(traits.spatialDependency, 0.1)
+                spatialDependency: this.mutate(traits.spatialDependency, 0.1),
+                trustRequirement: traits.trustRequirement,
+                visualEmphasis: traits.visualEmphasis,
+                conversionFocus: traits.conversionFocus
             };
             const variantSeed = `${seed}-microbe-${i}`;
-            const genome = this.sequencer.generate(variantSeed, variantTraits);
+            const genome = this.sequencer.generate(variantSeed, variantTraits, { primarySector: "technology" });
             variants.push({
                 id: `M-${i}`,
                 genome,
@@ -88,7 +91,7 @@ export class EcosystemGenerator {
                 playfulness: Math.min(1, traits.playfulness + 0.1) // Organic growth adds chaos
             };
             const variantSeed = `${seed}-flora-${i}`;
-            const genome = this.sequencer.generate(variantSeed, floraTraits);
+            const genome = this.sequencer.generate(variantSeed, floraTraits, { primarySector: "technology" });
             variants.push({
                 id: `F-${i}`,
                 genome,
@@ -111,7 +114,7 @@ export class EcosystemGenerator {
                 spatialDependency: Math.min(1, traits.spatialDependency + 0.2) // Navigation needs
             };
             const variantSeed = `${seed}-fauna-${i}`;
-            const genome = this.sequencer.generate(variantSeed, faunaTraits);
+            const genome = this.sequencer.generate(variantSeed, faunaTraits, { primarySector: "technology" });
             variants.push({
                 id: `A-${i}`,
                 genome,

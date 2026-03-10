@@ -1,0 +1,251 @@
+{
+  "dnaHash": "1ea6e5134f3fd5601318fa17160dac847e3d80c3c41ba2807deaedbfa833882f",
+  "traits": {
+    "informationDensity": 0.2,
+    "temporalUrgency": 0,
+    "emotionalTemperature": 0.4,
+    "playfulness": 0.2,
+    "spatialDependency": 0,
+    "trustRequirement": 0.8,
+    "visualEmphasis": 0.3,
+    "conversionFocus": 0
+  },
+  "sectorContext": {
+    "primary": "healthcare",
+    "secondary": null,
+    "subSector": "healthcare_general"
+  },
+  "chromosomes": {
+    "ch0_sector_primary": {
+      "sector": "healthcare",
+      "influence": 0.5
+    },
+    "ch0_sector_secondary": {
+      "sector": null,
+      "influence": 0
+    },
+    "ch0_sub_sector": {
+      "classification": "healthcare_general",
+      "confidence": 0,
+      "keywords": []
+    },
+    "ch0_brand_weight": {
+      "brandVsSector": 0.7,
+      "appliedOverrides": []
+    },
+    "ch1_structure": {
+      "topology": "deep",
+      "maxNesting": 1,
+      "sectionCount": 3
+    },
+    "ch2_rhythm": {
+      "density": "empty",
+      "baseSpacing": 8,
+      "sectionSpacing": 32
+    },
+    "ch3_type_display": {
+      "family": "Fraunces, Playfair Display, serif",
+      "charge": "humanist",
+      "fallback": "system-ui, -apple-system, sans-serif"
+    },
+    "ch4_type_body": {
+      "family": "Merriweather, Georgia, serif",
+      "xHeightRatio": 0.5149019607843137,
+      "contrast": 0.8376470588235294,
+      "fallback": "system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    "ch5_color_primary": {
+      "hue": 247,
+      "saturation": 0.5,
+      "lightness": 0.7,
+      "temperature": "cool",
+      "hex": "#958cd9",
+      "sectorAppropriate": true
+    },
+    "ch6_color_temp": {
+      "backgroundTemp": "cool",
+      "contrastRatio": 5.009803921568627,
+      "surfaceColor": "#141414",
+      "elevatedSurface": "#1e1e1e"
+    },
+    "ch7_edge": {
+      "radius": 4,
+      "style": "soft",
+      "variableRadius": false
+    },
+    "ch8_motion": {
+      "physics": "none",
+      "durationScale": 1.4141176470588237,
+      "staggerDelay": 0.05176470588235295
+    },
+    "ch9_grid": {
+      "asymmetry": 0.7694117647058825,
+      "columns": 2,
+      "gap": 19
+    },
+    "ch10_hierarchy": {
+      "depth": "overlapping",
+      "zIndexBehavior": "isolation",
+      "layerBlur": 2.392156862745098
+    },
+    "ch11_texture": {
+      "surface": "flat",
+      "noiseLevel": 0.24705882352941178,
+      "pattern": null
+    },
+    "ch12_signature": {
+      "entropy": 0.23921568627450981,
+      "uniqueMutation": "1ea6e513",
+      "variantSeed": 0.23921568627450981
+    },
+    "ch13_atmosphere": {
+      "fx": "none",
+      "intensity": 0,
+      "enabled": false
+    },
+    "ch14_physics": {
+      "material": "matte",
+      "roughness": 0.611764705882353,
+      "transmission": 0,
+      "enabled": false
+    },
+    "ch15_biomarker": {
+      "geometry": "monolithic",
+      "complexity": 0.5,
+      "enabled": false,
+      "usage": "none"
+    },
+    "ch16_typography": {
+      "display": {
+        "size": "44px",
+        "lineHeight": "1.60",
+        "letterSpacing": "0em"
+      },
+      "h1": {
+        "size": "35px",
+        "lineHeight": "1.64",
+        "letterSpacing": "0em"
+      },
+      "h2": {
+        "size": "28px",
+        "lineHeight": "1.68",
+        "letterSpacing": "0em"
+      },
+      "h3": {
+        "size": "23px",
+        "lineHeight": "1.72",
+        "letterSpacing": "0em"
+      },
+      "body": {
+        "size": "18px",
+        "lineHeight": "1.80",
+        "letterSpacing": "0em"
+      },
+      "small": {
+        "size": "16px",
+        "lineHeight": "1.76",
+        "letterSpacing": "0em"
+      },
+      "ratio": 1.25,
+      "baseSize": 18
+    },
+    "ch17_accessibility": {
+      "minContrastRatio": 3,
+      "focusIndicator": "outline",
+      "respectMotionPreference": true,
+      "minTouchTarget": 44,
+      "screenReaderOptimized": false
+    },
+    "ch18_rendering": {
+      "primary": "css",
+      "fallback": "css",
+      "animate": true,
+      "complexity": "balanced"
+    },
+    "ch19_hero_type": {
+      "type": "product_ui",
+      "variant": "floating_cards",
+      "variantIndex": 5
+    },
+    "ch19_hero_variant_detail": {
+      "layout": "floating_cards",
+      "elements": [
+        "screenshot",
+        "headline",
+        "subheadline",
+        "cta_primary",
+        "cta_secondary"
+      ]
+    },
+    "ch20_visual_treatment": {
+      "treatment": "lifestyle_photography",
+      "videoStrategy": "tutorial_walkthrough",
+      "hasVideo": true
+    },
+    "ch21_trust_signals": {
+      "approach": "credentials",
+      "prominence": "prominent",
+      "layoutVariant": "trust_credentials_0",
+      "contentProvided": false,
+      "suggestedStats": [
+        "patients_served",
+        "success_rate",
+        "years_experience",
+        "awards"
+      ]
+    },
+    "ch21_trust_content": {
+      "credentials": [],
+      "testimonials": [],
+      "stats": [],
+      "securityBadges": []
+    },
+    "ch22_social_proof": {
+      "type": "customer_logos",
+      "prominence": "prominent"
+    },
+    "ch22_impact_demonstration": {
+      "type": "live_counter",
+      "realTime": false,
+      "interactive": false
+    },
+    "ch23_content_depth": {
+      "level": "minimal",
+      "estimatedSections": 3,
+      "hasHero": true,
+      "hasFeatures": false,
+      "hasCTA": false,
+      "hasFAQ": false,
+      "hasTestimonials": true
+    },
+    "ch23_information_architecture": {
+      "pattern": "hub_spoke"
+    },
+    "ch24_personalization": {
+      "approach": "static",
+      "dynamicContent": false,
+      "userSegmentation": false
+    }
+  },
+  "constraints": {
+    "forbiddenPatterns": [],
+    "requiredPatterns": [],
+    "bondingRules": [
+      "[wcag_contrast_minimum] WCAG 1.4.3, informationDensity: 0.20 → Minimum contrast ratio 3:1 required for WCAG AA",
+      "[wcag_reduced_motion] WCAG 2.3.3, respectMotionPreference: true → Respect prefers-reduced-motion for users with vestibular disorders",
+      "[wcag_text_spacing] WCAG 1.4.12, informationDensity: 0.20 → Line height 1.5 minimum for readability"
+    ],
+    "compensatorySignals": []
+  },
+  "viabilityScore": 1,
+  "generation": {
+    "timestamp": "2026-03-10T20:48:11.350Z",
+    "version": "2.0.0",
+    "options": {},
+    "brand": null,
+    "rationale": [
+      "[Accessibility] Motion physics disabled per WCAG 2.3.3 (reduced motion preference)",
+      "[Accessibility Profile] Contrast: 3:1, Motion: reduced, Touch: 44px"
+    ]
+  }
+}

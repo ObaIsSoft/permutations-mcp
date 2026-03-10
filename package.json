@@ -11,7 +11,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsc --watch",
-    "test": "node test/sequencer.test.js"
+    "test": "node --max-old-space-size=4096 tests/genome.test.mjs",
+    "test:unit": "node tests/sequencer.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

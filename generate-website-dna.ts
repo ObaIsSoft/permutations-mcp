@@ -1,5 +1,5 @@
 import { GenomeSequencer } from "./src/genome/sequencer.js";
-import { CSSGenerator } from "./src/generators/css-generator.js";
+import { CSSGenerator } from "./src/css-generator.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -20,9 +20,12 @@ const genome = sequencer.generate("permutations-website-v1", {
     informationDensity: 0.75,    // Technical documentation + code samples
     temporalUrgency: 0.5,        // Product page - not urgent but not slow
     emotionalTemperature: 0.3,   // Clinical/technical
-    playfulness: 0.25,          // Serious developer tool
-    spatialDependency: 0.45     // Some depth but mostly flat
-});
+    playfulness: 0.25,           // Serious developer tool
+    spatialDependency: 0.45,     // Some depth but mostly flat
+    trustRequirement: 0.2,       // Developer tool — low trust pressure
+    visualEmphasis: 0.45,        // Balanced: code + visuals
+    conversionFocus: 0.4         // Moderate — manifesto first, conversion second
+}, { primarySector: "technology" });
 
 console.log("=== Generated Genome for Website ===");
 console.log("DNA Hash:", genome.dnaHash);
@@ -57,7 +60,7 @@ console.log("  Focus indicator:", genome.chromosomes.ch17_accessibility.focusInd
 console.log("  Touch target:", genome.chromosomes.ch17_accessibility.minTouchTarget, "px");
 
 // Generate Tailwind config from genome
-const tailwindConfig = generator.generate(genome, "tailwind");
+const tailwindConfig = generator.generate(genome, { format: "expanded" });
 
 // Write files for website
 const websiteDir = path.join(__dirname, "website");

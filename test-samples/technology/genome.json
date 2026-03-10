@@ -1,0 +1,253 @@
+{
+  "dnaHash": "d6da1c6bdefa2d1985090ffb2774408a46af8c44826f6bb6a33c502e5c424039",
+  "traits": {
+    "informationDensity": 0.3,
+    "temporalUrgency": 0,
+    "emotionalTemperature": 0,
+    "playfulness": 0.2,
+    "spatialDependency": 0,
+    "trustRequirement": 0,
+    "visualEmphasis": 0.3,
+    "conversionFocus": 0
+  },
+  "sectorContext": {
+    "primary": "technology",
+    "secondary": null,
+    "subSector": "technology_general"
+  },
+  "chromosomes": {
+    "ch0_sector_primary": {
+      "sector": "technology",
+      "influence": 0.5
+    },
+    "ch0_sector_secondary": {
+      "sector": null,
+      "influence": 0
+    },
+    "ch0_sub_sector": {
+      "classification": "technology_general",
+      "confidence": 0,
+      "keywords": []
+    },
+    "ch0_brand_weight": {
+      "brandVsSector": 0.7,
+      "appliedOverrides": []
+    },
+    "ch1_structure": {
+      "topology": "deep",
+      "maxNesting": 2,
+      "sectionCount": 3
+    },
+    "ch2_rhythm": {
+      "density": "breathing",
+      "baseSpacing": 17,
+      "sectionSpacing": 68
+    },
+    "ch3_type_display": {
+      "family": "Space Grotesk, system-ui, sans-serif",
+      "charge": "geometric",
+      "fallback": "system-ui, -apple-system, sans-serif"
+    },
+    "ch4_type_body": {
+      "family": "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      "xHeightRatio": 0.6043137254901961,
+      "contrast": 0.8141176470588236,
+      "fallback": "system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    },
+    "ch5_color_primary": {
+      "hue": 359,
+      "saturation": 0,
+      "lightness": 0.1,
+      "temperature": "warm",
+      "hex": "#1a1a1a",
+      "sectorAppropriate": true
+    },
+    "ch6_color_temp": {
+      "backgroundTemp": "cool",
+      "contrastRatio": 9.049019607843137,
+      "surfaceColor": "#141414",
+      "elevatedSurface": "#1e1e1e"
+    },
+    "ch7_edge": {
+      "radius": 5,
+      "style": "soft",
+      "variableRadius": false
+    },
+    "ch8_motion": {
+      "physics": "none",
+      "durationScale": 0.651764705882353,
+      "staggerDelay": 0.05411764705882353
+    },
+    "ch9_grid": {
+      "asymmetry": 0.5329411764705883,
+      "columns": 2,
+      "gap": 14
+    },
+    "ch10_hierarchy": {
+      "depth": "overlapping",
+      "zIndexBehavior": "isolation",
+      "layerBlur": 6.862745098039216
+    },
+    "ch11_texture": {
+      "surface": "flat",
+      "noiseLevel": 0.13725490196078433,
+      "pattern": null
+    },
+    "ch12_signature": {
+      "entropy": 0.6862745098039216,
+      "uniqueMutation": "d6da1c6b",
+      "variantSeed": null
+    },
+    "ch13_atmosphere": {
+      "fx": "none",
+      "intensity": 0,
+      "enabled": false
+    },
+    "ch14_physics": {
+      "material": "metallic",
+      "roughness": 0.21333333333333335,
+      "transmission": 0,
+      "enabled": false
+    },
+    "ch15_biomarker": {
+      "geometry": "monolithic",
+      "complexity": 0.5,
+      "enabled": false,
+      "usage": "none"
+    },
+    "ch16_typography": {
+      "display": {
+        "size": "44px",
+        "lineHeight": "1.60",
+        "letterSpacing": "0em"
+      },
+      "h1": {
+        "size": "35px",
+        "lineHeight": "1.64",
+        "letterSpacing": "0em"
+      },
+      "h2": {
+        "size": "28px",
+        "lineHeight": "1.68",
+        "letterSpacing": "0em"
+      },
+      "h3": {
+        "size": "23px",
+        "lineHeight": "1.72",
+        "letterSpacing": "0em"
+      },
+      "body": {
+        "size": "18px",
+        "lineHeight": "1.80",
+        "letterSpacing": "0em"
+      },
+      "small": {
+        "size": "16px",
+        "lineHeight": "1.76",
+        "letterSpacing": "0em"
+      },
+      "ratio": 1.25,
+      "baseSize": 18
+    },
+    "ch17_accessibility": {
+      "minContrastRatio": 3,
+      "focusIndicator": "outline",
+      "respectMotionPreference": true,
+      "minTouchTarget": 44,
+      "screenReaderOptimized": false
+    },
+    "ch18_rendering": {
+      "primary": "css",
+      "fallback": "css",
+      "animate": true,
+      "complexity": "balanced"
+    },
+    "ch19_hero_type": {
+      "type": "product_ui",
+      "variantIndex": null
+    },
+    "ch19_hero_variant_detail": {
+      "elements": [
+        "screenshot",
+        "headline",
+        "subheadline",
+        "cta_primary",
+        "cta_secondary"
+      ]
+    },
+    "ch20_visual_treatment": {
+      "hasVideo": false
+    },
+    "ch21_trust_signals": {
+      "approach": "credentials",
+      "prominence": "subtle",
+      "layoutVariant": "trust_credentials_NaN",
+      "contentProvided": false,
+      "suggestedStats": [
+        "users",
+        "uptime",
+        "performance",
+        "integrations"
+      ]
+    },
+    "ch21_trust_content": {
+      "credentials": [],
+      "testimonials": [],
+      "stats": [],
+      "securityBadges": []
+    },
+    "ch22_social_proof": {
+      "type": "testimonials_grid",
+      "prominence": "subtle"
+    },
+    "ch22_impact_demonstration": {
+      "type": "cumulative_stats",
+      "realTime": false,
+      "interactive": false
+    },
+    "ch23_content_depth": {
+      "level": "minimal",
+      "estimatedSections": 3,
+      "hasHero": true,
+      "hasFeatures": false,
+      "hasCTA": false,
+      "hasFAQ": false,
+      "hasTestimonials": false
+    },
+    "ch23_information_architecture": {
+      "pattern": "hub_spoke"
+    },
+    "ch24_personalization": {
+      "approach": "static",
+      "dynamicContent": false,
+      "userSegmentation": false
+    }
+  },
+  "constraints": {
+    "forbiddenPatterns": [],
+    "requiredPatterns": [],
+    "bondingRules": [
+      "[wcag_contrast_minimum] WCAG 1.4.3, informationDensity: 0.30 → Minimum contrast ratio 3:1 required for WCAG AA",
+      "[wcag_reduced_motion] WCAG 2.3.3, respectMotionPreference: true → Respect prefers-reduced-motion for users with vestibular disorders",
+      "[wcag_text_spacing] WCAG 1.4.12, informationDensity: 0.30 → Line height 1.5 minimum for readability",
+      "[cold_geometric] emotionalTemperature: 0.00 → Cold emotional tone requires geometric precision",
+      "[cold_metallic] emotionalTemperature: 0.00 → Metallic material conveys clinical precision"
+    ],
+    "compensatorySignals": []
+  },
+  "viabilityScore": 1,
+  "generation": {
+    "timestamp": "2026-03-10T18:54:46.889Z",
+    "version": "2.0.0",
+    "options": {
+      "creativityLevel": "balanced",
+      "brandWeight": 0.7,
+      "sectorWeight": 0.5
+    },
+    "brand": null,
+    "rationale": [
+      "[Accessibility] Motion physics disabled per WCAG 2.3.3 (reduced motion preference)",
+      "[Accessibility Profile] Contrast: 3:1, Motion: reduced, Touch: 44px"
+    ]
+  }
+}

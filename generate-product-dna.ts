@@ -1,7 +1,7 @@
 import { SemanticTraitExtractor } from "./src/semantic/extractor.js";
 import { GenomeSequencer } from "./src/genome/sequencer.js";
-import { CSSGenerator } from "./src/generators/css-generator.js";
-import { HTMLTopologyGenerator } from "./src/generators/html-topology.js";
+import { CSSGenerator } from "./src/css-generator.js";
+import { HTMLGenerator } from "./src/html-generator.js";
 import { WebGLGenerator } from "./src/generators/webgl-generator.js";
 import { FXGenerator } from "./src/generators/fx-generator.js";
 import { SVGGenerator } from "./src/generators/svg-generator.js";
@@ -19,7 +19,7 @@ async function run() {
     const extractor = new SemanticTraitExtractor(apiKey);
     const sequencer = new GenomeSequencer();
     const cssGen = new CSSGenerator();
-    const htmlGen = new HTMLTopologyGenerator();
+    const htmlGen = new HTMLGenerator();
     const webglGen = new WebGLGenerator();
     const fxGen = new FXGenerator();
     const svgGen = new SVGGenerator();
@@ -42,10 +42,10 @@ async function run() {
         const epigeneticData = await epigeneticParser.parseAssets([]);
 
         // Generate the full DNA
-        const genome = sequencer.generate("Permutations Product Page", traits, epigeneticData);
+        const genome = sequencer.generate("Permutations Product Page", traits, { primarySector: "technology" }, epigeneticData);
 
         // Generate all design outputs
-        const tailwindConfig = cssGen.generate(genome, "tailwind");
+        const tailwindConfig = cssGen.generate(genome, { format: "expanded" });
         const topology = htmlGen.generateTopology(genome);
         const webglComponents = webglGen.generateR3F(genome);
         const fxAtmosphere = fxGen.generateCSSClass(genome);

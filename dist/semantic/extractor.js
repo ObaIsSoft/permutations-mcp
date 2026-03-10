@@ -50,7 +50,7 @@ export class SemanticTraitExtractor {
                 break;
             case "gemini":
                 const genAI = new GoogleGenerativeAI(key);
-                this.gemini = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                this.gemini = genAI.getGenerativeModel({ model: "gemini-2.5-pro-latest" }); // Best multimodal, 1M context, reasoning
                 break;
         }
     }
@@ -80,6 +80,9 @@ export class SemanticTraitExtractor {
                 emotionalTemperature: this.clamp(result.emotionalTemperature ?? 0.5),
                 playfulness: this.clamp(result.playfulness ?? 0.5),
                 spatialDependency: this.clamp(result.spatialDependency ?? 0.5),
+                trustRequirement: 0.5,
+                visualEmphasis: 0.5,
+                conversionFocus: 0.5,
             };
         }
         catch (e) {
@@ -91,6 +94,9 @@ export class SemanticTraitExtractor {
                 emotionalTemperature: 0.5,
                 playfulness: 0.5,
                 spatialDependency: 0.5,
+                trustRequirement: 0.5,
+                visualEmphasis: 0.5,
+                conversionFocus: 0.5,
             };
         }
     }
@@ -123,7 +129,7 @@ Respond ONLY with a valid JSON object matching this exact shape:
         if (!this.groq)
             throw new Error("Groq client not initialized");
         const response = await this.groq.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
+            model: "llama-4-scout-17b-16e-instruct", // Fast, 10M context, open source
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             temperature: 0.2,
@@ -135,7 +141,7 @@ Respond ONLY with a valid JSON object matching this exact shape:
         if (!this.openai)
             throw new Error("OpenAI client not initialized");
         const response = await this.openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-4.1", // Best cost/performance, 1M context
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             temperature: 0.2,
@@ -147,7 +153,7 @@ Respond ONLY with a valid JSON object matching this exact shape:
         if (!this.anthropic)
             throw new Error("Anthropic client not initialized");
         const response = await this.anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
+            model: "claude-3-7-sonnet-latest", // Best for coding/reasoning
             max_tokens: 1024,
             messages: [{ role: "user", content: prompt }],
         });

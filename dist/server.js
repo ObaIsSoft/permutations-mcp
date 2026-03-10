@@ -3,8 +3,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { SemanticTraitExtractor } from "./semantic/extractor.js";
 import { GenomeSequencer } from "./genome/sequencer.js";
-import { CSSGenerator } from "./generators/css-generator.js";
-import { HTMLTopologyGenerator } from "./generators/html-topology.js";
+import { CSSGenerator } from "./css-generator.js";
+import { HTMLGenerator } from "./html-generator.js";
 import { WebGLGenerator } from "./generators/webgl-generator.js";
 import { FXGenerator } from "./generators/fx-generator.js";
 import { SVGGenerator } from "./generators/svg-generator.js";
@@ -32,7 +32,7 @@ class DesignGenomeServer {
         this.extractor = new SemanticTraitExtractor();
         this.sequencer = new GenomeSequencer();
         this.cssGen = new CSSGenerator();
-        this.htmlGen = new HTMLTopologyGenerator();
+        this.htmlGen = new HTMLGenerator();
         this.webglGen = new WebGLGenerator();
         this.fxGen = new FXGenerator();
         this.svgGen = new SVGGenerator();
@@ -163,10 +163,10 @@ class DesignGenomeServer {
                         // 2. Semantic Extraction (Context overrides)
                         const finalContext = epigeneticData?.brandContext || args.project_context;
                         const traits = await this.extractor.extractTraits(args.intent, finalContext);
-                        // 3. DNA Sequencing (Hash + Traits + Epigenetics)
-                        const genome = this.sequencer.generate(args.seed, traits, epigeneticData);
+                        // 3. DNA Sequencing (Hash + Traits + Config + Epigenetics)
+                        const genome = this.sequencer.generate(args.seed, traits, { primarySector: "technology" }, epigeneticData);
                         // 4. Component Generation
-                        const tailwindConfig = this.cssGen.generate(genome, "tailwind");
+                        const tailwindConfig = this.cssGen.generate(genome, { format: "compressed" });
                         const topology = this.htmlGen.generateTopology(genome);
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
@@ -192,7 +192,7 @@ class DesignGenomeServer {
                         // Generate from archetype (no API calls needed)
                         const genome = this.sequencer.generateFromArchetype(archetype, args.seed);
                         // Component Generation
-                        const tailwindConfig = this.cssGen.generate(genome, "tailwind");
+                        const tailwindConfig = this.cssGen.generate(genome, { format: "compressed" });
                         const topology = this.htmlGen.generateTopology(genome);
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
@@ -258,16 +258,16 @@ class DesignGenomeServer {
                         // Generate component outputs for each life form
                         const outputs = {
                             planet: {
-                                tailwind: this.cssGen.generate(ecosystem.planet.baseGenome, "tailwind"),
+                                tailwind: this.cssGen.generate(ecosystem.planet.baseGenome, { format: "compressed" }),
                                 topology: this.htmlGen.generateTopology(ecosystem.planet.baseGenome)
                             },
                             microbial: ecosystem.lifeForms.microbial.map(m => ({
                                 id: m.id,
-                                tailwind: this.cssGen.generate(m.genome, "tailwind")
+                                tailwind: this.cssGen.generate(m.genome, { format: "compressed" })
                             })),
                             flora: ecosystem.lifeForms.flora.map(f => ({
                                 id: f.id,
-                                tailwind: this.cssGen.generate(f.genome, "tailwind")
+                                tailwind: this.cssGen.generate(f.genome, { format: "compressed" })
                             })),
                             civilization: ecosystem.civilization ? {
                                 level: ecosystem.civilization.sentienceLevel,
@@ -313,7 +313,7 @@ class DesignGenomeServer {
                         let codeOutputs = null;
                         if (args.generate_code !== false) {
                             // Get base genome for the tier
-                            const baseGenome = this.sequencer.generate(args.seed, traits);
+                            const baseGenome = this.sequencer.generate(args.seed, traits, { primarySector: "technology" });
                             codeOutputs = generateCivilizationOutput(tier, baseGenome);
                         }
                         return {

@@ -42,6 +42,8 @@ export const ARCHETYPES: Record<string, FunctionalArchetype> = {
                 hierarchyDepth: 2,
                 contentTone: "technical",
                 scanVsReadRatio: 0.9,
+                keywords: [],
+                entities: [],
             },
             visualMarkers: {
                 dominantColors: [],
@@ -79,6 +81,8 @@ export const ARCHETYPES: Record<string, FunctionalArchetype> = {
                 hierarchyDepth: 3,
                 contentTone: "narrative",
                 scanVsReadRatio: 0.3,
+                keywords: [],
+                entities: [],
             },
             visualMarkers: {
                 dominantColors: [],
@@ -116,6 +120,8 @@ export const ARCHETYPES: Record<string, FunctionalArchetype> = {
                 hierarchyDepth: 4,
                 contentTone: "technical",
                 scanVsReadRatio: 0.1,
+                keywords: [],
+                entities: [],
             },
             visualMarkers: {
                 dominantColors: [],
@@ -153,6 +159,8 @@ export const ARCHETYPES: Record<string, FunctionalArchetype> = {
                 hierarchyDepth: 3,
                 contentTone: "commercial",
                 scanVsReadRatio: 0.6,
+                keywords: [],
+                entities: [],
             },
             visualMarkers: {
                 dominantColors: [],
@@ -190,6 +198,8 @@ export const ARCHETYPES: Record<string, FunctionalArchetype> = {
                 hierarchyDepth: 2,
                 contentTone: "commercial",
                 scanVsReadRatio: 0.5,
+                keywords: [],
+                entities: [],
             },
             visualMarkers: {
                 dominantColors: [],
@@ -227,6 +237,8 @@ export const ARCHETYPES: Record<string, FunctionalArchetype> = {
                 hierarchyDepth: 3,
                 contentTone: "narrative",
                 scanVsReadRatio: 0.2,
+                keywords: [],
+                entities: [],
             },
             visualMarkers: {
                 dominantColors: [],
