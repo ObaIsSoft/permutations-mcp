@@ -1,0 +1,135 @@
+{
+  "dnaHash": "4c71c8b84f6a92614b59cfc9b4f635b9b6cbca08771513d58c4bf7dc66f141be",
+  "traits": {
+    "informationDensity": 0.8,
+    "temporalUrgency": 0.4,
+    "emotionalTemperature": 0.2,
+    "playfulness": 0.7,
+    "spatialDependency": 0.9
+  },
+  "chromosomes": {
+    "ch1_structure": {
+      "topology": "flat",
+      "maxNesting": 3
+    },
+    "ch2_rhythm": {
+      "density": "airtight",
+      "baseSpacing": 8
+    },
+    "ch3_type_display": {
+      "family": "Space Grotesk, system-ui, sans-serif",
+      "charge": "geometric",
+      "weight": 900
+    },
+    "ch4_type_body": {
+      "family": "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      "xHeightRatio": 0.5588235294117647,
+      "contrast": 0.939607843137255
+    },
+    "ch5_color_primary": {
+      "hue": 292,
+      "saturation": 0.788235294117647,
+      "lightness": 0.7058823529411765,
+      "temperature": "cool"
+    },
+    "ch6_color_temp": {
+      "backgroundTemp": "cool",
+      "contrastRatio": 14.147058823529411
+    },
+    "ch7_edge": {
+      "radius": 10,
+      "style": "soft"
+    },
+    "ch8_motion": {
+      "physics": "step",
+      "durationScale": 0.5741176470588236
+    },
+    "ch9_grid": {
+      "logic": "broken",
+      "asymmetry": 1.3235294117647058
+    },
+    "ch10_hierarchy": {
+      "depth": "flat",
+      "zIndexBehavior": "isolation"
+    },
+    "ch11_texture": {
+      "surface": "flat",
+      "noiseLevel": 0.3568627450980392
+    },
+    "ch12_signature": {
+      "entropy": 0.796078431372549,
+      "uniqueMutation": "4c71c8b8"
+    },
+    "ch13_atmosphere": {
+      "fx": "crt_noise",
+      "intensity": 0.7129411764705882
+    },
+    "ch14_physics": {
+      "material": "metallic",
+      "roughness": 0.009411764705882354,
+      "transmission": 0
+    },
+    "ch15_biomarker": {
+      "geometry": "organic",
+      "complexity": 0.06588235294117648
+    },
+    "ch16_typography": {
+      "display": {
+        "size": "39px",
+        "lineHeight": "1.60",
+        "letterSpacing": "-0.01em"
+      },
+      "h1": {
+        "size": "31px",
+        "lineHeight": "1.64",
+        "letterSpacing": "-0.006em"
+      },
+      "h2": {
+        "size": "25px",
+        "lineHeight": "1.68",
+        "letterSpacing": "-0.004em"
+      },
+      "h3": {
+        "size": "20px",
+        "lineHeight": "1.72",
+        "letterSpacing": "-0.002em"
+      },
+      "body": {
+        "size": "16px",
+        "lineHeight": "1.80",
+        "letterSpacing": "0em"
+      },
+      "small": {
+        "size": "14px",
+        "lineHeight": "1.76",
+        "letterSpacing": "-0.004em"
+      },
+      "ratio": 1.25,
+      "baseSize": 16
+    },
+    "ch17_accessibility": {
+      "minContrastRatio": 7,
+      "focusIndicator": "underline",
+      "respectMotionPreference": false,
+      "minTouchTarget": 44,
+      "screenReaderOptimized": true
+    },
+    "ch18_rendering": {
+      "primary": "webgl",
+      "fallback": "css",
+      "animate": true,
+      "complexity": "rich"
+    }
+  },
+  "constraints": {
+    "forbiddenPatterns": [],
+    "requiredPatterns": [],
+    "bondingRules": [
+      "[wcag_contrast_minimum] WCAG 1.4.3, informationDensity: 0.80 → Minimum contrast ratio 7:1 required for WCAG AAA",
+      "[wcag_text_spacing] WCAG 1.4.12, informationDensity: 0.80 → Line height 1.5 minimum for readability",
+      "[cold_geometric] emotionalTemperature: 0.20 → Cold emotional tone requires geometric precision",
+      "[cold_metallic] emotionalTemperature: 0.20 → Metallic material conveys clinical precision"
+    ]
+  },
+  "viabilityScore": 1
+}

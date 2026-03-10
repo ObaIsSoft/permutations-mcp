@@ -3,24 +3,32 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { MeshTransmissionMaterial, Environment } from '@react-three/drei';
 import type { Mesh } from 'three';
 
-/* Permutations Generated DNA:
- * Material: glass
- * Roughness: 0.048627450980392145
- * Transmission: 0.8949019607843138
- * Geometry: torusKnot
- * Rendering Strategy: Derived from genome ch18_rendering
+/* Permutations Generated DNA - DYNAMIC FROM GENOME:
+ * Material: glass (from ch14_physics)
+ * Primary Color: from ch5_color_primary
+ * Rendering Strategy: from ch18_rendering
  */
+
+// Get genome color from CSS variable or fallback
+function getGenomeColor(): string {
+  if (typeof document === 'undefined') return '#4ade80';
+  const root = getComputedStyle(document.documentElement);
+  const hue = root.getPropertyValue('--primary-hue').trim() || '145';
+  const sat = root.getPropertyValue('--primary-sat').trim() || '27%';
+  const light = root.getPropertyValue('--primary-light').trim() || '53%';
+  return `hsl(${hue}, ${sat}, ${light})`;
+}
 
 /** Rendering strategy from genome - determines how to render visual elements */
 interface RenderingStrategy {
     /** Primary rendering approach */
-    primary: "webgl" | "css" | "static" | "svg";
+    primary: string;
     /** Fallback if primary fails or unsupported */
-    fallback: "css" | "static" | "none";
+    fallback: string;
     /** Whether to animate (respects accessibility settings) */
     animate: boolean;
     /** Complexity level - affects performance vs quality tradeoff */
-    complexity: "minimal" | "balanced" | "rich";
+    complexity: string;
 }
 
 /**
@@ -115,6 +123,11 @@ function CSSFallback3D({ strategy }: { strategy: RenderingStrategy }) {
 
 function GlassOrganism({ animate }: { animate: boolean }) {
     const meshRef = useRef<Mesh>(null);
+    const [color, setColor] = useState('#4ade80');
+
+    useEffect(() => {
+        setColor(getGenomeColor());
+    }, []);
 
     useFrame((_, delta) => {
         if (meshRef.current && animate) {
@@ -124,16 +137,28 @@ function GlassOrganism({ animate }: { animate: boolean }) {
     });
 
     return (
-        <mesh ref={meshRef} scale={1.2} position={[2, 0, 0]}>
-            <torusKnotGeometry args={[1, 0.3, 128, 32]} />
-            <MeshTransmissionMaterial
-                roughness={0.048627450980392145}
-                transmission={0.8949019607843138}
-                thickness={0.5}
-                ior={1.5}
-                color="#7f93c9"
-            />
-        </mesh>
+        <>
+            {/* Background glow for visibility */}
+            <mesh scale={2} position={[2, 0, -1]}>
+                <sphereGeometry args={[1.5, 32, 32]} />
+                <meshBasicMaterial color={color} transparent opacity={0.1} />
+            </mesh>
+            {/* Main glass organism */}
+            <mesh ref={meshRef} scale={1.2} position={[2, 0, 0]}>
+                <torusKnotGeometry args={[1, 0.35, 128, 32]} />
+                <MeshTransmissionMaterial
+                    roughness={0.1}
+                    transmission={0.8}
+                    thickness={1.5}
+                    ior={1.8}
+                    color={color}
+                    emissive={color}
+                    emissiveIntensity={0.2}
+                />
+            </mesh>
+            {/* Point light to illuminate the glass */}
+            <pointLight position={[2, 2, 2]} intensity={2} color={color} />
+        </>
     );
 }
 

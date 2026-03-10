@@ -1,0 +1,105 @@
+{
+  "planet": {
+    "seed": "planet-y2k-moon",
+    "conditions": {
+      "informationDensity": 0.8,
+      "temporalUrgency": 0.6,
+      "emotionalTemperature": 0.4,
+      "playfulness": 0.7,
+      "spatialDependency": 0.8
+    },
+    "baseGenome": {
+      "dnaHash": "61e7dddbe2e70e335fc15232957c0b49217da57991b7a514fa2f2adf0382ad7f",
+      "primaryColor": 116,
+      "material": "glass",
+      "complexity": 0.5741176470588235
+    }
+  },
+  "lifeForms": {
+    "microbial": [
+      {
+        "id": "M-0",
+        "material": "glass",
+        "edgeRadius": 21,
+        "entropy": 0.42745098039215684,
+        "mutation": "b5edb83e"
+      },
+      {
+        "id": "M-1",
+        "material": "glass",
+        "edgeRadius": 2,
+        "entropy": 0.5490196078431373,
+        "mutation": "5f1b1aae"
+      },
+      {
+        "id": "M-2",
+        "material": "glass",
+        "edgeRadius": 12,
+        "entropy": 0.9647058823529412,
+        "mutation": "3b857bcb"
+      },
+      {
+        "id": "M-3",
+        "material": "glass",
+        "edgeRadius": 6,
+        "entropy": 0.2901960784313726,
+        "mutation": "c643979d"
+      },
+      {
+        "id": "M-4",
+        "material": "glass",
+        "edgeRadius": 14,
+        "entropy": 0.3568627450980392,
+        "mutation": "97a41202"
+      },
+      {
+        "id": "M-5",
+        "material": "glass",
+        "edgeRadius": 7,
+        "entropy": 0.7529411764705882,
+        "mutation": "c64a5be9"
+      },
+      {
+        "id": "M-6",
+        "material": "glass",
+        "edgeRadius": 12,
+        "entropy": 0.3176470588235294,
+        "mutation": "538cf1d3"
+      },
+      {
+        "id": "M-7",
+        "material": "glass",
+        "edgeRadius": 21,
+        "entropy": 0.20784313725490197,
+        "mutation": "99ee36d0"
+      }
+    ],
+    "flora": [
+      {
+        "id": "F-0",
+        "topology": "flat",
+        "geometry": "organic",
+        "fx": "crt_noise"
+      },
+      {
+        "id": "F-1",
+        "topology": "deep",
+        "geometry": "organic",
+        "fx": "crt_noise"
+      },
+      {
+        "id": "F-2",
+        "topology": "radial",
+        "geometry": "organic",
+        "fx": "crt_noise"
+      },
+      {
+        "id": "F-3",
+        "topology": "deep",
+        "geometry": "organic",
+        "fx": "crt_noise"
+      }
+    ],
+    "civilization": null
+  }
+}

@@ -1,43 +1,39 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-    content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-    theme: {
-        extend: {
-            colors: {
-                primary: {
-                    DEFAULT: '#7f93c9',
-                    hue: 224,
-                },
-                background: '#f5f5f5',
-                surface: '#ffffff',
-            },
-            fontFamily: {
-                display: ['Space Mono', 'JetBrains Mono', 'monospace'],
-                body: ['IBM Plex Mono', 'Courier', 'monospace'],
-            },
-            spacing: {
-                'genome-unit': '16px',
-            },
-            borderRadius: {
-                'genome': '9px',
-                'none': '0px',
-            },
-            transitionTimingFunction: {
-                'genome': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-            },
-            transitionDuration: {
-                'genome': '376ms',
-            },
+module.exports = {
+  content: ["./src/**/*.{html,js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        // These will be overridden by genome.json at runtime
+        background: '#0a0a0a',
+        surface: '#141414',
+        'surface-elevated': '#1a1a1a',
+        primary: 'hsl(var(--primary-hue, 145), var(--primary-sat, 27%), var(--primary-light, 53%))',
+        'primary-dim': 'hsl(var(--primary-hue, 145), var(--primary-sat, 27%), var(--primary-light, 53%), 0.1)',
+      },
+      fontFamily: {
+        display: ['var(--font-display, "Fraunces"), "Playfair Display", serif'],
+        body: ['var(--font-body, "Merriweather"), Georgia, serif'],
+        mono: ['Space Grotesk', 'system-ui', 'monospace'],
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        'genome': 'var(--edge-radius, 27px)',
+      },
+      transitionTimingFunction: {
+        'genome': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      animation: {
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'scan': 'scan 3s linear infinite',
+      },
+      keyframes: {
+        scan: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(100%)' },
         },
+      },
     },
-    plugins: [],
-    corePlugins: {},
-};
-
-/*
-Design Genome DNA: 2f51eec6c7043eedf0fc9f69a4181997b79e0f7c792e8389c1faf478b1a46c30
-Viability Score: 1
-Traits: {"informationDensity":0.7,"temporalUrgency":0.8,"emotionalTemperature":0.6,"playfulness":0.9,"spatialDependency":0.8}
-Topology: radial | Grid: masonry | Motion: spring | FX: fluid_mesh | Material: glass | Biomarker: organic
-Generated: Permutations V3 - Biological Planetary Adaptation System
-*/
+  },
+  plugins: [],
+}

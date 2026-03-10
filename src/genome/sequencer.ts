@@ -105,7 +105,7 @@ export class GenomeSequencer {
                 ch3_type_display: { family: this.selectDisplayFont(bytes[5], charge), charge, weight: [400, 700, 900][bytes[6] % 3] },
                 ch4_type_body: { family: this.selectBodyFont(bytes[7], charge), xHeightRatio: 0.5 + b(8) * 0.2, contrast: 0.8 + b(9) * 0.4 },
                 ch5_color_primary: { hue, saturation: Math.max(0.2, b(11)), lightness: Math.max(0.2, b(12)), temperature: temp },
-                ch6_color_temp: { backgroundTemp: temp === "warm" ? "cool" : "neutral", contrastRatio: 4.5 + b(13) * 10 },
+                ch6_color_temp: { backgroundTemp: temp === "warm" ? "neutral" : "cool", contrastRatio: 4.5 + b(13) * 10 },
                 ch7_edge: { radius, style: radius === 0 ? "sharp" : (radius > 16 ? "organic" : "soft") },
                 ch8_motion: { physics, durationScale: 0.2 + b(14) * 1.8 },
                 ch9_grid: { logic: traits.informationDensity > 0.8 ? "column" : this.selectFromHash(bytes[15], ["column", "masonry", "broken"]), asymmetry },
@@ -147,14 +147,14 @@ export class GenomeSequencer {
     private selectDisplayFont(byte: number, charge: string): string {
         if (charge === "monospace") return "Space Mono, JetBrains Mono, monospace";
         if (charge === "humanist") return "Fraunces, Playfair Display, serif";
-        if (charge === "geometric") return "Space Grotesk, Inter, sans-serif";
-        return "Helvetica Neue, system-ui, sans-serif";
+        if (charge === "geometric") return "Space Grotesk, system-ui, sans-serif";
+        return "system-ui, -apple-system, sans-serif";
     }
 
     private selectBodyFont(byte: number, charge: string): string {
         if (charge === "monospace") return "IBM Plex Mono, Courier, monospace";
         if (charge === "humanist") return "Merriweather, Georgia, serif";
-        return "Inter, Roboto, sans-serif";
+        return "system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
     }
 
     /**

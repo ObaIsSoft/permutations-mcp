@@ -1,0 +1,111 @@
+# Permutations MCP — Project Rules for AI Agents
+
+These rules govern how AI coding agents (Cursor, Windsurf, Claude Desktop) must interact with this codebase. The Permutations MCP server is the single source of truth for all design decisions. **No aesthetic values may be invented manually.**
+
+---
+
+## Rule 1 — Always Call The Engine First
+
+Before creating any new UI component, page, section or design token, you MUST call the `generate_design_genome` MCP tool.
+
+```
+{
+  "tool": "generate_design_genome",
+  "arguments": {
+    "intent": "<describe the component or page in plain language>",
+    "seed": "<project-name>-<component-name>-<timestamp>",
+    "project_context": "<overarching brand or product narrative>",
+    "brand_asset_paths": ["</absolute/path/to/logo.png>", "</absolute/path/to/brand-guidelines.pdf>"]
+  }
+}
+```
+
+`project_context` and `brand_asset_paths` are optional but STRONGLY recommended for contextual accuracy.
+
+---
+
+## Rule 2 — Apply The Generated Config
+
+After calling the tool, you will receive a JSON response with multiple output fields. Apply each one:
+
+### `tailwindConfig`
+Copy this into `tailwind.config.js`. Do not merge manually — replace the `theme.extend` section entirely.
+
+### `cssVariableBlock` (from the `css` format output)
+Inject these CSS custom properties into `index.css` under `:root`. These are the live design tokens.
+
+### `webglComponents`
+If `ch18_rendering.primary` is `webgl`, paste the generated JSX into a `Procedural3D.tsx` file.
+
+### `fxAtmosphere`
+Paste the generated `.fx-atmosphere` CSS class into `index.css`. Apply the class to your hero/section containers.
+
+### `svgBiomarker`
+Use the generated SVG as the brand mark in your navbar/header. Do not substitute a generic icon.
+
+---
+
+## Rule 3 — Respect Forbidden Patterns
+
+The `genome.constraints.forbiddenPatterns` array contains patterns you are **strictly prohibited from using**.
+
+Common examples and what they mean:
+| Pattern | What to avoid |
+|---|---|
+| `large_hero_images` | No full-bleed background images in hero sections |
+| `scroll_animations` | No scroll-triggered fade/parallax effects |
+| `bounce_animations` | No spring-easing on bouncy elements |
+| `rounded_cards` | No heavily rounded cards (border-radius must be 0 or genome-defined) |
+| `heavy_blur_effects` | No backdrop-filter or gaussian blur greater than genome intensity |
+| `generous_whitespace` | No padding > genome-unit * 2 between sections |
+
+---
+
+## Rule 4 — Respect Required Patterns
+
+The `genome.constraints.requiredPatterns` array contains patterns you **must implement**.
+
+Common examples:
+| Pattern | What to implement |
+|---|---|
+| `high_contrast_text` | All body text must meet the `minContrastRatio` from ch17_accessibility |
+| `tabular_numerals` | All numbers must use `font-variant-numeric: tabular-nums` |
+| `compact_base_spacing` | Use `genome-unit` (from ch2) as the base spacing unit everywhere |
+
+---
+
+## Rule 5 — Typography Must Use Genome Values
+
+Do not invent font sizes. Use the `fontSize.*` values from the generated Tailwind config:
+- `text-display` for hero headings
+- `text-h1`, `text-h2`, `text-h3` for hierarchy
+- `text-body` for paragraphs
+- `text-small` for captions and metadata
+
+Font families are defined by `ch3_type_display.family` (headings) and `ch4_type_body.family` (body text). Do not use fonts not in these families.
+
+---
+
+## Rule 6 — Color Is Derived From The Genome
+
+The primary color is defined by `ch5_color_primary`. Never use hex/RGB colors that are not derived from this chromosome. Use `var(--primary-hue)`, `var(--primary-sat)`, `var(--primary-light)` in CSS, or the `primary` Tailwind token.
+
+Background colors are defined by `ch6_color_temp.backgroundTemp`:
+- `cool` → dark backgrounds (`#0a0a0a`, `#141414`)
+- `warm` → light backgrounds (`#fafaf9`, `#ffffff`)
+- `neutral` → medium tone
+
+---
+
+## Rule 7 — Motion Must Respect The Genome
+
+Use `transition-timing-function: var(--genome-easing)` and `transition-duration: var(--genome-duration)` for all animations.
+If `ch17_accessibility.respectMotionPreference` is `true`, wrap all animations with `@media (prefers-reduced-motion: no-preference)`.
+
+---
+
+## When To Re-Run The Engine
+
+- When starting a new feature area (e.g. switching from landing page to dashboard)
+- When the user provides brand assets (logos, style guides)
+- Never re-run with the same seed for the same component unless you want deterministic regeneration

@@ -25,9 +25,9 @@ async function run() {
     const svgGen = new SVGGenerator();
     const epigeneticParser = new EpigeneticParser();
 
-    // The payload structure - partial requirement with full context
-    const intent = "A spectacular product landing page";
-    const projectContext = "The Permutations Engine: A biological, planetary adaptation system where designs emerge as living organisms adapting to atmospheric conditions. Technical manifesto—avant-garde, uncompromising, deeply parametric.";
+    // The payload structure - rich, opinionated prompt that reflects the full story
+    const intent = "A dark, avant-garde product landing page for a parametric design engine that mathematically generates unique design systems from biological metaphors. The page should feel like a living organism — alien, technical, and visually uncompromising. High spatial complexity, experimental typography, and atmospheric depth are essential. This is NOT a SaaS landing page. It is a manifesto.";
+    const projectContext = "Permutations is an MCP (Model Context Protocol) server that intercepts AI code generation and forces it to produce mathematically unique UI systems instead of template-based slop. Every design decision — typography, color, spacing, motion, 3D geometry — is derived from a SHA-256 hash of semantic intent vectors. The design philosophy: as life evolves distinct organisms to survive on different planets (atmospheric pressure, radiation, gravity), Permutations evolves distinct design organisms to survive in different content environments. The brand must feel:  1) Technical and precise — monospace fonts, data-dense layouts, exact mathematical values  2) Biological and spatial — organic shapes, membrane-like transparency, 3D depth  3) Avant-garde and uncompromising — not a startup, not a SaaS, a manifesto. 4) Dark and atmospheric — deep space energy, bioluminescent accents, zero whitespace generosity. The audience is senior designers and developers who hate generic AI output. The visual DNA should make them immediately recognize this is different.";
 
     console.log("🧬 PERMUTATIONS DOGFOODING\n");
     console.log("Intent:", intent);
@@ -75,11 +75,35 @@ async function run() {
 
         console.log("\n========= SVG BIOMARKER =========");
         console.log(svgBiomarker);
+        // Write genome.json to website public folder so the site picks it up
+        import("fs").then(fs => {
+            const genomeJson = JSON.stringify(genome, null, 2);
+            fs.writeFileSync("website/public/genome.json", genomeJson, "utf-8");
+            fs.writeFileSync("website/src/genome.json", genomeJson, "utf-8"); // for IDE imports
+            console.log("\n✅ genome.json written to website/public/genome.json (served at /genome.json)");
+            console.log(`   Primary Hue: ${genome.chromosomes.ch5_color_primary.hue}° (${genome.chromosomes.ch5_color_primary.temperature})`);
+            console.log(`   Font: ${genome.chromosomes.ch3_type_display.family.split(",")[0].trim()}`);
+            console.log(`   Radius: ${genome.chromosomes.ch7_edge.radius}px`);
+            console.log(`   Biomarker: ${genome.chromosomes.ch15_biomarker.geometry}`);
+            console.log(`   Rendering: ${genome.chromosomes.ch18_rendering.primary}`);
+
+            // Also write full output dump for debugging
+            const fullOutput = [
+                "=== TAILWIND CONFIG ===", tailwindConfig,
+                "=== HTML TOPOLOGY ===", JSON.stringify(topology, null, 2),
+                "=== WEBGL COMPONENTS ===", webglComponents,
+                "=== FX ATMOSPHERE ===", fxAtmosphere,
+                "=== SVG BIOMARKER ===", svgBiomarker,
+            ].join("\n\n");
+            fs.writeFileSync("dna_output_v2.txt", fullOutput, "utf-8");
+            console.log("✅ Full output written to dna_output_v2.txt");
+        });
+
 
         // Demonstrate archetype mode (no API key required)
         console.log("\n\n========= ARCHETYPE MODE (No API Key) =========");
         console.log("Generating dashboard archetype...\n");
-        
+
         const archetypeGenome = sequencer.generateFromArchetype("dashboard", "demo-dashboard-001");
         console.log(`Archetype: Departure Board (dashboard)`);
         console.log(`Topology: ${archetypeGenome.chromosomes.ch1_structure.topology}`);
