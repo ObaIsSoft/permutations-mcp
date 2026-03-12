@@ -139,10 +139,27 @@ export class EcosystemGenerator {
             floraCount?: number;      // 8-12
             faunaCount?: number;      // 6-10
             complexityTarget?: number; // 0-1
+            primarySector?: string;   // sector override from caller
         }
     ): Ecosystem {
-        // Generate the shared environment (ONE genome)
-        const genome = this.sequencer.generate(seed, traits, { primarySector: "technology" });
+        // Derive sector from caller or infer from trait signature
+        type InferrableSector = "technology" | "healthcare" | "fintech" | "commerce" | "education" | "entertainment" | "legal" | "manufacturing";
+        let inferredSector: InferrableSector = "technology";
+        if (options?.primarySector) {
+            inferredSector = options.primarySector as InferrableSector;
+        } else if (traits.trustRequirement > 0.7 && traits.emotionalTemperature > 0.6) {
+            inferredSector = "healthcare";
+        } else if (traits.trustRequirement > 0.7 && traits.emotionalTemperature < 0.4) {
+            inferredSector = "fintech";
+        } else if (traits.conversionFocus > 0.7 && traits.visualEmphasis > 0.6) {
+            inferredSector = "commerce";
+        } else if (traits.playfulness > 0.6 && traits.temporalUrgency < 0.4) {
+            inferredSector = "entertainment";
+        } else if (traits.informationDensity > 0.7 && traits.emotionalTemperature < 0.3) {
+            inferredSector = "manufacturing";
+        }
+        // Generate the shared environment (ONE genome for entire ecosystem)
+        const genome = this.sequencer.generate(seed, traits, { primarySector: inferredSector });
         
         // Calculate how well this environment supports life
         const habitabilityScore = this.calculateHabitability(traits);

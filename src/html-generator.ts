@@ -76,17 +76,20 @@ export class HTMLGenerator {
   private generateHeader(genome: DesignGenome): string {
     const contentDepth = genome.chromosomes.ch23_content_depth;
     const ia = genome.chromosomes.ch23_information_architecture;
+    const copy = genome.chromosomes.ch25_copy_engine;
 
-    return `<header class="header">
+    // H-4: Use ia.navigationType to set nav class
+    // H-3: Use genome-generated CTA instead of hardcoded "Get Started"
+    return `<header class="header nav-${ia.navigationType}">
   <div class="container">
     <nav class="nav">
-      <a href="#" class="logo">Logo</a>
+      <a href="#" class="logo">${copy.companyName}</a>
       <ul class="nav-links">
         ${contentDepth.hasHero ? '<li><a href="#hero">Home</a></li>' : ''}
         ${contentDepth.level !== 'minimal' ? '<li><a href="#features">Features</a></li>' : ''}
         ${contentDepth.hasTestimonials ? '<li><a href="#testimonials">Reviews</a></li>' : ''}
         ${contentDepth.hasFAQ ? '<li><a href="#faq">FAQ</a></li>' : ''}
-        ${contentDepth.hasCTA ? '<li><a href="#cta" class="btn btn-primary">Get Started</a></li>' : ''}
+        ${contentDepth.hasCTA ? `<li><a href="#cta" class="btn btn-primary">${copy.cta}</a></li>` : ''}
       </ul>
     </nav>
   </div>
@@ -365,21 +368,23 @@ export class HTMLGenerator {
   }
 
   private generateContentCarouselHero(genome: DesignGenome, layout: HeroLayoutVariant): string {
+    const copy = genome.chromosomes.ch25_copy_engine;
+    const items = copy.features.map((feat, idx) => {
+      return `
+      <div class="carousel-item">
+        <img src="content-${idx + 1}.jpg" alt="${feat.title}" />
+        <h3>${feat.title}</h3>
+        <p>${feat.description}</p>
+      </div>`;
+    }).join('');
     return `  <div class="hero-content">
-    <h1 class="text-h1">Featured Content</h1>
+    <h1 class="text-h1">${copy.headline}</h1>
+    <p class="hero-subtitle">${copy.subheadline}</p>
     <div class="hero-carousel">
-      <div class="carousel-item">
-        <img src="content-1.jpg" alt="Content 1" />
-        <h3>Latest Release</h3>
-      </div>
-      <div class="carousel-item">
-        <img src="content-2.jpg" alt="Content 2" />
-        <h3>Trending Now</h3>
-      </div>
-      <div class="carousel-item">
-        <img src="content-3.jpg" alt="Content 3" />
-        <h3>Coming Soon</h3>
-      </div>
+      ${items}
+    </div>
+    <div class="hero-ctas">
+      <a href="#explore" class="btn btn-primary">${copy.cta}</a>
     </div>
   </div>`;
   }
@@ -402,11 +407,12 @@ export class HTMLGenerator {
   }
 
   private generateDefaultHero(genome: DesignGenome): string {
+    const copy = genome.chromosomes.ch25_copy_engine;
     return `  <div class="hero-content">
-    <h1 class="text-h1">Welcome</h1>
-    <p class="hero-subtitle">Discover something amazing.</p>
+    <h1 class="text-h1">${copy.headline}</h1>
+    <p class="hero-subtitle">${copy.subheadline}</p>
     <div class="hero-ctas">
-      <a href="#explore" class="btn btn-primary">Get Started</a>
+      <a href="#explore" class="btn btn-primary">${copy.cta}</a>
     </div>
   </div>`;
   }
@@ -461,23 +467,46 @@ export class HTMLGenerator {
 
   private generateTestimonialsGrid(genome: DesignGenome): string {
     const copy = genome.chromosomes.ch25_copy_engine;
-    return `<div class="testimonials-grid">
+    const social = genome.chromosomes.ch22_social_proof;
+    const count = typeof social.logoCount === 'number' ? Math.min(social.logoCount, 3) : 3;
+    // Generate varied testimonial cards so we always have a proper grid
+    const firstNames = ['Alex', 'Jordan', 'Morgan'];
+    const lastNames = ['Williams', 'Chen', 'Patel'];
+    const rolesList = [copy.authorTitle, 'Director of Operations', 'VP of Growth'];
+    const companiesList = [copy.companyName, 'Apex Group', 'Vertex Solutions'];
+    const quotesList = [
+      copy.testimonial,
+      `The results exceeded every expectation. Our team has never been more productive.`,
+      `Exactly what we needed. Simple, powerful, and built for how we actually work.`
+    ];
+    const cards = Array.from({ length: count }, (_, idx) => `
   <div class="testimonial-card">
-    <p>"${copy.testimonial}"</p>
+    <p>"${quotesList[idx % quotesList.length]}"</p>
     <div class="testimonial-author">
-      <strong>${copy.authorName}</strong>
-      <span>${copy.authorTitle}, ${copy.companyName}</span>
+      <strong>${firstNames[idx % firstNames.length]} ${lastNames[(idx + 1) % lastNames.length]}</strong>
+      <span>${rolesList[idx % rolesList.length]}, ${companiesList[idx % companiesList.length]}</span>
     </div>
-  </div>
+  </div>`).join('');
+    return `<div class="testimonials-grid">${cards}
 </div>`;
   }
 
   private generateCustomerLogos(genome: DesignGenome): string {
-    const copy = genome.chromosomes.ch25_copy_engine;
+    const social = genome.chromosomes.ch22_social_proof;
+    const count = typeof social.logoCount === 'number' ? Math.min(social.logoCount, 8) : 5;
+    // Plausible partner brand names (not the client's own name)
+    const partnerBrands = [
+      'Meridian Group', 'Stratum Labs', 'Epoch Ventures', 'Cascade Partners',
+      'Zenith Corp', 'Vantage Works', 'Prism Inc', 'Vertex Co'
+    ];
+    const items = Array.from({ length: count }, (_, idx) => {
+      const brand = partnerBrands[idx % partnerBrands.length];
+      return `  <div class="logo-item" aria-label="${brand}">
+    <span class="logo-wordmark">${brand}</span>
+  </div>`;
+    }).join('\n');
     return `<div class="logos-row">
-  <div class="logo-item">${copy.companyName} Partner 1</div>
-  <div class="logo-item">${copy.companyName} Partner 2</div>
-  <div class="logo-item">${copy.companyName} Partner 3</div>
+${items}
 </div>`;
   }
 

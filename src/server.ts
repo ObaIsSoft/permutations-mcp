@@ -103,13 +103,25 @@ class DesignGenomeServer {
                         properties: {
                             archetype: {
                                 type: "string",
-                                enum: ["dashboard", "portfolio", "documentation", "commerce", "landing", "blog"],
+                                enum: [
+                                    "dashboard", "documentation", "dev-tool",
+                                    "portfolio", "agency-portfolio",
+                                    "commerce", "luxury-commerce",
+                                    "landing", "saas-landing", "fintech-landing", "medical-landing",
+                                    "blog", "magazine",
+                                    "real-estate", "restaurant", "non-profit"
+                                ],
                                 description: "Functional archetype defining the content purpose"
                             },
                             seed: { type: "string", description: "Unique project seed for deterministic generation" },
-                            intent: { type: "string", description: "Optional: Natural language intent for archetype auto-detection" }
+                            intent: { type: "string", description: "Optional: Natural language intent for archetype auto-detection" },
+                            font_provider: {
+                                type: "string",
+                                enum: ["bunny", "google"],
+                                description: "Typography provider (default: bunny)"
+                            }
                         },
-                        required: ["archetype", "seed"]
+                        required: ["seed"]
                     }
                 },
                 {
@@ -483,8 +495,11 @@ class DesignGenomeServer {
                     }
 
                     case "generate_from_archetype": {
-                        if (!args.archetype || !args.seed) {
-                            throw new McpError(ErrorCode.InvalidParams, "Missing archetype or seed");
+                        if (!args.seed) {
+                            throw new McpError(ErrorCode.InvalidParams, "Missing seed");
+                        }
+                        if (!args.archetype && !args.intent) {
+                            throw new McpError(ErrorCode.InvalidParams, "Provide either archetype or intent for auto-detection");
                         }
 
                         // Auto-detect archetype from intent if provided
@@ -674,9 +689,18 @@ class DesignGenomeServer {
                             throw new McpError(ErrorCode.InvalidParams, "Missing intent or seed");
                         }
 
-                        // Extract traits
+                        // M-12: Single LLM call — use analyze() to get both traits AND sector at once
                         const context = args.project_context || "";
-                        const traits = await this.extractor.extractTraits(args.intent, context);
+                        let civTraits: any;
+                        let civSector: string = "technology";
+                        try {
+                            const civAnalysis = await this.extractor.analyze(args.intent, context);
+                            civTraits = civAnalysis.traits;
+                            civSector = civAnalysis.sector?.primary || "technology";
+                        } catch {
+                            // Fallback: extractTraits with default sector
+                            civTraits = await this.extractor.extractTraits(args.intent, context);
+                        }
 
                         // ECOSYSTEM INTEGRATION: Use provided ecosystem or generate standalone
                         let ecosystem = args.ecosystem;
@@ -689,12 +713,11 @@ class DesignGenomeServer {
                             organisms = ecosystem.organisms;
                         }
                         
-                        // If no ecosystem or genome, generate new one
+                        // If no ecosystem or genome, generate using already-derived sector (no second LLM call)
                         if (!baseGenome) {
-                            const civContentForSector = [args.intent, context].filter(Boolean).join(" ");
-                            const civSectorResult = await this.extractor.classifySector(civContentForSector);
-                            baseGenome = this.sequencer.generate(args.seed, traits, { primarySector: civSectorResult.primary as any });
+                            baseGenome = this.sequencer.generate(args.seed, civTraits, { primarySector: civSector as any });
                         }
+                        const traits = civTraits;
 
                         // Generate civilization tier
                         const tier = this.civilizationGen.generate(

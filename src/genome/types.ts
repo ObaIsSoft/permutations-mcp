@@ -45,6 +45,30 @@ export type SubSector =
     // Commerce
     | "commerce_luxury" | "commerce_fast" | "commerce_b2b"
     | "commerce_marketplace" | "commerce_general"
+    // Entertainment
+    | "entertainment_streaming" | "entertainment_gaming" | "entertainment_music"
+    | "entertainment_film" | "entertainment_events" | "entertainment_general"
+    // Manufacturing
+    | "manufacturing_aerospace" | "manufacturing_automotive" | "manufacturing_pharma"
+    | "manufacturing_industrial" | "manufacturing_consumer" | "manufacturing_general"
+    // Legal
+    | "legal_corporate" | "legal_litigation" | "legal_immigration"
+    | "legal_ip" | "legal_family" | "legal_general"
+    // Real Estate
+    | "real_estate_residential" | "real_estate_commercial" | "real_estate_luxury"
+    | "real_estate_rental" | "real_estate_industrial" | "real_estate_general"
+    // Travel
+    | "travel_luxury" | "travel_budget" | "travel_adventure" | "travel_business"
+    | "travel_cruise" | "travel_general"
+    // Food
+    | "food_restaurant" | "food_delivery" | "food_catering" | "food_cpg"
+    | "food_beverage" | "food_general"
+    // Sports
+    | "sports_fitness" | "sports_professional" | "sports_amateur" | "sports_equipment"
+    | "sports_nutrition" | "sports_general"
+    // Technology
+    | "technology_saas" | "technology_developer" | "technology_infrastructure"
+    | "technology_ai" | "technology_security" | "technology_hardware" | "technology_general"
     // Default
     | "general";
 
@@ -666,7 +690,7 @@ export interface DesignGenome {
             faq: { question: string; answer: string }[];
             features: { title: string; description: string }[];
         };
-        ch26_copy_intelligence: {
+        ch29_copy_intelligence: {
             industryTerminology: string[];
             emotionalRegister: "clinical" | "professional" | "conversational" | "playful" | "luxury" | "urgent";
             formalityLevel: number;

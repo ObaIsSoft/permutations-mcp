@@ -108,6 +108,44 @@ ${indent}outline-offset: 2px;
         parts.push(`${indent}--color-primary-800: hsl(${primaryHue}, ${primarySat}%, ${Math.max(5, primaryLight - 30)}%);`);
         parts.push(`${indent}--color-primary-900: hsl(${primaryHue}, ${primarySat}%, ${Math.max(5, primaryLight - 40)}%);`);
         
+        // H-5: ch26_color_system — secondary, accent, semantic, and neutral vars
+        const colorSystem = chromosomes.ch26_color_system;
+        if (colorSystem) {
+            // Secondary
+            parts.push(`${indent}/* Secondary Color */`);
+            parts.push(`${indent}--color-secondary: ${colorSystem.secondary.hex};`);
+            parts.push(`${indent}--color-secondary-h: ${Math.round(colorSystem.secondary.hue)};`);
+            parts.push(`${indent}--color-secondary-s: ${Math.round(colorSystem.secondary.saturation * 100)}%;`);
+            parts.push(`${indent}--color-secondary-l: ${Math.round(colorSystem.secondary.lightness * 100)}%;`);
+            parts.push(`${indent}--color-secondary-light: hsl(${Math.round(colorSystem.secondary.hue)}, ${Math.round(colorSystem.secondary.saturation * 100)}%, ${Math.min(95, Math.round(colorSystem.secondary.lightness * 100) + 20)}%);`);
+            parts.push(`${indent}--color-secondary-dark: hsl(${Math.round(colorSystem.secondary.hue)}, ${Math.round(colorSystem.secondary.saturation * 100)}%, ${Math.max(5, Math.round(colorSystem.secondary.lightness * 100) - 20)}%);`);
+            // Accent
+            parts.push(`${indent}/* Accent Color */`);
+            parts.push(`${indent}--color-accent: ${colorSystem.accent.hex};`);
+            parts.push(`${indent}--color-accent-light: hsl(${Math.round(colorSystem.accent.hue)}, ${Math.round(colorSystem.accent.saturation * 100)}%, ${Math.min(95, Math.round(colorSystem.accent.lightness * 100) + 20)}%);`);
+            // Semantic
+            parts.push(`${indent}/* Semantic Colors */`);
+            parts.push(`${indent}--color-success: ${colorSystem.semantic.success.hex};`);
+            parts.push(`${indent}--color-warning: ${colorSystem.semantic.warning.hex};`);
+            parts.push(`${indent}--color-error: ${colorSystem.semantic.error.hex};`);
+            parts.push(`${indent}--color-info: ${colorSystem.semantic.info.hex};`);
+            // Neutral scale
+            if (colorSystem.neutral?.scale?.length) {
+                parts.push(`${indent}/* Neutral Scale */`);
+                colorSystem.neutral.scale.forEach((shade, idx) => {
+                    const step = (idx + 1) * 100;
+                    parts.push(`${indent}--color-neutral-${step}: ${shade};`);
+                });
+            }
+            // Dark mode surfaces
+            if (colorSystem.darkMode?.surfaceStack?.length) {
+                parts.push(`${indent}/* Dark Mode */`);
+                colorSystem.darkMode.surfaceStack.forEach((surface, idx) => {
+                    parts.push(`${indent}--color-dark-surface-${idx}: ${surface};`);
+                });
+            }
+        }
+        
         // Surface colors - FROM GENOME surfaceStack
         const surfaceStack = chromosomes.ch6_color_temp.surfaceStack;
         const isDark = chromosomes.ch6_color_temp.isDark;
@@ -256,9 +294,13 @@ ${indent}cursor: pointer;
 ${indent}transition: all var(--duration-fast) var(--ease-smooth);
 }`);
         
+        // M-10: Contrast-aware text color for btn-primary
+        // If primary is very light (lightness > 60%) use dark text; else use white
+        const primaryLightness = Math.round(genome.chromosomes.ch5_color_primary.lightness * 100);
+        const btnTextColor = primaryLightness > 60 ? 'var(--color-text)' : 'white';
         parts.push(`.btn-primary {
 ${indent}background: var(--color-primary);
-${indent}color: white;
+${indent}color: ${btnTextColor};
 }`);
         
         // Hash-derived hover lift: 1-4px

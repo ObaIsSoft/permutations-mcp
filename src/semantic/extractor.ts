@@ -84,6 +84,7 @@ interface LLMResponse {
 }
 
 export class SemanticTraitExtractor {
+    private apiKeyMissing: boolean = false;
     private groq?: Groq;
     private openai?: OpenAI;
     private anthropic?: Anthropic;
@@ -121,9 +122,10 @@ export class SemanticTraitExtractor {
         const key = apiKey || groqKey || openaiKey || anthropicKey || geminiKey || openrouterKey || huggingfaceKey;
 
         if (!key) {
-            throw new Error(
-                "No API key provided. Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY"
-            );
+            // M-16: Don't crash at boot. Set a flag so analyze() throws gracefully at call time.
+            // This allows offline tools (generate_from_archetype, etc.) to work without an LLM key.
+            this.apiKeyMissing = true;
+            return;
         }
 
         switch (this.provider) {
@@ -138,7 +140,7 @@ export class SemanticTraitExtractor {
                 break;
             case "gemini":
                 const genAI = new GoogleGenerativeAI(key);
-                this.gemini = genAI.getGenerativeModel({ model: "gemini-2.5-pro-latest" });
+                this.gemini = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                 break;
             case "openrouter":
                 // OpenRouter uses OpenAI-compatible API
@@ -171,6 +173,12 @@ export class SemanticTraitExtractor {
      * Single-call extraction: traits + sector + subSector + archetype
      */
     async analyze(intent: string, projectContext?: string): Promise<DesignAnalysis> {
+        // M-16: Graceful error if no API key — deferred from constructor so offline tools still work
+        if (this.apiKeyMissing) {
+            throw new Error(
+                "No LLM API key configured. Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY. Offline tools (generate_from_archetype, mutate_genome, etc.) work without a key."
+            );
+        }
         const prompt = this.buildPrompt(intent, projectContext);
         let lastError: Error | null = null;
 
