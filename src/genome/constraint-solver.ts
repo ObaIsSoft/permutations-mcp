@@ -406,17 +406,11 @@ export class GenomeConstraintSolver {
         });
 
         // WCAG 2.3.3 Animation from Interactions - Respect motion preferences
+        // NOTE: We do NOT force physics to "none" - that would mutate the aesthetic.
+        // Instead, the CSS generator wraps animations in @media (prefers-reduced-motion: no-preference)
+        // and provides static fallbacks. The genome keeps its physics; accessibility is handled at output.
         if (a11y.respectMotionPreference) {
-            this.addConstraint({
-                id: "wcag_reduced_motion",
-                target: "chromosomes.ch8_motion.physics",
-                value: "none",
-                priority: 10,
-                source: `WCAG 2.3.3, respectMotionPreference: ${a11y.respectMotionPreference}`,
-                reason: "Respect prefers-reduced-motion for users with vestibular disorders"
-            });
-
-            this.rationale.push("[Accessibility] Motion physics disabled per WCAG 2.3.3 (reduced motion preference)");
+            this.rationale.push("[Accessibility] Motion physics preserved in genome; CSS generator will add prefers-reduced-motion media query per WCAG 2.3.3");
         }
 
         // WCAG 2.5.5 Target Size - Minimum touch target size

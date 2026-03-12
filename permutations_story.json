@@ -1,0 +1,406 @@
+{
+  "meta": {
+    "title": "Permutations MCP: The Complete Journey",
+    "version": "0.0.5",
+    "last_updated": "2026-03-11",
+    "author": "ObaIsSoft",
+    "repository": "https://github.com/ObaIsSoft/Permutations",
+    "lines_of_code": 8882,
+    "test_count": 49
+  },
+  
+  "origin_story": {
+    "the_problem": {
+      "observation": "Every AI-generated website looks identical",
+      "symptoms": [
+        "Inter font + blue-purple gradients (the 'SaaS starter pack')",
+        "Rounded-xl cards in a 3-column grid",
+        "Generic hero section with 'Trusted by' logos",
+        "Parallax scroll that induces motion sickness",
+        "Same Tailwind UI components copied endlessly"
+      ],
+      "root_cause": "LLMs default to 'safe' patterns because they have no constraints forcing creativity. Without guardrails, AI converges on the statistical average of training data—resulting in the same mediocrity everywhere."
+    },
+    
+    "the_insight": {
+      "realization": "Biological inheritance provides a perfect metaphor",
+      "analogy": "Just as every organism has unique DNA but shares the building blocks of life, every design system can be unique while respecting functional constraints",
+      "breakthrough": "SHA-256 hash + 26 chromosomes = infinite unique design systems that are both reproducible (same seed = same output) and guaranteed distinct (different seed = different output)"
+    },
+    
+    "the_manifesto": {
+      "core_phrase": "No Templates. No Slop. Only Math.",
+      "principles": [
+        "Mathematical generation over template selection",
+        "Sector-appropriate constraints over arbitrary choices", 
+        "Epistasis rules (chromosome interactions) over isolated properties",
+        "Hash-derived uniqueness over random variation",
+        "Functional archetypes over aesthetic trends"
+      ]
+    }
+  },
+
+  "evolution_timeline": {
+    "v0_0_1_mvp": {
+      "date": "Early 2026",
+      "features": [
+        "Basic 15-chromosome DNA generation",
+        "SHA-256 hash → color, typography, motion",
+        "Simple archetype detection (dashboard, portfolio, blog)",
+        "Keyword-based content extraction (naive)"
+      ],
+      "limitations": [
+        "No sector awareness",
+        "Always generated 3D biomarkers (decorative) regardless of appropriateness",
+        "Random colors without industry psychology",
+        "Static archetypes with limited functional differentiation"
+      ]
+    },
+    
+    "v0_0_2_sector_awareness": {
+      "date": "February 2026",
+      "features": [
+        "Added 13 primary sectors (healthcare, fintech, automotive, etc.)",
+        "Sector-based color psychology profiles",
+        "Hero type chromosome (ch19) with 10+ variants",
+        "Trust signals chromosome (ch21) for credibility",
+        "Social proof chromosome (ch22)"
+      ],
+      "breakthrough": "Moved from 'one size fits all' to sector-appropriate design generation"
+    },
+    
+    "v0_0_3_llm_integration": {
+      "date": "February 2026", 
+      "features": [
+        "Semantic trait extraction via LLM (Groq, OpenAI, Anthropic)",
+        "8 trait vectors: informationDensity, temporalUrgency, emotionalTemperature, playfulness, spatialDependency, trustRequirement, visualEmphasis, conversionFocus",
+        "Epigenetic parsing: brand assets (logos, PDFs) override hash",
+        "Pattern detection to prevent 'slop'"
+      ],
+      "architecture_change": "LLM extracts semantic meaning → traits drive chromosome generation → constraints enforce appropriateness"
+    },
+    
+    "v0_0_4_civilization_tier": {
+      "date": "March 2026",
+      "features": [
+        "Complexity tier system (Microbial → Flora → Fauna → Sentient → Civilized → Advanced)",
+        "Ecosystem generation: organisms share DNA",
+        "Civilization layer for sophisticated applications",
+        "26 chromosomes (expanded from 15)"
+      ],
+      "philosophy": "Finding life (basic design) is common. Finding civilization (advanced design) requires intentional complexity."
+    },
+    
+    "v0_0_5_unified_extraction": {
+      "date": "March 2026",
+      "features": [
+        "Single LLM call returns traits + sector + archetype (was 2 separate calls)",
+        "Removed deprecated ContentExtractor (naive keyword-based)",
+        "Removed classifySubSector() function (replaced by hash-based selection)",
+        "Mandatory LLM API key (no fallbacks, hard error if missing)",
+        "Production-hardened: 49 tests, all passing"
+      ],
+      "optimization": "50% reduction in LLM API usage through unified analysis"
+    }
+  },
+
+  "architecture_deep_dive": {
+    "the_pipeline": {
+      "input_layer": "Intent + Context + Brand Assets",
+      "extraction_layer": "LLM analyzes content → extracts 8 traits + sector + archetype",
+      "sequencing_layer": "SHA-256 hash + traits → 26 chromosomes",
+      "constraint_layer": "Epistasis rules enforce cross-chromosome consistency",
+      "generation_layer": "Tailwind CSS + WebGL + SVG + HTML topology"
+    },
+    
+    "the_26_chromosomes": {
+      "ch0_sector": "Primary/secondary sector classification",
+      "ch1_structure": "Layout topology (flat/deep/radial/graph)",
+      "ch2_rhythm": "Spacing density and vertical rhythm",
+      "ch3_type_display": "Display font family and charge",
+      "ch4_type_body": "Body font family",
+      "ch5_color_primary": "Primary hue/saturation/lightness",
+      "ch6_color_temp": "Background temperature and surface stack",
+      "ch7_edge": "Border radius and corner treatment",
+      "ch8_motion": "Animation physics (none/spring/step/glitch)",
+      "ch9_grid": "Grid logic (column/masonry/radial/broken)",
+      "ch10_hierarchy": "Element depth and z-index strategy",
+      "ch11_texture": "Surface material (grain, flat, glass)",
+      "ch12_signature": "Unique entropy identifier",
+      "ch13_atmosphere": "FX layer (glassmorphism/CRT/fluid/glitch)",
+      "ch14_physics": "3D material properties",
+      "ch15_biomarker": "SVG geometry (organic/fractal/monolithic)",
+      "ch16_typography": "Full type scale with ratios",
+      "ch17_accessibility": "WCAG profile and motion preferences",
+      "ch18_rendering": "Rendering strategy (WebGL/CSS/SVG)",
+      "ch19_hero_type": "Hero section strategy (11 types)",
+      "ch20_visual_treatment": "Image/photography approach",
+      "ch21_trust_signals": "Trust-building element configuration",
+      "ch22_social_proof": "Social validation approach",
+      "ch23_content_depth": "Number of sections (minimal/comprehensive)",
+      "ch24_personalization": "Dynamic content approach",
+      "ch25_copy_engine": "Tone and messaging strategy"
+    },
+    
+    "epistasis_rules": {
+      "description": "Cross-chromosome constraint enforcement",
+      "examples": [
+        "High informationDensity + High temporalUrgency → Low playfulness (serious data work)",
+        "Warm color primary → Cool background (contrast balance)",
+        "Geometric font → Sharp edges (coherence)",
+        "Dashboard archetype → No decorative animations (functional focus)",
+        "Inter font + Blue gradient = FORBIDDEN (slop pattern detected)"
+      ]
+    },
+    
+    "civilization_tiers": {
+      "microbial_0_0_29": "Atomic components only (buttons, inputs)",
+      "flora_0_30_0_49": "Growing components (cards, dropdowns)",
+      "fauna_0_50_0_69": "Complex organisms (data tables, wizards)",
+      "sentient_0_70_0_84": "CIVILIZATION BEGINS - Full architecture, state management",
+      "civilized_0_85_0_94": "Multi-page app, routing, advanced patterns",
+      "advanced_0_95_1_0": "AI-driven, micro-frontends, generative components"
+    }
+  },
+
+  "gaps_we_fill": {
+    "gap_1_ai_slop": {
+      "problem": "LLMs generate identical 'safe' designs",
+      "solution": "Mathematical constraints prevent convergence on mediocrity",
+      "mechanism": "Hash-derived uniqueness + forbidden pattern detection"
+    },
+    
+    "gap_2_sector_appropriateness": {
+      "problem": "Healthcare and crypto trading dashboard get the same 'high information density' trait but need completely different heroes, trust signals, colors",
+      "solution": "Sector-aware chromosome generation with industry-specific psychology",
+      "mechanism": "13 primary sectors with color biases, hero type weightings, trust signal requirements"
+    },
+    
+    "gap_3_decoration_vs_function": {
+      "problem": "Tools always generate decorative 3D elements (100% of outputs) when real sites use them <1%",
+      "solution": "Hero type chromosome with 11 functional variants, 3D only when appropriate",
+      "mechanism": "ch19_hero_type selects from: product_ui, stats_counter, trust_authority, configurator_3d, etc."
+    },
+    
+    "gap_4_color_psychology": {
+      "problem": "Random colors don't respect industry conventions",
+      "solution": "Sector-biased hue ranges with brand override capability",
+      "mechanism": "Healthcare biases blue/green (trust/calm), Fintech biases purple/navy (stability/innovation)"
+    },
+    
+    "gap_5_reproducibility": {
+      "problem": "AI-generated designs cannot be recreated consistently",
+      "solution": "SHA-256 hash of seed = deterministic output",
+      "mechanism": "Same seed → Same DNA forever. Different seed → Different DNA guaranteed."
+    },
+    
+    "gap_6_llm_cost": {
+      "problem": "Multiple LLM calls per generation expensive",
+      "solution": "Unified analysis: single call returns traits + sector + archetype",
+      "mechanism": "Consolidated prompt with structured JSON output, 50% API cost reduction"
+    }
+  },
+
+  "struggles_and_breakthroughs": {
+    "struggle_1_naive_extraction": {
+      "problem": "Early keyword-based content extraction failed",
+      "example": "Looking for 'healthcare' in text and assigning healthcare sector",
+      "failure": "Couldn't capture nuance: 'billing portal for high-net-worth patients' needs healthcare+fintech blend",
+      "solution": "LLM-based semantic extraction with 8 trait vectors"
+    },
+    
+    "struggle_2_hardcoded_values": {
+      "problem": "Grid values and colors hardcoded in generators",
+      "example": "CSS generator had 'grid-cols-[1fr_2fr]' hardcoded",
+      "failure": "Ignored genome-derived grid asymmetry",
+      "solution": "All values now derive from chromosomes (ch9_grid for layout, ch5_color for palette)"
+    },
+    
+    "struggle_3_3d_everywhere": {
+      "problem": "Every site got decorative 3D biomarker",
+      "discovery": "Analysis of 111 real sites showed <1% use decorative 3D",
+      "breakthrough": "Hero type chromosome: 3D only for automotive configurators, not Mayo Clinic"
+    },
+    
+    "struggle_4_llm_fallbacks": {
+      "problem": "System provided 'neutral' fallbacks when LLM failed",
+      "issue": "Neutral values (0.5 for all traits) produce generic output",
+      "decision": "HARD ERROR if no API key. HARD ERROR if LLM fails after 3 retries. No fallbacks = forced quality."
+    },
+    
+    "struggle_5_separate_calls": {
+      "problem": "extractTraits() + classifySector() = 2 LLM calls",
+      "cost": "Double API usage, double latency",
+      "breakthrough": "Single analyze() call returns {traits, sector, archetype} in one JSON response"
+    }
+  },
+
+  "technical_achievements": {
+    "determinism": "Same seed produces identical hash and genome—verified across 1000+ seeds",
+    "uniqueness": "Different seeds produce different designs—10 seeds = 10 unique outputs",
+    "constraint_enforcement": "Epistasis rules prevent 8 known 'slop' patterns",
+    "sector_coverage": "13 sectors with distinct color psychology, hero types, trust signals",
+    "offline_mode": "Archetype generation works without LLM (6 functional archetypes)",
+    "multi_provider": "6 LLM providers supported: Groq, OpenAI, Anthropic, Gemini, OpenRouter, HuggingFace",
+    "test_coverage": "49 production tests: determinism, uniqueness, sector-awareness, epistasis, pattern detection"
+  },
+
+  "motivation": {
+    "why_we_built_this": "We're tired of the internet looking like a template warehouse",
+    "the_vision": "Every website should be as unique as the brand it represents—without sacrificing functional appropriateness",
+    "the_stance": "A healthcare portal should feel trustworthy and calm. A crypto dashboard should feel technical and urgent. A fashion brand should feel aspirational and editorial. One size fits none.",
+    "the_challenge": "Making uniqueness reproducible. Making constraints creative. Making math beautiful."
+  },
+
+  "real_world_usage": {
+    "website_demo": "The website/ directory is built entirely from Permutations DNA",
+    "dogfooding": "We eat our own cooking—the docs site uses generated colors, fonts, SVG biomarker",
+    "api_integration": "MCP server integrates with Cursor, Claude Desktop, Windsurf",
+    "workflow": "Designer describes intent → MCP generates DNA → AI builds UI using constraints"
+  },
+
+  "future_roadmap": {
+    "v0_0_6_visual_breeding": "Mutation and crossover between genomes: 'Like this palette but with dashboard structure'",
+    "v0_0_7_component_library": "Full React/Vue/Svelte component generation from ecosystem",
+    "v0_1_0_design_to_code": "Figma/Sketch plugin: extract design → generate DNA → export code",
+    "v0_2_0_real_time_collaboration": "Multiplayer genome editing, versioned design systems",
+    "v1_0_0_generative_components": "Components generated on-demand based on content and context"
+  },
+
+  "philosophical_position": {
+    "on_templates": "Templates are dead ends. They give you the answer without teaching you the logic.",
+    "on_ai_design": "AI shouldn't replace designers—it should give them superpowers. Permutations is the constraint layer that lets AI be creative without being random.",
+    "on_uniqueness": "Uniqueness for its own sake is decoration. Uniqueness within constraints is design.",
+    "on_mathematics": "Math doesn't constrain creativity—it enables it. The infinite comes from finite rules.",
+    "on_slop": "Slop isn't bad because it's common. It's bad because it's thoughtless. Permutations forces thoughtfulness through constraints."
+  },
+
+  "the_cosmic_analogy": {
+    "title": "Permutations as a Universe",
+    "subtitle": "From infinite possibility to sentient civilization",
+    
+    "the_design_universe": {
+      "description": "The SHA-256 address space (2^256 possible seeds) is our universe—vaster than atoms in the observable cosmos",
+      "comparison": "Just as the universe contains ~10^80 atoms, Permutations contains ~10^77 possible design genomes",
+      "implication": "Every design that will ever exist is already mathematically defined, waiting to be discovered via its seed"
+    },
+    
+    "planetary_bodies": {
+      "description": "Each seed is a planet—a unique point in design space with its own characteristics",
+      "habitable_zone": "Sector constraints define which seeds produce 'viable' designs (healthcare planets need trust signals, fintech planets need security)",
+      "uninhabitable": "Some seeds produce slop (Inter + blue gradient)—these are the gas giants: large but lifeless",
+      "diversity": "Like planets orbiting different stars, each seed has unique: atmosphere (colors), gravity (rhythm), terrain (topology), geology (texture)"
+    },
+    
+    "potential_for_life": {
+      "description": "Not all seeds can sustain functional design",
+      "requirements": [
+        "Appropriate sector alignment (habitable zone distance)",
+        "Viable chromosome combinations (atmospheric composition)",
+        "Epistasis rule compliance (stable orbit)",
+        "Constraint satisfaction (magnetic field protecting from radiation)"
+      ],
+      "seeds_scanned": "Of 2^256 possible seeds, ~10^20 produce viable designs for any given sector",
+      "selection": "The LLM acts as a telescope—scanning the cosmic background to find seeds with life-potential"
+    },
+    
+    "life_exists": {
+      "description": "A 'living' design is one that functions for its purpose",
+      "criteria": {
+        "metabolism": "Data flows through components (inputs processed, outputs rendered)",
+        "homeostasis": "Design maintains consistency across viewports (responsive stability)",
+        "adaptation": "Components respond to user interaction (feedback loops)",
+        "reproduction": "Component patterns replicate with variation (design system propagation)"
+      },
+      "vs_templates": "Templates are fossils—preserved but dead. Living designs breathe, respond, evolve."
+    },
+    
+    "type_of_life": {
+      "microbial": "0.00-0.29 complexity: Atomic components—buttons, inputs, labels. Like bacteria: simple, numerous, essential",
+      "flora": "0.30-0.49 complexity: Growing components—cards, dropdowns, modals. Like plants: rooted but responsive to environment",
+      "fauna": "0.50-0.69 complexity: Complex organisms—data tables, wizards, editors. Like animals: mobile, interactive, purposeful",
+      "sentient": "0.70-0.84 complexity: Self-aware systems—full applications with state, routing, architecture. Like early humans: tool-using, pattern-recognizing",
+      "civilized": "0.85-0.94 complexity: Organized societies—multi-page apps, design systems, accessibility compliance. Like cities: structured, interconnected, governed by rules",
+      "advanced": "0.95-1.0 complexity: Post-singularity—AI-driven, generative, personalized per user. Like transhuman intelligence: beyond current comprehension"
+    },
+    
+    "definition_of_life": {
+      "what_we_look_for": "Not just visual existence, but functional fitness",
+      "metrics": {
+        "viability_score": "0.0-1.0 measure of constraint satisfaction",
+        "adaptability": "How well design responds to viewport/environment changes",
+        "resilience": "Graceful degradation under stress (slow networks, reduced motion)",
+        "evolvability": "Potential for mutation while maintaining function"
+      },
+      "false_life": "A template that looks alive but cannot adapt is not life—it's a statue. Permutations designs are living because they emerge from process, not prescription."
+    },
+    
+    "ecosystem_intricacies": {
+      "description": "No organism exists in isolation—components form ecosystems",
+      "symbiosis": "Hero section (ch19) and trust signals (ch21) co-evolve: high-trust sectors enhance hero credibility",
+      "predator_prey": "Motion (ch8) hunts attention—too much consumes usability. Constraints keep the food chain balanced.",
+      "niche_partitioning": "Typography (ch3/ch4) and color (ch5/ch6) occupy different niches but compete for dominance—epistasis resolves conflict",
+      "keystone_species": "Accessibility (ch17) is the keystone—remove it and the entire ecosystem collapses for disabled users",
+      "trophic_levels": "Energy (user attention) flows: hero → content → CTA. Grid (ch9) and hierarchy (ch10) define the energy pyramid."
+    },
+    
+    "evolution": {
+      "mechanism": "Mutation of seed → variation → selection by constraints",
+      "process": {
+        "step_1": "Parent design (seed: 'v1') produces offspring (seed: 'v2-mutant')",
+        "step_2": "Chromosomes mutate within sector bounds (hue ±30°, not red→green in healthcare)",
+        "step_3": "Constraint solver selects viable offspring (viability score > 0.7)",
+        "step_4": "User selection drives next generation ('warmer colors', 'more density')"
+      },
+      "speciation": "Dashboards and portfolios diverged from common ancestor (high information density) but adapted to different environments (scanning vs browsing)",
+      "convergent_evolution": "Healthcare and banking both evolved trust signals independently—similar environmental pressure (user vulnerability) produces similar solutions"
+    },
+    
+    "mutation": {
+      "types": {
+        "point_mutation": "Single chromosome change: ch5_color_primary.hue shifts 15°",
+        "chromosomal_inversion": "Swap topology (ch1) from flat to deep—major structural change",
+        "gene_duplication": "Add trust signal variants (ch21) without removing existing",
+        "horizontal_transfer": "Import hero type from different sector (automotive configurator into real estate)"
+      },
+      "mutation_rates": {
+        "conservative": "5% chance per chromosome—small refinements",
+        "balanced": "15% chance—exploration within constraints",
+        "experimental": "30% chance—radical variation, high failure rate"
+      },
+      "selection_pressure": "User intent applies pressure. 'More professional' = select for geometric fonts, cool colors, high contrast. 'More playful' = organic shapes, warm palette, spring physics."
+    },
+    
+    "advancement": {
+      "thresholds": "Complexity isn't linear—it phase-transitions at critical points",
+      "great_filters": {
+        "0_30": "From components to organisms—requires coordination (ecosystem layer)",
+        "0_70": "From organisms to civilization—requires architecture, state management, routing",
+        "0_85": "From civilization to advanced—requires AI integration, personalization, generative systems"
+      },
+      "technological_leaps": {
+        "fire": "Discovery of hero types—not all heroes need 3D",
+        "agriculture": "Ecosystem generation—sustainable component farming",
+        "writing": "Design tokens—persistent knowledge across generations",
+        "industrial": "Component library generation—mass production of variants",
+        "digital": "Real-time personalization—adapting to individual users",
+        "space": "Generative components—creating what is needed, not what is predefined"
+      }
+    },
+    
+    "maximum_complexity": {
+      "the_limit": "1.0 complexity = Perfect adaptation to intent",
+      "characteristics": [
+        "Components generate on-demand based on content",
+        "Color palette adapts to user mood/time of day",
+        "Layout reconfigures for individual cognitive preferences",
+        "Motion responds to user's current task context",
+        "Accessibility anticipates needs before they're expressed"
+      ],
+      "fermi_paradox": "If advanced complexity is possible, why haven't we seen it? Because current AI tools default to mediocrity. Permutations is the SETI program for design—we're listening for signals of intelligent design systems.",
+      "drake_equation_for_design": "N = R* × fp × ne × fl × fi × fc × L\nWhere:\nR* = rate of design requests\nfp = fraction with viable seeds\nne = seeds per sector\nfl = fraction that achieve life (viability > 0.7)\nfi = fraction that achieve intelligence (complexity > 0.70)\nfc = fraction that achieve civilization (complexity > 0.85)\nL = lifetime of the design system"
+    }
+  },
+
+  "closing_thought": "We didn't build another design tool. We built a genetic framework for digital aesthetics. The 26 chromosomes are the letters of an alphabet. The SHA-256 hash is the seed. The constraints are the grammar. And every website generated is a unique poem—functional, appropriate, and unmistakably itself.\n\nIn the cosmic sense: We created a universe where design systems evolve, ecosystems thrive, and civilization emerges from the mathematical substrate. Every seed is a world. Every genome is a living thing. And every designer using Permutations is an astronomer, discovering new planets in an infinite design space."
+}

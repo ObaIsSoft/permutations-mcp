@@ -18,7 +18,7 @@ Every AI-generated website looks the same:
 
 ## The Solution
 
-Permutations treats design like **biological inheritance**. Each project gets a unique 26-chromosome DNA (ch0-sector through ch25-copy_engine) that:
+Permutations treats design like **biological inheritance**. Each project gets a unique 29-chromosome DNA (ch0-sector through ch28-iconography) that:
 - ✅ Guarantees unique output (different seed = different design)
 - ✅ Guarantees reproducibility (same seed = same design forever)
 - ✅ Forbids generic patterns (no Inter font, no blue-purple gradients)
@@ -66,7 +66,7 @@ Ask your AI to design something:
 ```
 
 Your AI receives:
-- 26-chromosome DNA (colors, typography, motion, grid, hero, trust signals, personalization)
+- 29-chromosome DNA (colors, typography, motion, grid, hero, trust signals, personalization, color system, motion choreography, iconography)
 - Tailwind config
 - CSS atmospheric effects
 - WebGL component specs
@@ -188,7 +188,7 @@ The system detects and forbids:
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Content Input  │────▶│  LLM Analysis   │────▶│  26-Chromosome  │
+│  Content Input  │────▶│  LLM Analysis   │────▶│  29-Chromosome  │
 │  (text/images)  │     │  (5 trait axes) │     │  DNA Generation │
 └─────────────────┘     └─────────────────┘     └────────┬────────┘
                                                          │

@@ -75,7 +75,7 @@ npm run build
 
 | Field | Description |
 |---|---|
-| `genome` | Full 26-chromosome JSON object. All design decisions encoded as floats (ch0-sector through ch25-copy_engine) |
+| `genome` | Full 29-chromosome JSON object. All design decisions encoded as floats (ch0-sector through ch28-iconography) |
 | `tailwindConfig` | Ready-to-paste `tailwind.config.js` with all chromosome values injected |
 | `cssVariableBlock` | CSS custom properties file for runtime injection |
 | `topology` | Structural sections object describing the layout skeleton |
@@ -152,6 +152,70 @@ const civilization = generate_civilization(
 
 ---
 
+## Design Exploration Tools
+
+### Generate Dynamic Component
+
+Generate ANY component type from description + genome. No hardcoded templates—structure is derived from purpose and elements:
+
+```
+generate_dynamic_component(
+  genome: genome_result.genome,
+  purpose: "pricing",
+  elements: ["title", "price", "period", "feature_list", "cta"],
+  layout: "vertical",
+  complexity: "molecular"
+)
+→ Returns: HTML, CSS, JS with full derivation tracking
+```
+
+### Mutate Genome (Breeding)
+
+Generate design variants while preserving what you love:
+
+```
+mutate_genome(
+  genome: parent_genome,
+  preserve: ["ch3_type_display", "ch5_color_primary"],  // Keep these
+  target_chromosomes: ["ch7_edge", "ch11_texture"],      // Vary these
+  mutation_rate: 0.3,  // 0.1=subtle, 0.5=dramatic
+  count: 3             // Generate 3 variants
+)
+→ Returns: Array of variants with similarity scores
+```
+
+### Extract Genome from URL
+
+Reverse-engineer a genome from any website (requires browser automation):
+
+```
+extract_genome_from_url(
+  url: "https://example.com"
+)
+→ Returns: Approximate genome with confidence score
+```
+
+**Capabilities:**
+- Color palette extraction → ch5, ch26
+- Typography detection → ch3, ch4, ch16
+- Spacing inference → ch2
+- Border radius patterns → ch7
+- Animation detection → ch8, ch27
+
+### Generate Design Brief
+
+Convert genome to human-readable prose for client approval:
+
+```
+generate_design_brief(
+  genome: genome_result.genome,
+  format: "prose"  // or "markdown", "json"
+)
+→ Returns: Visual direction, strategic decisions, copy intelligence
+```
+
+---
+
 ## Interpreting The Genome
 
 ### Trait Vectors (0.0–1.0)
@@ -166,32 +230,38 @@ const civilization = generate_civilization(
 
 ### Chromosome Quick Reference
 
-| Chromosome | Controls |
-|---|---|
-| ch1_structure | Layout topology (flat/deep/radial/graph) |
-| ch2_rhythm | Spacing density |
-| ch3_type_display | Display font family + weight |
-| ch4_type_body | Body font family |
-| ch5_color_primary | Primary hue/saturation/lightness |
-| ch6_color_temp | Background temperature |
-| ch7_edge | Border radius |
-| ch8_motion | Animation physics |
-| ch9_grid | Grid logic (column/masonry/radial/broken) |
-| ch10_hierarchy | Element depth/z-index strategy |
-| ch11_texture | Surface material (grain, flat, glass) |
-| ch12_signature | Unique entropy/mutation identifier |
-| ch13_atmosphere | FX layer (glassmorphism/crt_noise/fluid_mesh) |
-| ch14_physics | 3D material (glass/metallic/neumorphism/matte) |
-| ch15_biomarker | SVG geometry (organic/fractal/monolithic) |
-| ch16_typography | Full type scale (display → small sizes and ratios) |
-| ch17_accessibility | WCAG profile (contrast ratio, motion, touch target) |
-| ch18_rendering | Rendering strategy (webgl/css/svg/static) |
-| ch19_hero_type | Hero section strategy (product_ui, brand_logo, editorial_feature, etc.) |
-| ch20_visual_treatment | Image/photography treatment approach |
-| ch21_trust_signals | Trust-building elements (testimonials, stats, security badges) |
-| ch22_social_proof | Social validation (logos, ratings, community size) |
-| ch23_content_depth | Number of sections (minimal/moderate/extensive/comprehensive) |
-| ch24_personalization | Dynamic content approach (static/behavior_based/fully_dynamic) |
+| ID | Chromosome | Controls |
+|---|---|---|
+| ch0 | sector | Industry sector + sub-sector classification |
+| ch1 | structure | Layout topology (flat/deep/radial/graph) |
+| ch2 | rhythm | Spacing density + vertical rhythm |
+| ch3 | type_display | Display font family + weight |
+| ch4 | type_body | Body font family |
+| ch5 | color_primary | Primary hue/saturation/lightness |
+| ch6 | color_temp | Background temperature |
+| ch7 | edge | Border radius + corner treatment |
+| ch8 | motion | Animation physics (spring/tween/physics) |
+| ch9 | grid | Grid logic (column/masonry/radial/broken) |
+| ch10 | hierarchy | Element depth/z-index strategy |
+| ch11 | texture | Surface material (grain, flat, glass) |
+| ch12 | signature | Unique entropy/mutation identifier |
+| ch13 | atmosphere | FX layer (glassmorphism/crt_noise/fluid_mesh) |
+| ch14 | physics | 3D material (glass/metallic/neumorphism/matte) |
+| ch15 | biomarker | SVG geometry (organic/fractal/monolithic) |
+| ch16 | typography | Full type scale (display → small sizes and ratios) |
+| ch17 | accessibility | WCAG profile (contrast ratio, motion, touch target) |
+| ch18 | rendering | Rendering strategy (webgl/css/svg/static) |
+| ch19 | hero_type | Hero section strategy (product_ui, brand_logo, editorial_feature) |
+| ch20 | visual_treatment | Image/photography treatment approach |
+| ch21 | trust_signals | Trust-building elements (testimonials, stats, security badges) |
+| ch22 | social_proof | Social validation (logos, ratings, community size) |
+| ch23 | content_depth | Number of sections (minimal/moderate/extensive/comprehensive) |
+| ch24 | personalization | Dynamic content approach (static/behavior_based/fully_dynamic) |
+| ch25 | copy_engine | Copywriting system (headline, CTA, tagline, testimonials, FAQ) |
+| ch26 | copy_intelligence | Linguistic patterns (terminology, register, vocabulary complexity) |
+| ch26 | color_system | Complete palette (secondary, accent, semantic, neutral scale) |
+| ch27 | motion_choreography | Entry sequences, stagger timing, scroll triggers, hover micro-interactions |
+| ch28 | iconography | Icon system (style, stroke weight, library: lucide/phosphor/heroicons) |
 
 ---
 

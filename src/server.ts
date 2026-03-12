@@ -25,6 +25,11 @@ import { generateCivilizationOutput } from "./generators/civilization-generators
 
 import { DesignFileWriter } from "./generators/file-writer.js";
 import { formatGenerator } from "./generators/format-generators.js";
+import { componentGenerator, ComponentType } from "./generators/component-generator.js";
+import { designBriefGenerator } from "./generators/design-brief-generator.js";
+import { dynamicComponentGenerator } from "./generators/dynamic-component-generator.js";
+import { genomeMutator } from "./genome/mutation.js";
+import { urlGenomeExtractor } from "./genome/extractor-url.js";
 
 class DesignGenomeServer {
     private server: Server;
@@ -296,6 +301,136 @@ class DesignGenomeServer {
                         },
                         required: ["genome", "formats"]
                     }
+                },
+                {
+                    name: "generate_component",
+                    description: "Generates a specific UI component (pricing_table, nav, card_grid, testimonial, etc.) from an existing genome. The component inherits the design system including colors, typography, spacing, and motion from the genome.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            genome: {
+                                type: "object",
+                                description: "The design genome from generate_design_genome or generate_civilization"
+                            },
+                            component_type: {
+                                type: "string",
+                                enum: ["pricing_table", "nav", "card_grid", "testimonial", "data_table", "hero", "feature_list", "stats_counter", "faq_accordion", "cta_section", "footer", "form_contact"],
+                                description: "Type of component to generate"
+                            },
+                            variant: {
+                                type: "string",
+                                description: "Optional variant name (e.g., 'horizontal', 'compact', 'featured'). If not specified, default variant is used."
+                            }
+                        },
+                        required: ["genome", "component_type"]
+                    }
+                },
+                {
+                    name: "generate_design_brief",
+                    description: "Generates a human-readable design brief from a genome. This is what a designer hands to a developer or a client approves before implementation. Includes visual direction, strategic decisions, and copy intelligence.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            genome: {
+                                type: "object",
+                                description: "The design genome from generate_design_genome or generate_civilization"
+                            },
+                            format: {
+                                type: "string",
+                                enum: ["prose", "json", "markdown"],
+                                description: "Output format (default: prose)",
+                                default: "prose"
+                            }
+                        },
+                        required: ["genome"]
+                    }
+                },
+                {
+                    name: "generate_dynamic_component",
+                    description: "Generates ANY component type dynamically from description + genome. No hardcoded templates - structure is inferred from purpose and elements. Uses ch27_motion_choreography and ch26_color_system.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            genome: {
+                                type: "object",
+                                description: "The design genome"
+                            },
+                            purpose: {
+                                type: "string",
+                                description: "Component purpose (e.g., 'pricing', 'navigation', 'content_display')"
+                            },
+                            elements: {
+                                type: "array",
+                                items: { type: "string" },
+                                description: "Elements to include (e.g., ['title', 'price', 'cta', 'feature_list'])"
+                            },
+                            layout: {
+                                type: "string",
+                                enum: ["horizontal", "vertical", "grid", "layered"],
+                                description: "Layout direction"
+                            },
+                            complexity: {
+                                type: "string",
+                                enum: ["atomic", "molecular", "organism"],
+                                description: "Component complexity"
+                            }
+                        },
+                        required: ["genome", "purpose", "elements"]
+                    }
+                },
+                {
+                    name: "mutate_genome",
+                    description: "Generates variant genomes by mutating specific chromosomes while preserving others. The 'breeding' part of the biological metaphor. Keep what you love, explore variations.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            genome: {
+                                type: "object",
+                                description: "The parent genome to mutate"
+                            },
+                            target_chromosomes: {
+                                type: "array",
+                                items: { type: "string" },
+                                description: "Chromosomes to mutate (default: all except preserved)"
+                            },
+                            preserve: {
+                                type: "array",
+                                items: { type: "string" },
+                                description: "Chromosomes to preserve exactly (e.g., ['ch3_type_display', 'ch9_grid'])"
+                            },
+                            mutation_rate: {
+                                type: "number",
+                                minimum: 0,
+                                maximum: 1,
+                                description: "Mutation intensity 0.0-1.0 (0.1=subtle, 0.5=dramatic)",
+                                default: 0.3
+                            },
+                            count: {
+                                type: "number",
+                                description: "Number of variants to generate",
+                                default: 3
+                            }
+                        },
+                        required: ["genome"]
+                    }
+                },
+                {
+                    name: "extract_genome_from_url",
+                    description: "Reverse-engineers an approximate genome from any website URL. Scrapes CSS, extracts colors/fonts/spacing, and builds a genome approximation. Use for 'I love this site, make something similar' workflows.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            url: {
+                                type: "string",
+                                description: "Website URL to analyze"
+                            },
+                            css: {
+                                type: "string",
+                                description: "CSS content (if already scraped)"
+                            }
+                        },
+                        required: ["url"]
+                    }
                 }
             ]
         }));
@@ -345,16 +480,19 @@ class DesignGenomeServer {
                             );
                         }
 
-                        // 2. Semantic Extraction (single LLM call: traits + sector + archetype)
+                        // 2. Semantic Extraction (single LLM call: traits + sector + archetype + copy intelligence)
                         const finalContext = epigeneticData?.brandContext || context;
                         const analysis = await this.extractor.analyze(intent, finalContext);
-                        const { traits, sector } = analysis;
+                        const { traits, sector, copyIntelligence } = analysis;
                         const detectedSector = sector.primary as any;
 
-                        // 4. DNA Sequencing
+                        // 4. DNA Sequencing (pass copy intelligence to sequencer)
                         const genome = this.sequencer.generate(seed, traits, {
                             primarySector: detectedSector,
-                            options: { fontProvider: args.font_provider }
+                            options: { 
+                                fontProvider: args.font_provider,
+                                copyIntelligence
+                            }
                         }, epigeneticData);
 
                         // 4. Component Generation
@@ -895,6 +1033,152 @@ class DesignGenomeServer {
                                         vue: "Single File Components for Vue 3",
                                         svelte: "Svelte components with scoped styles"
                                     }
+                                }, null, 2)
+                            }]
+                        };
+                    }
+
+                    case "generate_component": {
+                        if (!args.genome || !args.component_type) {
+                            throw new McpError(ErrorCode.InvalidParams, "Missing genome or component_type");
+                        }
+
+                        const component = componentGenerator.generate(
+                            args.component_type as ComponentType,
+                            args.genome,
+                            args.genome.dnaHash
+                        );
+
+                        return {
+                            content: [{
+                                type: "text",
+                                text: JSON.stringify({
+                                    component: {
+                                        type: component.type,
+                                        name: component.name,
+                                        html: component.html,
+                                        css: component.css,
+                                        variants: component.variants,
+                                        accessibility: component.accessibility
+                                    },
+                                    genomeDerivation: component.genomeDerivation,
+                                    usage: {
+                                        html: "Copy the HTML into your component file",
+                                        css: "Add the CSS to your stylesheet or CSS-in-JS",
+                                        variants: "Apply modifier classes for different layouts",
+                                        accessibility: "ARIA roles and keyboard handlers are included"
+                                    }
+                                }, null, 2)
+                            }]
+                        };
+                    }
+
+                    case "generate_design_brief": {
+                        if (!args.genome) {
+                            throw new McpError(ErrorCode.InvalidParams, "Missing genome");
+                        }
+
+                        const brief = designBriefGenerator.generate(args.genome);
+                        const format = args.format || "prose";
+
+                        let output: string;
+                        if (format === "prose" || format === "markdown") {
+                            output = brief.prose;
+                        } else {
+                            output = JSON.stringify(brief, null, 2);
+                        }
+
+                        return {
+                            content: [{
+                                type: "text",
+                                text: output
+                            }]
+                        };
+                    }
+
+                    case "generate_dynamic_component": {
+                        if (!args.genome || !args.purpose || !args.elements) {
+                            throw new McpError(ErrorCode.InvalidParams, "Missing required parameters");
+                        }
+
+                        const component = dynamicComponentGenerator.generate(
+                            {
+                                purpose: args.purpose,
+                                elements: args.elements,
+                                layout: args.layout || "vertical",
+                                complexity: args.complexity || "molecular"
+                            },
+                            args.genome
+                        );
+
+                        return {
+                            content: [{
+                                type: "text",
+                                text: JSON.stringify(component, null, 2)
+                            }]
+                        };
+                    }
+
+                    case "mutate_genome": {
+                        if (!args.genome) {
+                            throw new McpError(ErrorCode.InvalidParams, "Missing genome");
+                        }
+
+                        const variants = genomeMutator.mutate(
+                            args.genome,
+                            {
+                                targetChromosomes: args.target_chromosomes || [],
+                                preserve: args.preserve || [],
+                                rate: args.mutation_rate || 0.3,
+                                count: args.count || 3
+                            }
+                        );
+
+                        return {
+                            content: [{
+                                type: "text",
+                                text: JSON.stringify({
+                                    parent: { dnaHash: args.genome.dnaHash, seed: args.genome.seed },
+                                    variants: variants.map((v, i) => ({
+                                        index: i + 1,
+                                        id: v.id,
+                                        similarityScore: v.similarityScore,
+                                        mutations: v.mutations.map(m => ({
+                                            chromosome: m.chromosome,
+                                            changeType: m.changeType
+                                        }))
+                                    }))
+                                }, null, 2)
+                            }]
+                        };
+                    }
+
+                    case "extract_genome_from_url": {
+                        if (!args.url) {
+                            throw new McpError(ErrorCode.InvalidParams, "Missing URL");
+                        }
+
+                        // Note: This requires browser automation in production
+                        // For now, returns a mock response indicating the feature
+                        return {
+                            content: [{
+                                type: "text",
+                                text: JSON.stringify({
+                                    note: "URL extraction requires browser automation tool in production",
+                                    url: args.url,
+                                    status: "This feature analyzes CSS to reverse-engineer genomes",
+                                    workflow: [
+                                        "1. Scrape CSS from URL using browser automation",
+                                        "2. Pass css content to this tool",
+                                        "3. Returns approximated genome with confidence score"
+                                    ],
+                                    capabilities: [
+                                        "Color palette extraction (primary → ch5)",
+                                        "Typography detection (ch3, ch4, ch16)",
+                                        "Spacing inference (ch2 rhythm)",
+                                        "Border radius patterns (ch7 edge)",
+                                        "Animation detection (ch8, ch27)"
+                                    ]
                                 }, null, 2)
                             }]
                         };

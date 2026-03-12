@@ -32,6 +32,18 @@ export interface DesignAnalysis {
         type: string; // dashboard, portfolio, landing, documentation, commerce, blog
         confidence: number;
     };
+    // Copy intelligence for ch25_copy_engine
+    copyIntelligence: {
+        industryTerminology: string[]; // e.g., ["portfolio", "assets under management", "returns"] for fintech
+        emotionalRegister: "clinical" | "professional" | "conversational" | "playful" | "luxury" | "urgent";
+        formalityLevel: number; // 0.0 = casual, 1.0 = formal
+        ctaAggression: number; // 0.0 = soft suggestion, 1.0 = aggressive conversion
+        headlineStyle: "benefit_forward" | "curiosity_gap" | "social_proof" | "how_to" | "direct";
+        vocabularyComplexity: "simple" | "moderate" | "technical" | "specialized";
+        sentenceStructure: "short_punchy" | "balanced" | "complex_periodic";
+        emojiUsage: boolean;
+        contractionUsage: boolean; // don't, can't, won't
+    };
 }
 
 /**
@@ -56,6 +68,17 @@ interface LLMResponse {
     archetype?: {
         type?: string;
         confidence?: number;
+    };
+    copyIntelligence?: {
+        industryTerminology?: string[];
+        emotionalRegister?: string;
+        formalityLevel?: number;
+        ctaAggression?: number;
+        headlineStyle?: string;
+        vocabularyComplexity?: string;
+        sentenceStructure?: string;
+        emojiUsage?: boolean;
+        contractionUsage?: boolean;
     };
 }
 
@@ -175,6 +198,17 @@ export class SemanticTraitExtractor {
                     archetype: {
                         type: result.archetype?.type || "landing",
                         confidence: this.clamp(result.archetype?.confidence ?? 0.5),
+                    },
+                    copyIntelligence: {
+                        industryTerminology: result.copyIntelligence?.industryTerminology || [],
+                        emotionalRegister: (result.copyIntelligence?.emotionalRegister as any) || "professional",
+                        formalityLevel: this.clamp(result.copyIntelligence?.formalityLevel ?? 0.5),
+                        ctaAggression: this.clamp(result.copyIntelligence?.ctaAggression ?? 0.5),
+                        headlineStyle: (result.copyIntelligence?.headlineStyle as any) || "benefit_forward",
+                        vocabularyComplexity: (result.copyIntelligence?.vocabularyComplexity as any) || "moderate",
+                        sentenceStructure: (result.copyIntelligence?.sentenceStructure as any) || "balanced",
+                        emojiUsage: result.copyIntelligence?.emojiUsage ?? false,
+                        contractionUsage: result.copyIntelligence?.contractionUsage ?? true,
                     },
                 };
             } catch (e: any) {
@@ -396,6 +430,59 @@ FUNCTIONAL ARCHETYPES (pick one):
 - blog: Content-heavy, reading flow, editorial
 
 ═══════════════════════════════════════════════════════════════
+COPY INTELLIGENCE (for ch25_copy_engine)
+═══════════════════════════════════════════════════════════════
+
+The copy engine generates actual text content. Extract how the copy should sound:
+
+1. industryTerminology: Array of 3-5 sector-specific terms
+   Example fintech: ["portfolio", "returns", "assets under management", "diversification"]
+   Example healthcare: ["patient care", "treatment outcomes", "board certified", "clinical excellence"]
+   Example legal: ["counsel", "representation", "jurisdiction", "precedent"]
+
+2. emotionalRegister: How the copy should feel
+   - clinical: Cold, precise, technical (medical devices, scientific tools)
+   - professional: Neutral, credible, business-appropriate (SaaS, consulting)
+   - conversational: Friendly, approachable, human (consumer apps, wellness)
+   - playful: Fun, energetic, young (games, creative tools, education)
+   - luxury: Refined, exclusive, sophisticated (high-end brands, premium services)
+   - urgent: Action-oriented, time-sensitive (emergency services, limited offers)
+
+3. formalityLevel: 0.0 = casual ("Hey!"), 1.0 = formal ("Dear Sir/Madam")
+   Healthcare/legal: 0.7-0.9, Consumer apps: 0.2-0.4, Fintech: 0.5-0.7
+
+4. ctaAggression: 0.0 = soft ("Learn more"), 1.0 = aggressive ("Buy NOW!")
+   Nonprofit: 0.1-0.3, E-commerce: 0.6-0.9, Documentation: 0.0-0.2
+
+5. headlineStyle: Primary headline approach
+   - benefit_forward: Lead with value ("Save 10 hours a week")
+   - curiosity_gap: Create intrigue ("The productivity trick Wall Street doesn't want you to know")
+   - social_proof: Use credibility ("Join 10,000+ teams using...")
+   - how_to: Educational promise ("How to streamline your workflow")
+   - direct: Simple statement ("Project management software")
+
+6. vocabularyComplexity: Word sophistication level
+   - simple: Common words, short sentences (consumer, broad audience)
+   - moderate: Standard business vocabulary (general B2B)
+   - technical: Industry jargon acceptable (developer tools, specialized software)
+   - specialized: Domain-specific terminology (legal, medical, scientific)
+
+7. sentenceStructure: How sentences flow
+   - short_punchy: Fragmented. Impactful. Fast. (Urgent, mobile-first)
+   - balanced: Mix of short and medium. Natural flow. (Most common)
+   - complex_periodic: Sophisticated structures with subordinate clauses. (Legal, academic, luxury)
+
+8. emojiUsage: true/false - Are emojis appropriate? (Consumer/social: yes, Legal/enterprise: no)
+
+9. contractionUsage: true/false - Use "don't", "can't", "won't"? (Conversational: yes, Formal: no)
+
+SECTOR COPY EXAMPLES:
+- Fintech trading: "Start building wealth today" (professional, aggressive CTA, benefit-forward)
+- Legal services: "Schedule a confidential consultation" (luxury, formal, soft CTA, direct)
+- Healthcare wellness: "Feel like yourself again" (conversational, empathetic, benefit-forward)
+- Developer tools: "Ship faster with automated workflows" (technical, moderate, how-to)
+
+═══════════════════════════════════════════════════════════════
 OUTPUT INSTRUCTIONS
 ═══════════════════════════════════════════════════════════════
 
@@ -403,7 +490,8 @@ OUTPUT INSTRUCTIONS
 2. Detect SECTOR from intent keywords and context
 3. Detect SUB-SECTOR (e.g., "healthcare_wellness", "fintech_trading")
 4. Detect ARCHETYPE from functional purpose
-5. Output EXACTLY this JSON (no markdown, no explanation):
+5. Extract COPY INTELLIGENCE for the copy engine (how text should sound)
+6. Output EXACTLY this JSON (no markdown, no explanation):
 
 {
   "traits": {
@@ -424,6 +512,17 @@ OUTPUT INSTRUCTIONS
   "archetype": {
     "type": "dashboard|portfolio|documentation|commerce|landing|blog",
     "confidence": 0.0-1.0
+  },
+  "copyIntelligence": {
+    "industryTerminology": ["term1", "term2", "term3"],
+    "emotionalRegister": "clinical|professional|conversational|playful|luxury|urgent",
+    "formalityLevel": 0.0-1.0,
+    "ctaAggression": 0.0-1.0,
+    "headlineStyle": "benefit_forward|curiosity_gap|social_proof|how_to|direct",
+    "vocabularyComplexity": "simple|moderate|technical|specialized",
+    "sentenceStructure": "short_punchy|balanced|complex_periodic",
+    "emojiUsage": true|false,
+    "contractionUsage": true|false
   }
 }
 `;

@@ -560,14 +560,33 @@ export class EcosystemGenerator {
     }
     
     private deriveColorTreatment(genome: DesignGenome, index: number): Organism['characteristics']['colorTreatment'] {
+        // Use ch26_color_system if available, fallback to ch5
+        const cs = genome.chromosomes.ch26_color_system;
+        if (cs) {
+            const treatments: Organism['characteristics']['colorTreatment'][] = ['primary', 'secondary', 'accent', 'neutral'];
+            // Hash-derived from secondary color relationship
+            const relationshipSeed = cs.secondary.relationship === "complementary" ? 0 : 
+                                     cs.secondary.relationship === "analogous" ? 1 :
+                                     cs.secondary.relationship === "split" ? 2 : 3;
+            return treatments[(relationshipSeed + index) % 4];
+        }
+        // Fallback to ch5
         const hue = genome.chromosomes.ch5_color_primary.hue;
         const treatments: Organism['characteristics']['colorTreatment'][] = ['primary', 'secondary', 'accent', 'neutral'];
         const quadrant = Math.floor(hue / 90);
-        const offset = index % 4;
-        return treatments[(quadrant + offset) % 4];
+        return treatments[(quadrant + index) % 4];
     }
     
     private deriveMotionStyle(genome: DesignGenome, category: 'microbial' | 'flora' | 'fauna'): Organism['characteristics']['motionStyle'] {
+        // Prefer ch27_motion_choreography if available
+        const mc = genome.chromosomes.ch27_motion_choreography;
+        if (mc) {
+            if (mc.choreographyStyle === "elegant" || mc.choreographyStyle === "smooth") return 'subtle';
+            if (mc.choreographyStyle === "energetic" || mc.choreographyStyle === "snappy") return 'active';
+            if (mc.choreographyStyle === "dramatic") return 'complex';
+        }
+        
+        // Fallback to ch8
         const physics = genome.chromosomes.ch8_motion.physics;
         const complexity = genome.chromosomes.ch15_biomarker.complexity;
         
@@ -601,6 +620,71 @@ export class EcosystemGenerator {
         if (material === 'neumorphism' || elevation === 'neumorphic') return 'elevated';
         if (material === 'metallic') return 'material';
         return 'flat';
+    }
+    
+    /**
+     * Generate icon organisms from ch28_iconography
+     * Icons are microbial organisms with specific characteristics
+     */
+    generateIconOrganisms(genome: DesignGenome): Organism[] {
+        const iconography = genome.chromosomes.ch28_iconography;
+        if (!iconography) return [];
+        
+        const organisms: Organism[] = [];
+        const count = Math.floor(iconography.sizeScale * 8) + 4; // 4-16 icons based on scale
+        
+        for (let i = 0; i < count; i++) {
+            const mutation = this.generateMutation(genome, i + 1000);
+            
+            organisms.push({
+                id: `I-${i}`,
+                name: `Icon${iconography.style.charAt(0).toUpperCase() + iconography.style.slice(1)}-${i}`,
+                category: 'microbial',
+                spec: {
+                    name: `icon-${i}`,
+                    category: 'input',
+                    props: [
+                        { name: 'name', type: 'string', required: true },
+                        { name: 'size', type: 'number', required: false, default: iconography.sizeScale },
+                        { name: 'strokeWidth', type: 'number', required: false, default: iconography.strokeWeight === 'thin' ? 1 : iconography.strokeWeight === 'bold' ? 3 : 2 }
+                    ],
+                    variants: [iconography.style, iconography.cornerTreatment, `${iconography.animation}`],
+                    accessibility: {
+                        role: 'img',
+                        ariaProps: ['aria-label', 'aria-hidden'],
+                        keyboard: []
+                    }
+                },
+                adaptation: {
+                    mutation,
+                    entropy: genome.chromosomes.ch12_signature.entropy * 0.5,
+                    generation: 1
+                },
+                characteristics: {
+                    colorTreatment: iconography.colorTreatment === 'inherit' ? 'neutral' : 
+                                   iconography.colorTreatment === 'primary' ? 'primary' :
+                                   iconography.colorTreatment === 'secondary' ? 'secondary' : 'accent',
+                    motionStyle: iconography.animation === 'none' ? 'none' : 'subtle',
+                    scale: iconography.sizeScale < 1 ? 'small' : iconography.sizeScale > 1.2 ? 'medium' : 'micro',
+                    texture: 'flat'
+                },
+                topology: {
+                    containmentDepth: 0,
+                    edgeProfile: iconography.cornerTreatment === 'sharp' ? 0 : 
+                                 iconography.cornerTreatment === 'rounded' ? 0.5 : 1,
+                    motionComplexity: iconography.animation === 'none' ? 0 : 
+                                      iconography.animation === 'draw' ? 0.8 : 0.4,
+                    interactionPattern: `${iconography.library}-icon`
+                },
+                relationships: {
+                    symbiosis: [],
+                    prey: [],
+                    predator: undefined
+                }
+            });
+        }
+        
+        return organisms;
     }
     
     private findSymbioticMicrobes(index: number, total: number): string[] {

@@ -291,6 +291,17 @@ export interface GenerationOptions {
     contentWeight?: number;              // Override content analysis influence
     enable3D?: boolean;                  // Global 3D toggle (default: context-appropriate)
     fontProvider?: FontProvider;         // "bunny" | "google" (default: "bunny")
+    copyIntelligence?: {                 // LLM-extracted copy guidance
+        industryTerminology: string[];
+        emotionalRegister: "clinical" | "professional" | "conversational" | "playful" | "luxury" | "urgent";
+        formalityLevel: number;
+        ctaAggression: number;
+        headlineStyle: "benefit_forward" | "curiosity_gap" | "social_proof" | "how_to" | "direct";
+        vocabularyComplexity: "simple" | "moderate" | "technical" | "specialized";
+        sentenceStructure: "short_punchy" | "balanced" | "complex_periodic";
+        emojiUsage: boolean;
+        contractionUsage: boolean;
+    };
 }
 
 // ============================================================================
@@ -431,6 +442,37 @@ export interface DesignGenome {
             accentColor: string;           // computed +30° complementary hex
             surfaceStack: string[];        // [base, raised, overlay, modal]
         };
+        ch26_color_system: {
+            // Primary already in ch5 - this is the COMPLETE system
+            secondary: {
+                hue: number;               // hash-derived offset from primary (±30-60°)
+                saturation: number;
+                lightness: number;
+                hex: string;
+                relationship: "complementary" | "analogous" | "split" | "triadic";
+            };
+            accent: {
+                hue: number;               // hash-derived (triadic or tetradic)
+                saturation: number;
+                lightness: number;
+                hex: string;
+                usage: "cta" | "highlight" | "alert" | "success";
+            };
+            semantic: {
+                success: { hue: number; hex: string; };   // sector-biased green
+                warning: { hue: number; hex: string; };   // sector-biased yellow/orange
+                error: { hue: number; hex: string; };     // sector-biased red
+                info: { hue: number; hex: string; };      // sector-biased blue
+            };
+            neutral: {
+                scale: string[];           // 9-step gray with primary tint
+                tintStrength: number;      // how much primary hue bleeds into neutrals
+            };
+            darkMode: {
+                surfaceStack: string[];    // dark mode surfaces
+                elevationMap: number[];    // lightness boosts per elevation level
+            };
+        };
         ch7_edge: {
             radius: number;                // container/section radius
             style: EdgeStyle;
@@ -447,6 +489,21 @@ export interface DesignGenome {
             exitBehavior: ExitBehavior;
             hoverIntensity: number;        // 0.0-1.0
             reducedMotionFallback: "fade" | "none";
+        };
+        ch27_motion_choreography: {
+            entrySequence: "hero_first" | "cascade_down" | "cascade_up" | "simultaneous" | "stagger_center";
+            staggerInterval: number;        // ms between elements (20-150ms)
+            scrollTrigger: {
+                triggerPoint: number;       // % of viewport (0.1-0.9)
+                scrubIntensity: number;     // 0 = snap, 1 = smooth scrub
+            };
+            hoverMicrointeraction: {
+                type: "scale" | "color_shift" | "shadow" | "lift" | "glow";
+                intensity: number;          // 0.0-1.0
+                duration: number;           // ms
+            };
+            pageTransition: "fade" | "slide" | "morph" | "wipe" | "dissolve";
+            choreographyStyle: "elegant" | "energetic" | "smooth" | "snappy" | "dramatic";
         };
         ch9_grid: {
             logic: GridLogic;
@@ -475,6 +532,15 @@ export interface DesignGenome {
             entropy: number;
             uniqueMutation: string;
             variantSeed: number;  // for hero/layout variants
+        };
+        ch28_iconography: {
+            style: "outline" | "filled" | "duotone" | "rounded" | "sharp";
+            strokeWeight: "thin" | "regular" | "bold" | "variable";
+            cornerTreatment: "sharp" | "rounded" | "pill";
+            sizeScale: number;             // ratio to body text (0.8-1.5)
+            library: "lucide" | "phosphor" | "heroicons" | "feather" | "radix";
+            colorTreatment: "inherit" | "primary" | "secondary" | "muted";
+            animation: "none" | "bounce" | "pulse" | "spin" | "draw";
         };
         ch13_atmosphere: {
             fx: AtmosphereFX;
@@ -599,6 +665,17 @@ export interface DesignGenome {
             stats: { label: string; value: string }[];
             faq: { question: string; answer: string }[];
             features: { title: string; description: string }[];
+        };
+        ch26_copy_intelligence: {
+            industryTerminology: string[];
+            emotionalRegister: "clinical" | "professional" | "conversational" | "playful" | "luxury" | "urgent";
+            formalityLevel: number;
+            ctaAggression: number;
+            headlineStyle: "benefit_forward" | "curiosity_gap" | "social_proof" | "how_to" | "direct";
+            vocabularyComplexity: "simple" | "moderate" | "technical" | "specialized";
+            sentenceStructure: "short_punchy" | "balanced" | "complex_periodic";
+            emojiUsage: boolean;
+            contractionUsage: boolean;
         };
     };
 

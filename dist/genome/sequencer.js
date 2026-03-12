@@ -7,6 +7,7 @@
 import * as crypto from "crypto";
 import { GenomeConstraintSolver } from "./constraint-solver.js";
 import { getSectorProfile, generateHueFromBias, generateSaturationFromBias, generateLightnessFromBias, selectHeroType, selectTrustApproach, SUB_SECTOR_KEYWORDS } from "./sector-profiles.js";
+import { COPY_PATTERN_BANKS, generateHeadlineFromPatterns, generateCTAFromPatterns, generateTaglineFromPatterns, generateSentenceFromTemplate } from "./copy-patterns.js";
 export class GenomeSequencer {
     /**
      * Generate a design genome with full sector awareness
@@ -107,6 +108,7 @@ export class GenomeSequencer {
         const ch6_color_temp = isForced('ch6_color_temp') || this.generateColorTemp(ch5_color_primary.temperature, primaryProfile, b);
         const ch7_edge = isForced('ch7_edge') || this.generateEdge(traits, b, primaryProfile);
         const ch8_motion = isForced('ch8_motion') || this.generateMotion(traits, b, primaryProfile);
+        const ch27_motion_choreography = isForced('ch27_motion_choreography') || this.generateMotionChoreography(traits, b);
         const ch9_grid = isForced('ch9_grid') || this.generateGrid(traits, b);
         const ch10_hierarchy = isForced('ch10_hierarchy') || this.generateHierarchy(traits, b);
         const ch11_texture = isForced('ch11_texture') || this.generateTexture(traits, b);
@@ -115,6 +117,7 @@ export class GenomeSequencer {
             uniqueMutation: hash.slice(0, 8),
             variantSeed: b(18) // Byte 18 — distinct from entropy (byte 17)
         };
+        const ch28_iconography = isForced('ch28_iconography') || this.generateIconography(traits, b, primaryProfile);
         const ch13_atmosphere = isForced('ch13_atmosphere') || this.generateAtmosphere(traits, b, isDisabled('ch13_atmosphere'));
         const ch14_physics = isForced('ch14_physics') || this.generatePhysics(traits, b, isDisabled('ch14_physics'));
         const ch15_biomarker = isForced('ch15_biomarker') || this.generateBiomarker(traits, b, primaryProfile, isDisabled('ch15_atmosphere'), options?.enable3D);
@@ -240,7 +243,15 @@ export class GenomeSequencer {
             abTestingReady: traits.conversionFocus > 0.5,
             segmentCount: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 3 : 2)
         };
-        const ch25_copy_engine = isForced('ch25_copy_engine') || this.generateCopyEngine(primaryProfile, b);
+        const ch25_copy_engine = isForced('ch25_copy_engine') || this.generateCopyEngine(primaryProfile, b, options?.copyIntelligence);
+        const ch26_copy_intelligence = options?.copyIntelligence || this.generateDefaultCopyIntelligence(primaryProfile);
+        // Ensure ch25 uses the same intelligence for consistency
+        if (options?.copyIntelligence && !isForced('ch25_copy_engine')) {
+            // Regenerate copy engine with the provided intelligence
+            const regeneratedCopy = this.generateCopyEngine(primaryProfile, b, options.copyIntelligence);
+            // Copy regenerated content back to ch25_copy_engine
+            Object.assign(ch25_copy_engine, regeneratedCopy);
+        }
         return {
             ch0_sector_primary,
             ch0_sector_secondary,
@@ -254,10 +265,12 @@ export class GenomeSequencer {
             ch6_color_temp,
             ch7_edge,
             ch8_motion,
+            ch27_motion_choreography,
             ch9_grid,
             ch10_hierarchy,
             ch11_texture,
             ch12_signature,
+            ch28_iconography,
             ch13_atmosphere,
             ch14_physics,
             ch15_biomarker,
@@ -274,38 +287,367 @@ export class GenomeSequencer {
             ch23_content_depth,
             ch23_information_architecture,
             ch24_personalization,
-            ch25_copy_engine
+            ch25_copy_engine,
+            ch26_copy_intelligence,
+            ch26_color_system: this.generateColorSystem(ch5_color_primary, primaryProfile, b)
         };
     }
     /**
-     * Generate copy engine placeholders
+     * Generate complete color system with hash-driven harmony
      */
-    generateCopyEngine(_profile, b) {
-        const entropy = Math.floor(b(130) * 10000).toString(16);
+    generateColorSystem(primary, profile, b) {
+        // Hash-derived secondary color relationship
+        const relationships = ["complementary", "analogous", "split", "triadic"];
+        const relationship = relationships[Math.floor(b(208) * relationships.length)];
+        let secondaryHue;
+        switch (relationship) {
+            case "complementary":
+                secondaryHue = (primary.hue + 180) % 360;
+                break;
+            case "analogous":
+                secondaryHue = (primary.hue + 30 + Math.floor(b(209) * 60)) % 360;
+                break;
+            case "split":
+                secondaryHue = (primary.hue + 150 + Math.floor(b(210) * 60)) % 360;
+                break;
+            case "triadic":
+                secondaryHue = (primary.hue + 120 + Math.floor(b(211) * 120)) % 360;
+                break;
+        }
+        const secondary = {
+            hue: Math.round(secondaryHue),
+            saturation: Math.round(Math.max(0.3, Math.min(0.8, primary.saturation + (b(212) - 0.5) * 0.4)) * 100) / 100,
+            lightness: Math.round(Math.max(0.2, Math.min(0.8, primary.lightness + (b(213) - 0.5) * 0.3)) * 100) / 100,
+            hex: this.hslToHex(secondaryHue, Math.max(0.3, Math.min(0.8, primary.saturation + (b(212) - 0.5) * 0.4)) * 100, Math.max(0.2, Math.min(0.8, primary.lightness + (b(213) - 0.5) * 0.3)) * 100),
+            relationship
+        };
+        // Hash-derived accent (triadic or tetradic)
+        const accentHue = (primary.hue + 240 + Math.floor(b(214) * 60)) % 360;
+        const accent = {
+            hue: Math.round(accentHue),
+            saturation: Math.round(Math.max(0.4, b(215)) * 100) / 100,
+            lightness: Math.round(Math.max(0.4, Math.min(0.6, 0.5 + (b(216) - 0.5) * 0.2)) * 100) / 100,
+            hex: this.hslToHex(accentHue, Math.max(0.4, b(215)) * 100, Math.max(0.4, Math.min(0.6, 0.5 + (b(216) - 0.5) * 0.2)) * 100),
+            usage: ["cta", "highlight", "alert", "success"][Math.floor(b(217) * 4)]
+        };
+        // Sector-biased semantic colors
+        const semantic = {
+            success: {
+                hue: profile.sector === "healthcare" ? 145 : profile.sector === "fintech" ? 140 : 135,
+                hex: this.hslToHex(profile.sector === "healthcare" ? 145 : profile.sector === "fintech" ? 140 : 135, 65, 45)
+            },
+            warning: {
+                hue: profile.sector === "automotive" ? 35 : 45,
+                hex: this.hslToHex(profile.sector === "automotive" ? 35 : 45, 90, 50)
+            },
+            error: {
+                hue: profile.sector === "healthcare" ? 355 : 0,
+                hex: this.hslToHex(profile.sector === "healthcare" ? 355 : 0, 75, 50)
+            },
+            info: {
+                hue: profile.sector === "technology" ? 210 : 200,
+                hex: this.hslToHex(profile.sector === "technology" ? 210 : 200, 80, 50)
+            }
+        };
+        // Hash-driven neutral scale with primary tint
+        const tintStrength = Math.round(b(218) * 30) / 100; // 0-30% tint
+        const neutralScale = [];
+        for (let i = 0; i < 9; i++) {
+            const lightness = 5 + i * 11; // 5, 16, 27, 38, 49, 60, 71, 82, 93
+            const saturation = tintStrength * (1 - Math.abs(i - 4) / 4); // strongest in middle
+            neutralScale.push(this.hslToHex(primary.hue, saturation * 100, lightness));
+        }
+        // Dark mode surfaces
+        const darkModeSurfaces = [];
+        const darkElevations = [5, 10, 15, 20, 25, 30, 35, 40];
+        for (let i = 0; i < 8; i++) {
+            const lightness = darkElevations[i];
+            const saturation = tintStrength * 0.5;
+            darkModeSurfaces.push(this.hslToHex(primary.hue, saturation * 100, lightness));
+        }
         return {
-            headline: `{{HEADLINE_${entropy.slice(0, 4)}}}`,
-            subheadline: `{{SUBHEADLINE_${entropy.slice(4, 8)}}}`,
-            cta: `{{CTA_${Math.floor(b(131) * 3)}}}`,
+            secondary,
+            accent,
+            semantic,
+            neutral: {
+                scale: neutralScale,
+                tintStrength
+            },
+            darkMode: {
+                surfaceStack: darkModeSurfaces,
+                elevationMap: darkElevations
+            }
+        };
+    }
+    /**
+     * Generate copy engine with hash-driven patterns
+     * Uses copy intelligence + hash bytes to generate unique, deterministic copy
+     */
+    generateCopyEngine(profile, b, copyIntelligence) {
+        const ci = copyIntelligence || this.generateDefaultCopyIntelligence(profile);
+        const sector = profile.sector;
+        // Hash-driven headline generation
+        const headline = generateHeadlineFromPatterns(ci.headlineStyle, sector, ci.emotionalRegister, b);
+        // Hash-driven CTA generation
+        const cta = generateCTAFromPatterns(ci.ctaAggression, sector, ci.emotionalRegister, b);
+        // Hash-driven tagline generation
+        const tagline = generateTaglineFromPatterns(sector, ci.emotionalRegister, b);
+        // Hash-driven subheadline from sentence template
+        const subheadline = generateSentenceFromTemplate(ci.sentenceStructure, sector, ci.emotionalRegister, b);
+        // Generate testimonial from pattern
+        const testimonial = this.generateTestimonialFromPatterns(sector, ci.emotionalRegister, b);
+        // Generate stats based on sector patterns
+        const stats = this.generateStatsFromPatterns(sector, b);
+        // Generate FAQ from patterns
+        const faq = this.generateFAQFromPatterns(sector, ci, b);
+        // Generate features from patterns
+        const features = this.generateFeaturesFromPatterns(sector, ci, b);
+        return {
+            headline,
+            subheadline,
+            cta,
             authorName: `{{AUTHOR_NAME}}`,
             authorTitle: `{{AUTHOR_TITLE}}`,
-            testimonial: `{{TESTIMONIAL_QUOTE}}`,
+            testimonial,
             companyName: `{{COMPANY_NAME}}`,
-            tagline: `{{TAGLINE_${entropy.slice(8, 12)}}}`,
-            stats: [
-                { label: `{{STAT_1_LABEL}}`, value: `{{STAT_1_VALUE}}` },
-                { label: `{{STAT_2_LABEL}}`, value: `{{STAT_2_VALUE}}` },
-                { label: `{{STAT_3_LABEL}}`, value: `{{STAT_3_VALUE}}` }
-            ],
-            faq: [
-                { question: `{{FAQ_1_Q}}`, answer: `{{FAQ_1_A}}` },
-                { question: `{{FAQ_2_Q}}`, answer: `{{FAQ_2_A}}` }
-            ],
-            features: [
-                { title: `{{FEATURE_1_TITLE}}`, description: `{{FEATURE_1_DESC}}` },
-                { title: `{{FEATURE_2_TITLE}}`, description: `{{FEATURE_2_DESC}}` },
-                { title: `{{FEATURE_3_TITLE}}`, description: `{{FEATURE_3_DESC}}` }
-            ]
+            tagline,
+            stats,
+            faq,
+            features
         };
+    }
+    /**
+     * Generate default copy intelligence for a sector
+     */
+    generateDefaultCopyIntelligence(profile) {
+        const sectorDefaults = {
+            healthcare: {
+                industryTerminology: ["patient care", "treatment outcomes", "clinical excellence", "board certified"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.7,
+                ctaAggression: 0.3,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: false
+            },
+            fintech: {
+                industryTerminology: ["portfolio", "returns", "assets under management", "diversification"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.6,
+                ctaAggression: 0.6,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            legal: {
+                industryTerminology: ["counsel", "representation", "jurisdiction", "precedent"],
+                emotionalRegister: "luxury",
+                formalityLevel: 0.9,
+                ctaAggression: 0.2,
+                headlineStyle: "direct",
+                vocabularyComplexity: "specialized",
+                sentenceStructure: "complex_periodic",
+                emojiUsage: false,
+                contractionUsage: false
+            },
+            automotive: {
+                industryTerminology: ["performance", "efficiency", "handling", "innovation"],
+                emotionalRegister: "urgent",
+                formalityLevel: 0.4,
+                ctaAggression: 0.5,
+                headlineStyle: "curiosity_gap",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            technology: {
+                industryTerminology: ["integration", "automation", "scalability", "deployment"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.4,
+                ctaAggression: 0.4,
+                headlineStyle: "how_to",
+                vocabularyComplexity: "technical",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            education: {
+                industryTerminology: ["curriculum", "outcomes", "mastery", "development"],
+                emotionalRegister: "conversational",
+                formalityLevel: 0.5,
+                ctaAggression: 0.3,
+                headlineStyle: "social_proof",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            commerce: {
+                industryTerminology: ["collection", "exclusive", "limited", "quality"],
+                emotionalRegister: "playful",
+                formalityLevel: 0.3,
+                ctaAggression: 0.7,
+                headlineStyle: "curiosity_gap",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: true,
+                contractionUsage: true
+            },
+            entertainment: {
+                industryTerminology: ["experience", "exclusive", "premiere", "access"],
+                emotionalRegister: "playful",
+                formalityLevel: 0.2,
+                ctaAggression: 0.5,
+                headlineStyle: "social_proof",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: true,
+                contractionUsage: true
+            },
+            real_estate: {
+                industryTerminology: ["property", "investment", "location", "valuation"],
+                emotionalRegister: "luxury",
+                formalityLevel: 0.6,
+                ctaAggression: 0.3,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: false
+            },
+            travel: {
+                industryTerminology: ["destination", "experience", "adventure", "itinerary"],
+                emotionalRegister: "conversational",
+                formalityLevel: 0.3,
+                ctaAggression: 0.4,
+                headlineStyle: "curiosity_gap",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: true,
+                contractionUsage: true
+            },
+            food: {
+                industryTerminology: ["artisan", "craft", "locally sourced", "seasonal"],
+                emotionalRegister: "conversational",
+                formalityLevel: 0.3,
+                ctaAggression: 0.5,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: true,
+                contractionUsage: true
+            },
+            sports: {
+                industryTerminology: ["performance", "training", "achievement", "victory"],
+                emotionalRegister: "urgent",
+                formalityLevel: 0.3,
+                ctaAggression: 0.6,
+                headlineStyle: "social_proof",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: true,
+                contractionUsage: true
+            },
+            manufacturing: {
+                industryTerminology: ["precision", "quality", "innovation", "capacity"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.6,
+                ctaAggression: 0.3,
+                headlineStyle: "direct",
+                vocabularyComplexity: "technical",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: false
+            }
+        };
+        return sectorDefaults[profile.sector] || sectorDefaults.technology;
+    }
+    /**
+     * Generate testimonial from hash-driven patterns
+     */
+    generateTestimonialFromPatterns(sector, register, b) {
+        const banks = COPY_PATTERN_BANKS;
+        const safeRegister = register || "professional";
+        const verbs = banks.verbs[safeRegister] || banks.verbs.professional;
+        const adjectives = banks.adjectives[safeRegister] || banks.adjectives.professional;
+        const nouns = banks.industryTerms[sector] || banks.industryTerms.technology;
+        const safeVerb = (idx) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "deliver";
+        const safeAdj = (idx) => adjectives[Math.floor(b(idx) * adjectives.length)] || adjectives[0] || "great";
+        const safeNoun = (idx) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "service";
+        const templates = [
+            `The ${safeNoun(180)} ${safeVerb(181)}ed beyond my expectations.`,
+            `${safeAdj(182).charAt(0).toUpperCase() + safeAdj(182).slice(1)} ${safeNoun(183)} that actually delivers.`,
+            `I ${safeVerb(184)}ed the results within days.`
+        ];
+        return templates[Math.floor(b(185) * templates.length)];
+    }
+    /**
+     * Generate stats from hash-driven patterns
+     */
+    generateStatsFromPatterns(sector, b) {
+        const banks = COPY_PATTERN_BANKS;
+        const nouns = banks.industryTerms[sector] || banks.industryTerms.technology;
+        const safeNoun = (idx) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "solution";
+        const statTemplates = [
+            { label: `${safeNoun(186)}s`, value: `{{${Math.floor(b(187) * 1000)}}}` },
+            { label: `${safeNoun(188)} Rate`, value: `{{${Math.floor(b(189) * 100)}}}%` },
+            { label: `${safeNoun(190)}s Delivered`, value: `{{${Math.floor(b(191) * 10000)}}}` }
+        ];
+        return statTemplates;
+    }
+    /**
+     * Generate FAQ from hash-driven patterns
+     */
+    generateFAQFromPatterns(sector, ci, b) {
+        const banks = COPY_PATTERN_BANKS;
+        const nouns = banks.industryTerms[sector] || banks.industryTerms.technology;
+        const safeRegister = ci?.emotionalRegister || "professional";
+        const verbs = banks.verbs[safeRegister] || banks.verbs.professional;
+        const safeVerb = (idx) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "use";
+        const safeNoun = (idx) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "service";
+        return [
+            {
+                question: `How do I ${safeVerb(192)} ${safeNoun(193)}?`,
+                answer: `{{ANSWER_1}}`
+            },
+            {
+                question: `What ${safeNoun(194)}s do you offer?`,
+                answer: `{{ANSWER_2}}`
+            }
+        ];
+    }
+    /**
+     * Generate features from hash-driven patterns
+     */
+    generateFeaturesFromPatterns(sector, ci, b) {
+        const banks = COPY_PATTERN_BANKS;
+        const nouns = banks.industryTerms[sector] || banks.industryTerms.technology;
+        const register = ci?.emotionalRegister || "professional";
+        const verbs = banks.verbs[register] || banks.verbs.professional;
+        const adjectives = banks.adjectives[register] || banks.adjectives.professional;
+        // Defensive: ensure arrays are valid
+        const safeVerb = (idx) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "deliver";
+        const safeAdj = (idx) => adjectives[Math.floor(b(idx) * adjectives.length)] || adjectives[0] || "effective";
+        const safeNoun = (idx) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "solution";
+        return [
+            {
+                title: `${safeVerb(195).charAt(0).toUpperCase() + safeVerb(195).slice(1)} ${safeNoun(196)}`,
+                description: `{{DESCRIPTION: ${safeAdj(197)} ${safeNoun(198)} that ${safeVerb(199)}s your needs.}}`
+            },
+            {
+                title: `${safeAdj(200).charAt(0).toUpperCase() + safeAdj(200).slice(1)} ${safeNoun(201)}`,
+                description: `{{DESCRIPTION: ${safeAdj(202)} approach to ${safeNoun(203)}.}}`
+            },
+            {
+                title: `${safeNoun(204).charAt(0).toUpperCase() + safeNoun(204).slice(1)} Excellence`,
+                description: `{{DESCRIPTION: ${safeVerb(205).charAt(0).toUpperCase() + safeVerb(205).slice(1)} ${safeNoun(206)} with ${safeAdj(207)} results.}}`
+            }
+        ];
     }
     /**
      * Hash-derived sub-sector selection
@@ -700,6 +1042,50 @@ export class GenomeSequencer {
         };
     }
     /**
+     * Generate motion choreography - hash-driven animation sequencing
+     */
+    generateMotionChoreography(traits, b) {
+        // Hash-driven entry sequence
+        const entrySequences = ["hero_first", "cascade_down", "cascade_up", "simultaneous", "stagger_center"];
+        const entrySequence = entrySequences[Math.floor(b(219) * entrySequences.length)];
+        // Stagger interval derived from information density (dense = fast, sparse = slow)
+        const staggerInterval = traits.informationDensity > 0.7
+            ? 20 + Math.floor(b(220) * 30) // 20-50ms for dashboards
+            : traits.informationDensity < 0.3
+                ? 100 + Math.floor(b(220) * 50) // 100-150ms for editorial
+                : 50 + Math.floor(b(220) * 50); // 50-100ms default
+        // Scroll trigger point hash-derived
+        const scrollTrigger = {
+            triggerPoint: 0.1 + b(221) * 0.8, // 0.1-0.9 of viewport
+            scrubIntensity: traits.temporalUrgency > 0.6 ? 0.2 + b(222) * 0.3 : 0.5 + b(222) * 0.5
+        };
+        // Hover microinteraction from playfulness
+        const hoverTypes = ["scale", "color_shift", "shadow", "lift", "glow"];
+        const hoverMicrointeraction = {
+            type: hoverTypes[Math.floor(b(223) * hoverTypes.length)],
+            intensity: traits.playfulness * 0.8 + b(224) * 0.2,
+            duration: 150 + Math.floor(b(225) * 350) // 150-500ms
+        };
+        // Page transition from topology
+        const pageTransitions = ["fade", "slide", "morph", "wipe", "dissolve"];
+        const pageTransition = pageTransitions[Math.floor(b(226) * pageTransitions.length)];
+        // Choreography style from emotional temperature
+        const choreographyStyles = ["elegant", "energetic", "smooth", "snappy", "dramatic"];
+        const styleIndex = Math.floor(traits.emotionalTemperature > 0.7 ? 0 + b(227) * 2 : // elegant/smooth for warm
+            traits.emotionalTemperature < 0.3 ? 3 + b(227) * 2 : // snappy/dramatic for cold
+                1 + b(227) * 3 // mixed for neutral
+        );
+        const choreographyStyle = choreographyStyles[styleIndex % choreographyStyles.length];
+        return {
+            entrySequence,
+            staggerInterval,
+            scrollTrigger,
+            hoverMicrointeraction,
+            pageTransition,
+            choreographyStyle
+        };
+    }
+    /**
      * Generate grid
      */
     generateGrid(traits, b) {
@@ -747,6 +1133,53 @@ export class GenomeSequencer {
                     ? "screen"
                     : "overlay",
             animatedTexture: traits.playfulness > 0.7 && traits.temporalUrgency < 0.5
+        };
+    }
+    /**
+     * Generate iconography - hash-driven icon system
+     */
+    generateIconography(traits, b, profile) {
+        // Hash-driven style
+        const styles = ["outline", "filled", "duotone", "rounded", "sharp"];
+        const style = styles[Math.floor(b(228) * styles.length)];
+        // Stroke weight from playfulness (low = thin/clean, high = bold/expressive)
+        const strokeWeights = ["thin", "regular", "bold", "variable"];
+        const strokeWeight = strokeWeights[Math.floor(traits.playfulness < 0.3 ? b(229) * 2 : // thin/regular for strict
+            traits.playfulness > 0.7 ? 2 + b(229) * 2 : // bold/variable for playful
+                b(229) * 4 // any for neutral
+        )];
+        // Corner treatment from edge chromosome style
+        const cornerTreatments = ["sharp", "rounded", "pill"];
+        const cornerTreatment = cornerTreatments[Math.floor(b(230) * cornerTreatments.length)];
+        // Size scale from information density (dense = smaller icons)
+        const sizeScale = traits.informationDensity > 0.7
+            ? 0.8 + b(231) * 0.2 // 0.8-1.0 for dense
+            : traits.informationDensity < 0.3
+                ? 1.2 + b(231) * 0.3 // 1.2-1.5 for sparse
+                : 1.0 + b(231) * 0.2; // 1.0-1.2 default
+        // Library from emotional register
+        const libraries = ["lucide", "phosphor", "heroicons", "feather", "radix"];
+        const libraryIndex = Math.floor(profile.defaultTypography === "geometric" ? b(232) * 2 : // lucide/phosphor
+            profile.defaultTypography === "humanist" ? 2 + b(232) * 2 : // heroicons/feather
+                profile.defaultTypography === "monospace" ? 4 : // radix for tech
+                    b(232) * 5);
+        const library = libraries[libraryIndex % libraries.length];
+        // Color treatment from sector
+        const colorTreatments = ["inherit", "primary", "secondary", "muted"];
+        const colorTreatment = colorTreatments[Math.floor(b(233) * colorTreatments.length)];
+        // Animation from playfulness
+        const animations = ["none", "bounce", "pulse", "spin", "draw"];
+        const animation = traits.playfulness < 0.2
+            ? "none"
+            : animations[Math.floor(b(234) * (animations.length - 1)) + 1];
+        return {
+            style,
+            strokeWeight,
+            cornerTreatment,
+            sizeScale,
+            library,
+            colorTreatment,
+            animation
         };
     }
     /**
