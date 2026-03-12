@@ -12,7 +12,7 @@ export class EpigeneticParser {
         for (const filePath of filePaths) {
             try {
                 if (!fs.existsSync(filePath)) {
-                    console.warn(`[Epigenetics] File not found: ${filePath}`);
+                    // File not found, skip
                     continue;
                 }
                 const ext = path.extname(filePath).toLowerCase();
@@ -21,7 +21,7 @@ export class EpigeneticParser {
                     const hue = await this.extractHueFromImage(filePath);
                     if (hue !== undefined) {
                         data.epigeneticHue = hue;
-                        console.log(`[Epigenetics] Extracted dominant hue ${hue} from ${path.basename(filePath)}`);
+                        // Extracted hue from image
                     }
                 }
                 else if (ext === '.pdf') {
@@ -29,15 +29,15 @@ export class EpigeneticParser {
                     const text = await this.extractTextFromPDF(filePath);
                     if (text) {
                         contextSegments.push(text);
-                        console.log(`[Epigenetics] Extracted ${text.length} characters of brand context from ${path.basename(filePath)}`);
+                        // Extracted text from PDF
                     }
                 }
                 else {
-                    console.warn(`[Epigenetics] Unsupported asset format: ${ext}`);
+                    // Unsupported format, skip
                 }
             }
             catch (e) {
-                console.error(`[Epigenetics] Failed to parse asset ${filePath}:`, e);
+                // Failed to parse asset
             }
         }
         if (contextSegments.length > 0) {
@@ -80,7 +80,7 @@ export class EpigeneticParser {
             });
         }
         catch (e) {
-            console.error(`Error analyzing PDF ${filePath}:`, e);
+            // Error analyzing PDF
             return undefined;
         }
     }
@@ -93,7 +93,7 @@ export class EpigeneticParser {
             return this.rgbToHue(dominant.r, dominant.g, dominant.b);
         }
         catch (e) {
-            console.error(`Error analyzing image ${filePath}:`, e);
+            // Error analyzing image
             return undefined;
         }
     }

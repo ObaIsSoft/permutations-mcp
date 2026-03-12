@@ -5,7 +5,7 @@
  * NO named colors. NO templates. Only mathematical constraints.
  * 
  * Philosophy: Sector provides BIAS, not SELECTION.
- * The SHA-256 hash + 25 chromosomes generate infinitely.
+ * The SHA-256 hash + 26 chromosomes generate infinitely.
  */
 
 import {
@@ -503,7 +503,7 @@ const TRUST_APPROACH_WEIGHTS: Record<PrimarySector, Record<TrustApproach, number
 // SUB-SECTOR KEYWORDS (Kept - used for content classification)
 // ============================================================================
 
-const SUB_SECTOR_KEYWORDS: Record<PrimarySector, Record<string, string[]>> = {
+export const SUB_SECTOR_KEYWORDS: Record<PrimarySector, Record<string, string[]>> = {
     healthcare: {
         surgical: ["surgery", "surgeon", "operating", "procedure", "OR", "cutting", "incision", "scalpel", "anesthesia"],
         wellness: ["wellness", "preventive", "holistic", "nutrition", "fitness", "mental health", "yoga", "meditation"],
@@ -885,13 +885,7 @@ export function getSubSectors(sector: PrimarySector): string[] {
     return Object.keys(keywords).map(k => `${sector}_${k}`);
 }
 
-// ============================================================================
-// DEPRECATED EXPORTS (for backward compatibility during transition)
-// ============================================================================
-
-// TODO: Remove these after sequencer is updated to use new API
-export const SECTOR_PROFILES = {} as any;
-export function getSectorProfile(sector: PrimarySector): any {
+export function getSectorProfile(sector: PrimarySector) {
     const defaults = SECTOR_DEFAULTS[sector];
     const colorBias = SECTOR_COLOR_BIAS[sector];
     return {
@@ -908,14 +902,4 @@ export function getSectorProfile(sector: PrimarySector): any {
         generate3D: defaults.generate3D,
         subSectorKeywords: SUB_SECTOR_KEYWORDS[sector]
     };
-}
-
-// Stub for backward compatibility - will be removed
-export function selectColorFromProfile(): string {
-    throw new Error("selectColorFromProfile is deprecated. Use generateHueFromBias() instead.");
-}
-
-// Stub for backward compatibility - will be removed  
-export function colorNameToHSL(): { h: number; s: number; l: number } {
-    throw new Error("colorNameToHSL is deprecated. Colors are now generated mathematically from sector bias.");
 }

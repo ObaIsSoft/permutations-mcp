@@ -6,7 +6,7 @@
  */
 import * as crypto from "crypto";
 import { GenomeConstraintSolver } from "./constraint-solver.js";
-import { getSectorProfile, classifySubSector, generateHueFromBias, generateSaturationFromBias, generateLightnessFromBias, selectHeroType, selectTrustApproach } from "./sector-profiles.js";
+import { getSectorProfile, generateHueFromBias, generateSaturationFromBias, generateLightnessFromBias, selectHeroType, selectTrustApproach, SUB_SECTOR_KEYWORDS } from "./sector-profiles.js";
 export class GenomeSequencer {
     /**
      * Generate a design genome with full sector awareness
@@ -308,88 +308,31 @@ export class GenomeSequencer {
         };
     }
     /**
-     * Classify sub-sector from content traits
-     * @deprecated Synthetic keyword strings for classification will be replaced with hash-derived selection
+     * Hash-derived sub-sector selection
      */
     classifySubSectorFromTraits(traits, primarySector) {
-        const contentHints = [];
-        // === Information Density signals ===
-        if (traits.informationDensity > 0.8)
-            contentHints.push("dashboard data analytics monitoring reporting metrics kpi");
-        else if (traits.informationDensity > 0.6)
-            contentHints.push("data analytics reporting structured");
-        else if (traits.informationDensity < 0.3)
-            contentHints.push("minimal sparse editorial gallery portfolio luxury");
-        // === Temporal Urgency signals ===
-        if (traits.temporalUrgency > 0.8)
-            contentHints.push("real-time live feed emergency alert critical ticker");
-        else if (traits.temporalUrgency > 0.6)
-            contentHints.push("live dynamic news breaking feed");
-        else if (traits.temporalUrgency < 0.3)
-            contentHints.push("archival editorial long-form evergreen static portfolio");
-        // === Emotional Temperature signals ===
-        if (traits.emotionalTemperature > 0.8)
-            contentHints.push("wellness lifestyle community empathy care warmth healing");
-        else if (traits.emotionalTemperature > 0.6)
-            contentHints.push("lifestyle humanist warm brand story");
-        else if (traits.emotionalTemperature < 0.3)
-            contentHints.push("enterprise B2B clinical diagnostic precision instrument");
-        else if (traits.emotionalTemperature < 0.4)
-            contentHints.push("corporate professional institutional");
-        // === Playfulness signals ===
-        if (traits.playfulness > 0.8)
-            contentHints.push("gaming entertainment creative media interactive experimental playful children");
-        else if (traits.playfulness > 0.6)
-            contentHints.push("creative agency startup playful brand culture");
-        else if (traits.playfulness < 0.2)
-            contentHints.push("legal compliance regulatory formal institutional");
-        // === Spatial Dependency signals ===
-        if (traits.spatialDependency > 0.8)
-            contentHints.push("immersive 3d webgl spatial depth metaverse ar vr configurator");
-        else if (traits.spatialDependency > 0.6)
-            contentHints.push("interactive 3d animation particles depth");
-        else if (traits.spatialDependency < 0.2)
-            contentHints.push("flat text-heavy document whitepaper");
-        // === Trust Requirement signals ===
-        if (traits.trustRequirement > 0.8)
-            contentHints.push("security compliance certification credentials HIPAA SOC2 ISO audit regulated");
-        else if (traits.trustRequirement > 0.6)
-            contentHints.push("trusted secure verified credentials");
-        // === Visual Emphasis signals ===
-        if (traits.visualEmphasis > 0.8)
-            contentHints.push("photography visual imagery aesthetic lookbook fashion editorial studio");
-        else if (traits.visualEmphasis > 0.6)
-            contentHints.push("visual imagery photography showcase");
-        else if (traits.visualEmphasis < 0.2)
-            contentHints.push("text-first documentation technical");
-        // === Conversion Focus signals ===
-        if (traits.conversionFocus > 0.8)
-            contentHints.push("checkout payment cart ecommerce retail fast-fashion marketplace acquisition");
-        else if (traits.conversionFocus > 0.6)
-            contentHints.push("sales conversion cta pricing subscription");
-        else if (traits.conversionFocus < 0.2)
-            contentHints.push("informational educational non-profit awareness");
-        // === Sector-specific sub-sector hints ===
-        const sectorHints = {
-            healthcare: "medical surgical pediatric geriatric cosmetic dental wellness diagnostic imaging pharmacy",
-            fintech: "consumer banking trading lending payments wealth management crypto institutional",
-            automotive: "luxury electric commercial economy dealership fleet motorsport",
-            education: "k12 higher university corporate professional creative vocational",
-            commerce: "luxury fast-fashion marketplace b2b wholesale dropship",
-            entertainment: "streaming gaming music film sports media podcast broadcast",
-            manufacturing: "industrial aerospace defense automotive chemical pharmaceutical",
-            legal: "litigation corporate immigration family criminal ip real-estate",
-            real_estate: "residential commercial luxury rental investment construction",
-            travel: "luxury budget adventure business family cruise airline hotel",
-            food: "restaurant delivery catering bakery healthy organic gourmet",
-            sports: "professional amateur fitness gym outdoor team",
-            technology: "saas developer api infrastructure security ai ml cloud"
-        };
-        if (sectorHints[primarySector])
-            contentHints.push(sectorHints[primarySector]);
-        const syntheticContent = contentHints.join(" ");
-        const { subSector, confidence } = classifySubSector(syntheticContent, primarySector);
-        return { subSector: subSector, confidence };
+        const subSectorMap = SUB_SECTOR_KEYWORDS[primarySector];
+        if (!subSectorMap) {
+            return { subSector: `${primarySector}_general`, confidence: 0.5 };
+        }
+        const subSectors = Object.keys(subSectorMap);
+        if (subSectors.length === 0) {
+            return { subSector: `${primarySector}_general`, confidence: 0.5 };
+        }
+        // Use trait combination to select sub-sector deterministically
+        const traitSum = traits.informationDensity + traits.temporalUrgency +
+            traits.emotionalTemperature + traits.playfulness + traits.spatialDependency;
+        const index = Math.floor((traitSum % 1) * subSectors.length);
+        const selectedSubSector = subSectors[index] || subSectors[0];
+        // Confidence based on trait clarity (extreme values = higher confidence)
+        const extremeTraits = [
+            traits.informationDensity > 0.7 || traits.informationDensity < 0.3,
+            traits.temporalUrgency > 0.7 || traits.temporalUrgency < 0.3,
+            traits.emotionalTemperature > 0.7 || traits.emotionalTemperature < 0.3,
+            traits.playfulness > 0.7 || traits.playfulness < 0.3
+        ].filter(Boolean).length;
+        const confidence = 0.4 + (extremeTraits * 0.15);
+        return { subSector: `${primarySector}_${selectedSubSector}`, confidence };
     }
     /**
      * Extract keyword hints from trait values
@@ -1536,7 +1479,7 @@ export class GenomeSequencer {
         const config = archetypes[archetypeName];
         if (!config) {
             // Unknown archetype: use a safe neutral preset rather than hardcoding 'technology'
-            console.error(`[generateFromArchetype] Unknown archetype '${archetypeName}', using neutral technology defaults`);
+            // Unknown archetype, using neutral defaults
             return this.generate(seed, {
                 informationDensity: 0.5, temporalUrgency: 0.5, emotionalTemperature: 0.5,
                 playfulness: 0.5, spatialDependency: 0.3, trustRequirement: 0.5,

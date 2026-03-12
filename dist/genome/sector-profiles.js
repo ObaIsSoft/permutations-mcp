@@ -5,7 +5,7 @@
  * NO named colors. NO templates. Only mathematical constraints.
  *
  * Philosophy: Sector provides BIAS, not SELECTION.
- * The SHA-256 hash + 25 chromosomes generate infinitely.
+ * The SHA-256 hash + 26 chromosomes generate infinitely.
  */
 /**
  * Mathematical color biases by sector.
@@ -461,7 +461,7 @@ const TRUST_APPROACH_WEIGHTS = {
 // ============================================================================
 // SUB-SECTOR KEYWORDS (Kept - used for content classification)
 // ============================================================================
-const SUB_SECTOR_KEYWORDS = {
+export const SUB_SECTOR_KEYWORDS = {
     healthcare: {
         surgical: ["surgery", "surgeon", "operating", "procedure", "OR", "cutting", "incision", "scalpel", "anesthesia"],
         wellness: ["wellness", "preventive", "holistic", "nutrition", "fitness", "mental health", "yoga", "meditation"],
@@ -784,11 +784,6 @@ export function getSubSectors(sector) {
         return [];
     return Object.keys(keywords).map(k => `${sector}_${k}`);
 }
-// ============================================================================
-// DEPRECATED EXPORTS (for backward compatibility during transition)
-// ============================================================================
-// TODO: Remove these after sequencer is updated to use new API
-export const SECTOR_PROFILES = {};
 export function getSectorProfile(sector) {
     const defaults = SECTOR_DEFAULTS[sector];
     const colorBias = SECTOR_COLOR_BIAS[sector];
@@ -806,12 +801,4 @@ export function getSectorProfile(sector) {
         generate3D: defaults.generate3D,
         subSectorKeywords: SUB_SECTOR_KEYWORDS[sector]
     };
-}
-// Stub for backward compatibility - will be removed
-export function selectColorFromProfile() {
-    throw new Error("selectColorFromProfile is deprecated. Use generateHueFromBias() instead.");
-}
-// Stub for backward compatibility - will be removed  
-export function colorNameToHSL() {
-    throw new Error("colorNameToHSL is deprecated. Colors are now generated mathematically from sector bias.");
 }

@@ -16,7 +16,6 @@ import { PatternDetector } from "./constraints/pattern-detector.js";
 import { ecosystemGenerator } from "./genome/ecosystem.js";
 import { CivilizationGenerator } from "./genome/civilization.js";
 import { generateCivilizationOutput } from "./generators/civilization-generators.js";
-import { ContentExtractor } from "./genome/extractor.js";
 import { DesignFileWriter } from "./generators/file-writer.js";
 import { formatGenerator } from "./generators/format-generators.js";
 class DesignGenomeServer {
@@ -31,10 +30,9 @@ class DesignGenomeServer {
     epigeneticParser;
     patternDetector;
     civilizationGen;
-    contentExtractor;
     fileWriter;
     constructor() {
-        this.server = new Server({ name: "permutations", version: "1.0.0" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "permutations", version: "0.0.5" }, { capabilities: { tools: {} } });
         this.extractor = new SemanticTraitExtractor();
         this.sequencer = new GenomeSequencer();
         this.cssGen = new CSSGenerator();
@@ -45,7 +43,6 @@ class DesignGenomeServer {
         this.epigeneticParser = new EpigeneticParser();
         this.patternDetector = new PatternDetector();
         this.civilizationGen = new CivilizationGenerator();
-        this.contentExtractor = new ContentExtractor();
         this.fileWriter = new DesignFileWriter();
         this.setupHandlers();
     }
@@ -318,12 +315,10 @@ class DesignGenomeServer {
                         // 2. Semantic Extraction
                         const finalContext = epigeneticData?.brandContext || context;
                         const traits = await this.extractor.extractTraits(intent, finalContext);
-                        // 3. Sector Detection
+                        // 3. Sector Detection (LLM-based)
                         const contentForSector = [intent, finalContext].filter(Boolean).join(" ");
-                        const contentAnalysis = this.contentExtractor.analyze(contentForSector);
-                        const detectedSector = contentAnalysis.success && contentAnalysis.content
-                            ? contentAnalysis.content.sector.primary
-                            : "technology";
+                        const sectorResult = await this.extractor.classifySector(contentForSector);
+                        const detectedSector = sectorResult.primary;
                         // 4. DNA Sequencing
                         const genome = this.sequencer.generate(seed, traits, {
                             primarySector: detectedSector,
@@ -417,7 +412,7 @@ class DesignGenomeServer {
                         // Extract traits from intent
                         const context = args.project_context || "";
                         const traits = await this.extractor.extractTraits(args.intent, context);
-                        // Generate ecosystem V2 - all organisms share ONE genome
+                        // Generate ecosystem - all organisms share ONE genome
                         const ecosystem = ecosystemGenerator.generate(args.seed, traits, args.options);
                         // Generate CSS from the shared genome
                         const css = this.cssGen.generate(ecosystem.environment.genome, { format: "compressed" });
@@ -527,11 +522,8 @@ class DesignGenomeServer {
                         // If no ecosystem or genome, generate new one
                         if (!baseGenome) {
                             const civContentForSector = [args.intent, context].filter(Boolean).join(" ");
-                            const civContentAnalysis = this.contentExtractor.analyze(civContentForSector);
-                            const civSector = civContentAnalysis.success && civContentAnalysis.content
-                                ? civContentAnalysis.content.sector.primary
-                                : "technology";
-                            baseGenome = this.sequencer.generate(args.seed, traits, { primarySector: civSector });
+                            const civSectorResult = await this.extractor.classifySector(civContentForSector);
+                            baseGenome = this.sequencer.generate(args.seed, traits, { primarySector: civSectorResult.primary });
                         }
                         // Generate civilization tier
                         const tier = this.civilizationGen.generate(args.intent, context, traits, args.min_tier);
@@ -816,7 +808,7 @@ const server = new DesignGenomeServer();
 server.run().catch(console.error);
 // === Startup environment check ===
 if (!SemanticTraitExtractor.isAvailable()) {
-    console.error("[WARNING] No LLM API key found in environment. " +
-        "Set GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY. " +
-        "Tools requiring trait extraction will return neutral fallbacks.");
+    console.error("[ERROR] No LLM API key found in environment. " +
+        "Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY.");
+    process.exit(1);
 }

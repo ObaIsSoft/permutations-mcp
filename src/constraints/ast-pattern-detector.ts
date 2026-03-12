@@ -110,7 +110,7 @@ export class ASTPatternDetector {
                 this.checkDeclaration(decl);
             });
         } catch (e) {
-            console.error("CSS parsing error:", e);
+            // CSS parsing error
         }
     }
 

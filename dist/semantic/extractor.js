@@ -107,23 +107,16 @@ export class SemanticTraitExtractor {
                     const baseDelay = 500 * Math.pow(2, attempt - 1); // 500ms, 1000ms, 2000ms
                     const jitter = Math.random() * 500; // Add 0-500ms random jitter
                     const delay = baseDelay + jitter;
-                    console.error(`[extractor] Attempt ${attempt}/${LLM_MAX_RETRIES} failed, retrying in ${delay}ms:`, e?.message);
+                    // Retry attempt failed, will retry
                     await new Promise(r => setTimeout(r, delay));
                 }
             }
         }
-        console.error(`[extractor] All ${LLM_MAX_RETRIES} attempts failed (${this.provider}):`, lastError?.message);
-        // Neutral fallback — sequencer will still produce a valid genome
-        return {
-            informationDensity: 0.5,
-            temporalUrgency: 0.5,
-            emotionalTemperature: 0.5,
-            playfulness: 0.5,
-            spatialDependency: 0.5,
-            trustRequirement: 0.5,
-            visualEmphasis: 0.5,
-            conversionFocus: 0.5,
-        };
+        // All retries failed - LLM is required, no fallback
+        throw new Error(`LLM extraction failed after ${LLM_MAX_RETRIES} attempts. ` +
+            `Provider: ${this.provider}. ` +
+            `Last error: ${lastError?.message || "Unknown error"}. ` +
+            `Set a valid API key (GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY).`);
     }
     /** Race a promise against a timeout */
     withTimeout(promise, ms) {
@@ -143,7 +136,7 @@ export class SemanticTraitExtractor {
         }
     }
     buildPrompt(intent, projectContext) {
-        return `You are a Semantic Trait Extractor for a parametric design system with 25-chromosome DNA generation.
+        return `You are a Semantic Trait Extractor for a parametric design system with 26-chromosome DNA generation (ch0-sector through ch25-copy_engine).
 
 Analyze the design intent and map to 8 trait vectors (0.0-1.0). Your output directly generates the design genome.
 
@@ -400,5 +393,78 @@ OUTPUT INSTRUCTIONS
     }
     getProvider() {
         return this.provider;
+    }
+    /**
+     * Classify sector from content using LLM
+     */
+    async classifySector(content) {
+        const prompt = `Analyze this content and classify it into ONE primary sector.
+
+Available sectors: healthcare, fintech, automotive, education, commerce, entertainment, manufacturing, legal, real_estate, travel, food, sports, technology
+
+Content: "${content.slice(0, 2000)}"
+
+Respond with EXACTLY this JSON (no markdown):
+{
+  "sector": "one_of_the_above",
+  "confidence": 0.0-1.0
+}`;
+        try {
+            const response = await this.withTimeout(this.callProviderForSector(prompt), LLM_TIMEOUT_MS);
+            return {
+                primary: response.seector || response.sector || "technology",
+                confidence: this.clamp(response.confidence ?? 0.5)
+            };
+        }
+        catch {
+            return { primary: "technology", confidence: 0.3 };
+        }
+    }
+    async callProviderForSector(prompt) {
+        switch (this.provider) {
+            case "groq":
+                if (!this.groq)
+                    throw new Error("Groq not initialized");
+                const groqRes = await this.groq.chat.completions.create({
+                    model: "llama-4-scout-17b-16e-instruct",
+                    messages: [{ role: "user", content: prompt }],
+                    response_format: { type: "json_object" },
+                    temperature: 0.2,
+                });
+                return JSON.parse(groqRes.choices[0].message.content || "{}");
+            case "openai":
+                if (!this.openai)
+                    throw new Error("OpenAI not initialized");
+                const openaiRes = await this.openai.chat.completions.create({
+                    model: "gpt-4.1",
+                    messages: [{ role: "user", content: prompt }],
+                    response_format: { type: "json_object" },
+                    temperature: 0.2,
+                });
+                return JSON.parse(openaiRes.choices[0].message.content || "{}");
+            case "anthropic":
+                if (!this.anthropic)
+                    throw new Error("Anthropic not initialized");
+                const anthropicRes = await this.anthropic.messages.create({
+                    model: "claude-3-7-sonnet-latest",
+                    max_tokens: 256,
+                    messages: [{ role: "user", content: prompt }],
+                });
+                const text = anthropicRes.content[0].type === "text" ? anthropicRes.content[0].text : "";
+                const match = text.match(/\{[\s\S]*\}/);
+                return match ? JSON.parse(match[0]) : { sector: "technology", confidence: 0.3 };
+            case "gemini":
+                if (!this.gemini)
+                    throw new Error("Gemini not initialized");
+                const geminiRes = await this.gemini.generateContent({
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+                });
+                const geminiText = geminiRes.response.text();
+                const geminiMatch = geminiText.match(/\{[\s\S]*\}/);
+                return geminiMatch ? JSON.parse(geminiMatch[0]) : { sector: "technology", confidence: 0.3 };
+            default:
+                return { sector: "technology", confidence: 0.3 };
+        }
     }
 }

@@ -55,7 +55,8 @@ npm run build
 | **Anthropic** | `ANTHROPIC_API_KEY` | claude-3-7-sonnet-latest |
 | **Gemini** | `GEMINI_API_KEY` | gemini-2.5-pro-latest |
 | **OpenRouter** | `OPENROUTER_API_KEY` | meta-llama/llama-4-scout |
-| **HuggingFace** | `HUGGINGFACE_API_KEY` | meta-llama/Meta-Llama-3-8B |
+| **HuggingFace** | `HUGGINGFACE_API_KEY` | meta-llama/Meta-Llama-3-8B-Instruct |
+| **Total** | **6 providers** | Fallback priority: Groq → OpenAI → Anthropic → Gemini → OpenRouter → HuggingFace |
 
 ---
 
@@ -74,7 +75,7 @@ npm run build
 
 | Field | Description |
 |---|---|
-| `genome` | Full 25-chromosome JSON object. All design decisions encoded as floats |
+| `genome` | Full 26-chromosome JSON object. All design decisions encoded as floats (ch0-sector through ch25-copy_engine) |
 | `tailwindConfig` | Ready-to-paste `tailwind.config.js` with all chromosome values injected |
 | `cssVariableBlock` | CSS custom properties file for runtime injection |
 | `topology` | Structural sections object describing the layout skeleton |
@@ -194,24 +195,19 @@ const civilization = generate_civilization(
 
 ---
 
-## Standlone Generation Script
+## Standalone CLI Usage
 
-To regenerate the product page DNA independently without an AI IDE:
+To generate designs without an MCP-enabled IDE:
 
 ```bash
-GROQ_API_KEY=your_key npx tsx generate-product-dna.ts
+npm run build
+node dist/generate-design.js
 ```
 
-This outputs a `dna_output_v2.txt` and `website/src/genome.json` with the full genome used by the product website.
+Or use the MCP tools directly via the server.
 
 ---
 
 ## Dogfooding
 
-The product website at `website/` was built using the output of this engine. To verify:
-
-1. Run `npx tsx generate-product-dna.ts` to regenerate `genome.json`
-2. Run `cd website && npm run dev`
-3. Inspect `localStorage` or the page source — the primary color, fonts, border-radius, and SVG biomarker are all injected from `genome.json` at runtime via CSS custom properties
-
-The website's primary color, font family, edge radius, SVG brand mark in the navbar, and 3D element rendering mode are all mathematically determined by the genome — not hand-crafted.
+The product website at `website/` was built using the output of this engine. The website's primary color, font family, edge radius, SVG brand mark in the navbar, and 3D element rendering mode are all mathematically determined by the genome — not hand-crafted.

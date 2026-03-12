@@ -1,4 +1,4 @@
-# Permutations V2 Architecture
+# Permutations Architecture
 ## Context-Aware, Sector-Mapped, Anti-Slop Design Generation
 
 ---
@@ -13,7 +13,7 @@ The design genome must correlate to:
 
 ---
 
-## The Generation Pipeline V2
+## The Generation Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -627,5 +627,5 @@ function mutateGenome(parent: Genome, mutationRate: number): Genome {
 
 ---
 
-*Architecture V2: Context-aware, sector-mapped, anti-slop design generation*
+*Architecture: Context-aware, sector-mapped, anti-slop design generation*
 *Date: March 2026*

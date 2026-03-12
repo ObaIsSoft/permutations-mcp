@@ -80,7 +80,7 @@ export class ASTPatternDetector {
             });
         }
         catch (e) {
-            console.error("CSS parsing error:", e);
+            // CSS parsing error
         }
     }
     checkDeclaration(decl) {

@@ -1,6 +1,6 @@
-# Permutations MCP — Project Rules for AI Agents
+# Permutations MCP — Agent Rules (v0.0.5)
 
-These rules govern how AI coding agents (Cursor, Windsurf, Claude Desktop) must interact with this codebase. The Permutations MCP server is the single source of truth for all design decisions. **No aesthetic values may be invented manually.**
+These rules govern how AI coding agents must interact with this codebase. The Permutations MCP server generates **26-chromosome design DNA** from SHA-256 hashes. **No aesthetic values may be invented manually.**
 
 ---
 
@@ -20,7 +20,9 @@ Before creating any new UI component, page, section or design token, you MUST ca
 }
 ```
 
-`project_context` and `brand_asset_paths` are optional but STRONGLY recommended for contextual accuracy.
+`project_context` and `brand_asset_paths` are optional but recommended for contextual accuracy.
+
+**REQUIREMENT:** One LLM API key MUST be set: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY.
 
 ---
 
@@ -90,10 +92,7 @@ Font families are defined by `ch3_type_display.family` (headings) and `ch4_type_
 
 The primary color is defined by `ch5_color_primary`. Never use hex/RGB colors that are not derived from this chromosome. Use `var(--primary-hue)`, `var(--primary-sat)`, `var(--primary-light)` in CSS, or the `primary` Tailwind token.
 
-Background colors are defined by `ch6_color_temp.backgroundTemp`:
-- `cool` → dark backgrounds (`#0a0a0a`, `#141414`)
-- `warm` → light backgrounds (`#fafaf9`, `#ffffff`)
-- `neutral` → medium tone
+Background colors are defined by `ch6_color_temp.surfaceStack` (array of derived surface colors). Use CSS variables: `--color-surface-0` through `--color-surface-3`.
 
 ---
 

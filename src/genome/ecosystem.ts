@@ -1,5 +1,5 @@
 /**
- * Permutations MCP - Ecosystem V2
+ * Permutations MCP - Ecosystem Generator
  * 
  * A living design system where components are organisms in a shared environment.
  * 

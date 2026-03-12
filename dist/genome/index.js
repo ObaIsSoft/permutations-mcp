@@ -4,11 +4,12 @@
  * Main exports for the design genome system
  */
 // Sector Profiles
-export { SECTOR_PROFILES, getSectorProfile, classifySubSector, isValidSector } from './sector-profiles.js';
+export { getSectorProfile, classifySubSector, isValidSector, SUB_SECTOR_KEYWORDS } from './sector-profiles.js';
 // Sequencer
 export { GenomeSequencer } from './sequencer.js';
-// Extractor
+// Extractors
 export { ContentExtractor } from './extractor.js';
+export { SemanticTraitExtractor } from '../semantic/extractor.js';
 // Constraint Solver
 export { GenomeConstraintSolver } from './constraint-solver.js';
 // Archetypes

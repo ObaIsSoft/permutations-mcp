@@ -6,7 +6,7 @@
  */
 
 import { GenomeSequencer, SequencerConfig } from "./genome/sequencer.js";
-import { ContentExtractor } from "./genome/extractor.js";
+import { SemanticTraitExtractor } from "./semantic/extractor.js";
 import { CSSGenerator } from "./css-generator.js";
 import { HTMLGenerator } from "./html-generator.js";
 import { DesignGenome, PrimarySector, ContentTraits } from "./genome/types.js";
@@ -38,25 +38,12 @@ export async function generateFromContent(
     const startTime = Date.now();
     
     try {
-        // Step 1: Analyze content
-        console.log("📊 Analyzing content...");
-        const extractor = new ContentExtractor();
-        const analysis = extractor.analyze(content);
-        
-        if (!analysis.success || !analysis.content) {
-            return {
-                success: false,
-                error: analysis.error || "Failed to analyze content",
-                metadata: {
-                    sector: "technology" as PrimarySector,
-                    subSector: "unknown",
-                    heroType: "unknown",
-                    generationTime: Date.now() - startTime
-                }
-            };
-        }
-        
-        const { traits, sector, subSector } = analysis.content;
+        // Step 1: Extract traits via LLM
+        const extractor = new SemanticTraitExtractor();
+        const traits = await extractor.extractTraits(content);
+        const sectorResult = await extractor.classifySector(content);
+        const sector = { primary: sectorResult.primary as PrimarySector };
+        const subSector = { classification: `${sector.primary}_general` };
         
         // Step 2: Configure sequencer
         const config: SequencerConfig = {
@@ -73,13 +60,11 @@ export async function generateFromContent(
         };
         
         // Step 3: Generate genome
-        console.log(`🧬 Generating genome for ${sector.primary} sector...`);
         const sequencer = new GenomeSequencer();
         const seed = `${content}-${Date.now()}`;
         const genome = sequencer.generate(seed, traits, config);
         
         // Step 4: Generate CSS
-        console.log("🎨 Generating CSS...");
         const cssGenerator = new CSSGenerator();
         const css = cssGenerator.generate(genome, {
             includeReset: true,
@@ -88,7 +73,6 @@ export async function generateFromContent(
         });
         
         // Step 5: Generate HTML
-        console.log("📝 Generating HTML...");
         const htmlGenerator = new HTMLGenerator();
         const html = htmlGenerator.generate(genome, {
             heroOnly: options?.heroOnly ?? false,
@@ -109,7 +93,7 @@ export async function generateFromContent(
                 JSON.stringify(genome, null, 2)
             );
             
-            console.log(`💾 Output saved to ${outputDir}`);
+            // Output saved
         }
         
         const generationTime = Date.now() - startTime;
