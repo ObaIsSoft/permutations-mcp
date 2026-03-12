@@ -278,6 +278,11 @@ export class HTMLGenerator {
     generateConfigurator3DHero(genome, layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         const price = copy.stats.find(s => s.label.toLowerCase().includes('price'))?.value || '$299';
+        // Use surface stack for color swatches (dark, medium, light)
+        const surfaceStack = genome.chromosomes.ch6_color_temp.surfaceStack;
+        const swatch1 = surfaceStack[0] || '#333';
+        const swatch2 = surfaceStack[2] || '#666';
+        const swatch3 = surfaceStack[3] || '#999';
         return `  <div class="hero-content">
     <h1 class="text-h1">${copy.headline}</h1>
     <p class="hero-subtitle">${copy.subheadline}</p>
@@ -289,9 +294,9 @@ export class HTMLGenerator {
         <div class="option-group">
           <label>Options</label>
           <div class="color-options">
-            <button class="color-swatch active" style="background: #333"></button>
-            <button class="color-swatch" style="background: #666"></button>
-            <button class="color-swatch" style="background: #999"></button>
+            <button class="color-swatch active" style="background: ${swatch1}"></button>
+            <button class="color-swatch" style="background: ${swatch2}"></button>
+            <button class="color-swatch" style="background: ${swatch3}"></button>
           </div>
         </div>
         <div class="config-price">

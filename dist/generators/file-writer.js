@@ -126,26 +126,26 @@ export class DesignFileWriter {
         
         .preview-info {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: ${genome.chromosomes.ch2_rhythm.baseSpacing}px;
+            right: ${genome.chromosomes.ch2_rhythm.baseSpacing}px;
             background: ${genome.chromosomes.ch6_color_temp.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.8)'};
-            color: ${genome.chromosomes.ch6_color_temp.isDark ? '#000' : '#fff'};
-            padding: 16px;
+            color: ${genome.chromosomes.ch6_color_temp.isDark ? genome.chromosomes.ch6_color_temp.surfaceStack[0] : genome.chromosomes.ch6_color_temp.surfaceStack[genome.chromosomes.ch6_color_temp.surfaceStack.length - 1]};
+            padding: ${genome.chromosomes.ch2_rhythm.baseSpacing}px;
             border-radius: ${genome.chromosomes.ch7_edge.componentRadius}px;
             font-family: monospace;
-            font-size: 12px;
-            max-width: 300px;
+            font-size: ${Math.max(11, genome.chromosomes.ch16_typography.baseSize * 0.75)}px;
+            max-width: ${280 + Math.floor((parseInt(genome.dnaHash.slice(0, 2), 16) / 255) * 80)}px;
             z-index: 9999;
         }
         
         .preview-info h3 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
+            margin: 0 0 ${genome.chromosomes.ch2_rhythm.baseSpacing / 2}px 0;
+            font-size: ${Math.max(12, genome.chromosomes.ch16_typography.baseSize * 0.875)}px;
         }
         
         .preview-info code {
             background: ${genome.chromosomes.ch6_color_temp.isDark ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'};
-            padding: 2px 4px;
+            padding: ${Math.max(2, genome.chromosomes.ch2_rhythm.baseSpacing / 8)}px ${Math.max(4, genome.chromosomes.ch2_rhythm.baseSpacing / 4)}px;
             border-radius: ${Math.max(2, genome.chromosomes.ch7_edge.radius / 4)}px;
         }
         
@@ -174,7 +174,7 @@ export class DesignFileWriter {
         <div>Primary: <span class="chromosome-tag">hsl(${primary.hue}, ${Math.round(primary.saturation * 100)}%, ${Math.round(primary.lightness * 100)}%)</span></div>
         <br>
         <div><strong>25 Chromosomes Active</strong></div>
-        <div style="margin-top: 8px; opacity: 0.7;">
+        <div style="margin-top: ${genome.chromosomes.ch2_rhythm.baseSpacing / 2}px; opacity: 0.7;">
             Generated ${new Date().toLocaleDateString()}
         </div>
     </div>

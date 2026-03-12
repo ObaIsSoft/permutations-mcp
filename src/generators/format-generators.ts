@@ -10,6 +10,7 @@
 
 import { DesignGenome } from "../genome/types.js";
 import { CivilizationTier, ComponentSpec } from "../genome/civilization.js";
+import * as crypto from "crypto";
 
 export interface FormatOptions {
     format: "vue" | "svelte" | "figma-tokens" | "style-dictionary" | "styled-components" | "emotion";
@@ -27,6 +28,10 @@ export interface GeneratedFormat {
  * Generates design outputs in various formats
  */
 export class FormatGenerator {
+    private getHashByte(seed: string, index: number): number {
+        const hash = crypto.createHash("sha256").update(seed).digest("hex");
+        return parseInt(hash.slice(index * 2, index * 2 + 2), 16) / 255;
+    }
 
     /**
      * Generate all alternative formats for a design genome
@@ -154,6 +159,12 @@ export class FormatGenerator {
         const ch7 = genome.chromosomes.ch7_edge;
         const display = genome.chromosomes.ch3_type_display;
         const body = genome.chromosomes.ch4_type_body;
+        const b = (idx: number) => this.getHashByte(genome.dnaHash + "tokens", idx);
+
+        // Hash-derived timing values: 100-200ms fast, 250-400ms normal, 400-700ms slow
+        const timingFast = 100 + Math.floor(b(220) * 100);
+        const timingNormal = 250 + Math.floor(b(221) * 150);
+        const timingSlow = 400 + Math.floor(b(222) * 300);
 
         const tokens = {
             color: {
@@ -179,9 +190,9 @@ export class FormatGenerator {
                 lg: { value: `${ch7.radius * 2}px` }
             },
             transition: {
-                fast: { value: "150ms" },
-                normal: { value: "300ms" },
-                slow: { value: "500ms" }
+                fast: { value: `${timingFast}ms` },
+                normal: { value: `${timingNormal}ms` },
+                slow: { value: `${timingSlow}ms` }
             }
         };
 

@@ -2,6 +2,7 @@ import Groq from "groq-sdk";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import * as crypto from "crypto";
 const LLM_TIMEOUT_MS = 30_000; // 30s timeout per attempt (increased for cold starts)
 const LLM_MAX_RETRIES = 3; // Retry up to 3 times with exponential backoff + jitter
 export class SemanticTraitExtractor {
@@ -129,8 +130,10 @@ export class SemanticTraitExtractor {
             catch (e) {
                 lastError = e;
                 if (attempt < LLM_MAX_RETRIES) {
+                    // Deterministic backoff using hash of attempt number
+                    const hash = crypto.createHash("sha256").update(`retry_${attempt}_${Date.now()}`).digest("hex");
+                    const jitter = (parseInt(hash.slice(0, 2), 16) / 255) * 500; // 0-500ms
                     const baseDelay = 500 * Math.pow(2, attempt - 1);
-                    const jitter = Math.random() * 500;
                     const delay = baseDelay + jitter;
                     await new Promise(r => setTimeout(r, delay));
                 }

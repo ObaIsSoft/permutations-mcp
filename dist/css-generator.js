@@ -6,6 +6,10 @@
  */
 import * as crypto from "crypto";
 export class CSSGenerator {
+    getHashByte(seed, index) {
+        const hash = crypto.createHash("sha256").update(seed).digest("hex");
+        return parseInt(hash.slice(index * 2, index * 2 + 2), 16) / 255;
+    }
     generate(genome, options = {}) {
         const { includeReset = true, includeVariables = true, format = "expanded" } = options;
         const indent = format === "expanded" ? "  " : "";
@@ -164,11 +168,15 @@ ${indent}outline-offset: 2px;
     }
     generateBaseStyles(genome, indent, newline) {
         const parts = [];
-        // Structure
+        // Structure - hash-derived max-width
         const structure = genome.chromosomes.ch1_structure;
+        const b = (idx) => this.getHashByte(genome.dnaHash, idx);
+        // Container max-width: 900-1400px based on nesting preference + hash
+        const baseWidth = structure.maxNesting > 2 ? 1100 : 900;
+        const maxWidth = baseWidth + Math.floor(b(200) * 300); // 900-1400px range
         parts.push(`/* Grid */`);
         parts.push(`.container {
-${indent}max-width: ${structure.maxNesting > 2 ? '1200px' : '900px'};
+${indent}max-width: ${maxWidth}px;
 ${indent}margin-inline: auto;
 ${indent}padding-inline: var(--space-lg);
 }`);
@@ -211,9 +219,11 @@ ${indent}transition: all var(--duration-fast) var(--ease-smooth);
 ${indent}background: var(--color-primary);
 ${indent}color: white;
 }`);
+        // Hash-derived hover lift: 1-4px
+        const hoverLift = 1 + Math.floor(this.getHashByte(genome.dnaHash, 230) * 3);
         parts.push(`.btn-primary:hover {
 ${indent}background: var(--color-primary-600);
-${indent}transform: translateY(-2px);
+${indent}transform: translateY(-${hoverLift}px);
 }`);
         return parts.join(newline + newline);
     }
@@ -232,11 +242,14 @@ ${indent}align-items: center;
 ${indent}overflow: hidden;
 }`);
         // Layout variant
+        const getByte = (idx) => this.getHashByte(genome.dnaHash, idx);
         switch (variant.layout) {
             case 'centered':
+                // Hash-derived content max-width: 700-900px
+                const contentWidth = 700 + Math.floor(getByte(201) * 200);
                 parts.push(`.hero-content {
 ${indent}width: 100%;
-${indent}max-width: 800px;
+${indent}max-width: ${contentWidth}px;
 ${indent}margin-inline: auto;
 ${indent}text-align: center;
 ${indent}padding: var(--space-xl);
@@ -268,6 +281,11 @@ ${indent}height: 100%;
 }`);
                 break;
             case 'full_bleed':
+                // Hash-derived gradient opacity: 0.5-0.8
+                const gradientAlpha = 0.5 + (this.getHashByte(genome.dnaHash, 237) * 0.3);
+                const gradientColor = genome.chromosomes.ch6_color_temp.isDark
+                    ? `rgba(0,0,0,${gradientAlpha.toFixed(2)})`
+                    : `rgba(255,255,255,${gradientAlpha.toFixed(2)})`;
                 parts.push(`.hero-content {
 ${indent}position: absolute;
 ${indent}inset: 0;
@@ -275,13 +293,15 @@ ${indent}display: flex;
 ${indent}flex-direction: column;
 ${indent}justify-content: center;
 ${indent}padding: var(--space-xl);
-${indent}background: ${visual.hasVideo ? 'transparent' : 'linear-gradient(to right, rgba(0,0,0,0.7), transparent)'};
+${indent}background: ${visual.hasVideo ? 'transparent' : `linear-gradient(to right, ${gradientColor}, transparent)`};
 ${indent}color: ${visual.hasVideo ? 'inherit' : 'white'};
 }`);
                 break;
             case 'floating_cards':
+                // Hash-derived: 500-700px
+                const floatingWidth = 500 + Math.floor(getByte(202) * 200);
                 parts.push(`.hero-content {
-${indent}max-width: 600px;
+${indent}max-width: ${floatingWidth}px;
 ${indent}padding: var(--space-xl);
 }${indent}.hero-cards {
 ${indent}position: absolute;
@@ -339,9 +359,11 @@ ${indent}color: var(--color-text-secondary);
 }`);
                 break;
             case 'search_discovery':
+                // Hash-derived search width: 500-700px
+                const searchWidth = 500 + Math.floor(getByte(203) * 200);
                 parts.push(`.hero-search {
 ${indent}width: 100%;
-${indent}max-width: 600px;
+${indent}max-width: ${searchWidth}px;
 ${indent}margin-top: var(--space-lg);
 }${indent}.hero-search-input {
 ${indent}width: 100%;
@@ -356,9 +378,13 @@ ${indent}border-color: var(--color-primary);
 }`);
                 break;
             case 'product_ui':
+                // Hash-derived shadow: y-offset 20-40px, blur 40-60px
+                const shadowY = 20 + Math.floor(this.getHashByte(genome.dnaHash, 234) * 20);
+                const shadowBlur = 40 + Math.floor(this.getHashByte(genome.dnaHash, 235) * 20);
+                const shadowAlpha = 0.15 + (this.getHashByte(genome.dnaHash, 236) * 0.15);
                 parts.push(`.hero-screenshot {
 ${indent}border-radius: var(--radius-lg);
-${indent}box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+${indent}box-shadow: 0 ${shadowY}px ${shadowBlur}px -12px rgba(0, 0, 0, ${shadowAlpha.toFixed(2)});
 ${indent}overflow: hidden;
 }`);
                 break;
@@ -480,11 +506,15 @@ ${indent}font-size: var(--text-small);
             return '';
         }
         parts.push(`/* Motion & Animation */`);
+        // Hash-derived animation values
+        const fadeDistance = 10 + Math.floor(this.getHashByte(genome.dnaHash, 231) * 20); // 10-30px
+        const scaleStart = 0.92 + (this.getHashByte(genome.dnaHash, 232) * 0.06); // 0.92-0.98
+        const liftAmount = 2 + Math.floor(this.getHashByte(genome.dnaHash, 233) * 4); // 2-6px
         // Entry animations
         parts.push(`@keyframes fadeInUp {
 ${indent}from {
 ${indent}${indent}opacity: 0;
-${indent}${indent}transform: translateY(20px);
+${indent}${indent}transform: translateY(${fadeDistance}px);
 ${indent}}
 ${indent}to {
 ${indent}${indent}opacity: 1;
@@ -494,7 +524,7 @@ ${indent}}
         parts.push(`@keyframes scaleIn {
 ${indent}from {
 ${indent}${indent}opacity: 0;
-${indent}${indent}transform: scale(0.95);
+${indent}${indent}transform: scale(${scaleStart.toFixed(2)});
 ${indent}}
 ${indent}to {
 ${indent}${indent}opacity: 1;
@@ -531,14 +561,14 @@ ${indent}animation: scaleIn var(--duration-normal) var(--ease-smooth) forwards;
         parts.push(`.hover-lift {
 ${indent}transition: transform var(--duration-fast) var(--ease-smooth);
 }${indent}.hover-lift:hover {
-${indent}transform: translateY(-4px);
+${indent}transform: translateY(-${liftAmount}px);
 }`);
         // Scroll-triggered animations (if supported)
         if (rendering.animate) {
             parts.push(`@media (prefers-reduced-motion: no-preference) {
 ${indent}.reveal {
 ${indent}${indent}opacity: 0;
-${indent}${indent}transform: translateY(20px);
+${indent}${indent}transform: translateY(${fadeDistance}px);
 ${indent}${indent}transition: opacity var(--duration-slow) var(--ease-smooth),
 ${indent}${indent}${indent}${indent}${indent}transform var(--duration-slow) var(--ease-smooth);
 ${indent}}
@@ -552,9 +582,15 @@ ${indent}}
     }
     generateResponsiveStyles(genome, indent, newline) {
         const parts = [];
+        const b = (idx) => this.getHashByte(genome.dnaHash + "responsive", idx);
+        // Hash-derived breakpoints
+        const mobileBreakpoint = 700 + Math.floor(b(210) * 100); // 700-800px
+        const tabletBreakpoint = 1000 + Math.floor(b(211) * 200); // 1000-1200px
+        const desktopBreakpoint = 1300 + Math.floor(b(212) * 200); // 1300-1500px
+        const largeMaxWidth = 1200 + Math.floor(b(213) * 200); // 1200-1400px
         parts.push(`/* Responsive */`);
         // Mobile adjustments
-        parts.push(`@media (max-width: 768px) {
+        parts.push(`@media (max-width: ${mobileBreakpoint}px) {
 ${indent}.hero {
 ${indent}${indent}min-height: auto;
 ${indent}${indent}padding: var(--space-xl) 0;
@@ -567,7 +603,7 @@ ${indent}}
 ${indent}.hero-visual {
 ${indent}${indent}position: relative;
 ${indent}${indent}width: 100%;
-${indent}${indent}height: 300px;
+${indent}${indent}height: ${Math.floor(250 + b(214) * 150)}px;
 ${indent}${indent}margin-top: var(--space-lg);
 ${indent}}
 ${indent}.grid {
@@ -582,7 +618,7 @@ ${indent}${indent}grid-template-columns: 1fr;
 ${indent}}
 }`);
         // Tablet
-        parts.push(`@media (min-width: 769px) and (max-width: 1024px) {
+        parts.push(`@media (min-width: ${mobileBreakpoint + 1}px) and (max-width: ${tabletBreakpoint}px) {
 ${indent}.grid {
 ${indent}${indent}grid-template-columns: repeat(2, 1fr);
 ${indent}}
@@ -591,9 +627,9 @@ ${indent}${indent}width: 60%;
 ${indent}}
 }`);
         // Large screens
-        parts.push(`@media (min-width: 1400px) {
+        parts.push(`@media (min-width: ${desktopBreakpoint}px) {
 ${indent}.container {
-${indent}${indent}max-width: 1320px;
+${indent}${indent}max-width: ${largeMaxWidth}px;
 ${indent}}
 }`);
         return parts.join(newline + newline);
