@@ -365,13 +365,13 @@ export class GenomeSequencer {
             segmentCount: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 3 : 2) as 2 | 3 | 4
         };
 
-        const ch25_copy_engine = isForced('ch25_copy_engine') as any || this.generateCopyEngine(primaryProfile, b, options?.copyIntelligence);
+        const ch25_copy_engine = isForced('ch25_copy_engine') as any || this.generateCopyEngine(primaryProfile, b, options?.copyIntelligence, options?.copy);
         const ch26_copy_intelligence = options?.copyIntelligence || this.generateDefaultCopyIntelligence(primaryProfile);
         
         // Ensure ch25 uses the same intelligence for consistency
         if (options?.copyIntelligence && !isForced('ch25_copy_engine')) {
             // Regenerate copy engine with the provided intelligence
-            const regeneratedCopy = this.generateCopyEngine(primaryProfile, b, options.copyIntelligence);
+            const regeneratedCopy = this.generateCopyEngine(primaryProfile, b, options.copyIntelligence, options.copy);
             // Copy regenerated content back to ch25_copy_engine
             Object.assign(ch25_copy_engine, regeneratedCopy);
         }
@@ -459,7 +459,7 @@ export class GenomeSequencer {
             hue: Math.round(accentHue),
             saturation: Math.round(Math.max(0.4, b(215)) * 100) / 100,
             lightness: Math.round(Math.max(0.4, Math.min(0.6, 0.5 + (b(216) - 0.5) * 0.2)) * 100) / 100,
-            hex: this.hslToHex(accentHue, Math.max(0.4, b(215) * 100) * 100, Math.max(0.4, Math.min(0.6, 0.5 + (b(216) - 0.5) * 0.2)) * 100),
+            hex: this.hslToHex(accentHue, Math.max(40, b(215) * 100), Math.max(40, Math.min(60, (0.5 + (b(216) - 0.5) * 0.2) * 100))),
             usage: ["cta", "highlight", "alert", "success"][Math.floor(b(217) * 4)] as "cta" | "highlight" | "alert" | "success"
         };
         
@@ -484,21 +484,21 @@ export class GenomeSequencer {
         };
         
         // Hash-driven neutral scale with primary tint
-        const tintStrength = Math.round(b(218) * 30) / 100; // 0-30% tint
+        const tintStrength = Math.round(b(218) * 30) / 100; // 0-0.3 (0-30%)
         const neutralScale: string[] = [];
         for (let i = 0; i < 9; i++) {
-            const lightness = 5 + i * 11; // 5, 16, 27, 38, 49, 60, 71, 82, 93
-            const saturation = tintStrength * (1 - Math.abs(i - 4) / 4); // strongest in middle
-            neutralScale.push(this.hslToHex(primary.hue, saturation * 100, lightness * 100));
+            const lightness = 5 + i * 11; // 5, 16, 27, 38, 49, 60, 71, 82, 93 (already 0-100)
+            const saturation = tintStrength * (1 - Math.abs(i - 4) / 4) * 100; // 0-30% converted to 0-100
+            neutralScale.push(this.hslToHex(primary.hue, saturation, lightness));
         }
         
         // Dark mode surfaces
         const darkModeSurfaces: string[] = [];
         const darkElevations = [5, 10, 15, 20, 25, 30, 35, 40];
         for (let i = 0; i < 8; i++) {
-            const lightness = darkElevations[i];
-            const saturation = tintStrength * 0.5;
-            darkModeSurfaces.push(this.hslToHex(primary.hue, saturation * 100, lightness * 100));
+            const lightness = darkElevations[i]; // already 0-100
+            const saturation = tintStrength * 0.5 * 100; // convert to 0-100
+            darkModeSurfaces.push(this.hslToHex(primary.hue, saturation, lightness));
         }
         
         return {
@@ -517,94 +517,52 @@ export class GenomeSequencer {
     }
 
     /**
-     * Generate copy engine with hash-driven patterns
-     * Uses copy intelligence + hash bytes to generate unique, deterministic copy
+     * Generate copy engine
+     * Uses LLM-generated copy from intent if available, otherwise falls back to patterns
      */
     private generateCopyEngine(
         profile: ReturnType<typeof getSectorProfile>,
         b: (index: number) => number,
-        copyIntelligence?: CopyIntelligence
+        copyIntelligence?: CopyIntelligence,
+        copy?: { headline: string; subheadline: string; cta: string; tagline: string; companyName: string; features: { title: string; description: string }[]; stats: { label: string; value: string }[]; testimonial: string; faq: { question: string; answer: string }[] }
     ) {
+        // If LLM-generated copy is provided from intent, use it directly
+        if (copy) {
+            return {
+                headline: copy.headline,
+                subheadline: copy.subheadline,
+                cta: copy.cta,
+                authorName: "Customer Name",  // Placeholder - should come from actual testimonial
+                authorTitle: "Role",          // Placeholder
+                testimonial: copy.testimonial,
+                companyName: copy.companyName,
+                tagline: copy.tagline,
+                stats: copy.stats,
+                faq: copy.faq,
+                features: copy.features
+            };
+        }
+        
+        // Fallback: Generate from patterns (for archetype mode without LLM)
         const ci = copyIntelligence || this.generateDefaultCopyIntelligence(profile);
         const sector = profile.sector;
         
-        // Hash-driven headline generation
-        const headline = generateHeadlineFromPatterns(
-            ci.headlineStyle,
-            sector,
-            ci.emotionalRegister,
-            b
-        );
-        
-        // Hash-driven CTA generation
-        const cta = generateCTAFromPatterns(
-            ci.ctaAggression,
-            sector,
-            ci.emotionalRegister,
-            b
-        );
-        
-        // Hash-driven tagline generation
+        // Pattern-based generation (fallback only)
+        const headline = generateHeadlineFromPatterns(ci.headlineStyle, sector, ci.emotionalRegister, b);
+        const cta = generateCTAFromPatterns(ci.ctaAggression, sector, ci.emotionalRegister, b);
         const tagline = generateTaglineFromPatterns(sector, ci.emotionalRegister, b);
-        
-        // Hash-driven subheadline from sentence template
-        const subheadline = generateSentenceFromTemplate(
-            ci.sentenceStructure,
-            sector,
-            ci.emotionalRegister,
-            b
-        );
-        
-        // Generate testimonial from pattern
+        const subheadline = generateSentenceFromTemplate(ci.sentenceStructure, sector, ci.emotionalRegister, b);
         const testimonial = this.generateTestimonialFromPatterns(sector, ci.emotionalRegister, b);
-        
-        // Generate stats based on sector patterns
         const stats = this.generateStatsFromPatterns(sector, b);
-        
-        // Generate FAQ from patterns
         const faq = this.generateFAQFromPatterns(sector, ci, b);
-        
-        // Generate features from patterns
         const features = this.generateFeaturesFromPatterns(sector, ci, b);
-        
-        // Generate author name from sector terms + title patterns
-        const nameNouns = (COPY_PATTERN_BANKS.industryTerms as any)[sector] || COPY_PATTERN_BANKS.industryTerms.technology;
-        const firstNames = ["Alex", "Jordan", "Morgan", "Taylor", "Casey", "Riley", "Drew", "Quinn", "Avery", "Blake"];
-        const lastNames = ["Williams", "Chen", "Patel", "Thompson", "Garcia", "Kim", "Johnson", "Martinez", "Lee", "Davis"];
-        const titleBySector: Record<string, string[]> = {
-            healthcare: ["Chief Medical Officer", "Head of Patient Care", "VP of Clinical Operations", "Medical Director"],
-            fintech: ["VP of Finance", "Chief Risk Officer", "Head of Investments", "Portfolio Manager"],
-            technology: ["CTO", "VP of Engineering", "Head of Product", "Engineering Director"],
-            legal: ["Managing Partner", "Senior Counsel", "Partner", "General Counsel"],
-            commerce: ["Head of Commerce", "VP of Retail", "Chief Merchandising Officer", "Brand Director"],
-            education: ["Dean of Academics", "Head of Curriculum", "VP of Learning", "Academic Director"],
-            automotive: ["VP of Engineering", "Head of Design", "Chief Innovation Officer", "Technical Director"],
-            entertainment: ["Creative Director", "VP of Content", "Head of Production", "Chief Creative Officer"],
-            real_estate: ["Managing Broker", "VP of Development", "Head of Acquisitions", "Investment Director"],
-            travel: ["Chief Experience Officer", "Head of Destinations", "VP of Operations", "Travel Director"],
-            food: ["Executive Chef", "Head of Operations", "Culinary Director", "VP of Brand"],
-            sports: ["Head Coach", "VP of Performance", "Athletic Director", "Training Director"],
-            manufacturing: ["VP of Operations", "Chief Quality Officer", "Head of Engineering", "Production Director"]
-        };
-        const titles = titleBySector[sector] || titleBySector.technology;
-        const authorName = `${firstNames[Math.floor(b(173) * firstNames.length)]} ${lastNames[Math.floor(b(174) * lastNames.length)]}`;
-        const authorTitle = titles[Math.floor(b(175) * titles.length)];
-        const companyPrefixes = ["Apex", "Vertex", "Nexus", "Prism", "Cascade", "Zenith", "Meridian", "Stratum", "Vantage", "Epoch"];
-        const companySuffixes = ["Group", "Solutions", "Partners", "Labs", "Ventures", "Works", "Co", "Inc", "Corp"];
-        const companyName = `${companyPrefixes[Math.floor(b(176) * companyPrefixes.length)]} ${companySuffixes[Math.floor(b(177) * companySuffixes.length)]}`;
+        const authorName = "Customer Name";
+        const authorTitle = "Role";
+        const companyName = "Your Product";
 
         return {
-            headline,
-            subheadline,
-            cta,
-            authorName,
-            authorTitle,
-            testimonial,
-            companyName,
-            tagline,
-            stats,
-            faq,
-            features
+            headline, subheadline, cta, authorName, authorTitle,
+            testimonial, companyName, tagline, stats, faq, features
         };
     }
 
@@ -762,125 +720,45 @@ export class GenomeSequencer {
     }
 
     /**
-     * Generate testimonial from hash-driven patterns
+     * Generate testimonial - placeholder only
+     * Real testimonials must come from actual user feedback
      */
     private generateTestimonialFromPatterns(sector: PrimarySector, register: string, b: (index: number) => number): string {
-        const banks = COPY_PATTERN_BANKS;
-        const safeRegister = register || "professional";
-        const verbs = (banks.verbs as any)[safeRegister] || banks.verbs.professional;
-        const adjectives = (banks.adjectives as any)[safeRegister] || banks.adjectives.professional;
-        const nouns = (banks.industryTerms as any)[sector] || banks.industryTerms.technology;
-        
-        const safeVerb = (idx: number) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "deliver";
-        const safeAdj = (idx: number) => adjectives[Math.floor(b(idx) * adjectives.length)] || adjectives[0] || "great";
-        const safeNoun = (idx: number) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "service";
-        
-        const templates = [
-            `The ${safeNoun(180)} ${safeVerb(181)}ed beyond my expectations.`,
-            `${safeAdj(182).charAt(0).toUpperCase() + safeAdj(182).slice(1)} ${safeNoun(183)} that actually delivers.`,
-            `I ${safeVerb(184)}ed the results within days.`
-        ];
-        
-        return templates[Math.floor(b(185) * templates.length)];
+        return "Testimonial placeholder - replace with actual customer quote";
     }
 
     /**
-     * Generate stats from hash-driven patterns
+     * Generate stats - placeholder only
+     * Real stats must come from actual business data
      */
     private generateStatsFromPatterns(sector: PrimarySector, b: (index: number) => number): { label: string; value: string }[] {
-        const banks = COPY_PATTERN_BANKS;
-        const nouns = (banks.industryTerms as any)[sector] || banks.industryTerms.technology;
-        const safeNoun = (idx: number) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "solution";
-        
-        // Stats: real numeric values with sector-appropriate labels
-        const statMultipliers: Record<string, [number, number][]> = {
-            healthcare: [[100, 5000], [80, 99], [1000, 50000]],
-            fintech: [[1000000, 500000000], [85, 99], [10000, 1000000]],
-            technology: [[100, 10000], [90, 99], [500, 50000]],
-            legal: [[50, 500], [90, 100], [100, 2000]],
-            commerce: [[1000, 100000], [80, 98], [10000, 1000000]],
-            education: [[100, 5000], [85, 99], [1000, 50000]],
-            default: [[100, 10000], [80, 99], [500, 50000]]
-        };
-        const ranges = (statMultipliers as any)[sector] || statMultipliers.default;
-        const statValues = ranges.map(([min, max]: [number, number], i: number) => {
-            const val = min + Math.floor(b(187 + i) * (max - min));
-            if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
-            if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
-            return `${val}`;
-        });
-        const percentVal = `${80 + Math.floor(b(189) * 19)}%`;
-
-        const statTemplates = [
-            { label: `${safeNoun(186)}s Served`, value: statValues[0] },
-            { label: `${safeNoun(188)} Rating`, value: percentVal },
-            { label: `${safeNoun(190)}s Delivered`, value: statValues[2] }
+        return [
+            { label: "Stat 1 Label", value: "{{VALUE_1}}" },
+            { label: "Stat 2 Label", value: "{{VALUE_2}}" },
+            { label: "Stat 3 Label", value: "{{VALUE_3}}" }
         ];
-        
-        return statTemplates;
     }
 
     /**
-     * Generate FAQ from hash-driven patterns
+     * Generate FAQ - placeholder only
+     * Real FAQs must come from actual user questions
      */
     private generateFAQFromPatterns(sector: PrimarySector, ci: CopyIntelligence, b: (index: number) => number): { question: string; answer: string }[] {
-        const banks = COPY_PATTERN_BANKS;
-        const nouns = (banks.industryTerms as any)[sector] || banks.industryTerms.technology;
-        const safeRegister = ci?.emotionalRegister || "professional";
-        const verbs = (banks.verbs as any)[safeRegister] || banks.verbs.professional;
-        
-        const adjectives = (banks.adjectives as any)[safeRegister] || banks.adjectives.professional;
-        const safeAdj = (idx: number) => adjectives[Math.floor(b(idx) * adjectives.length)] || adjectives[0] || "effective";
-        const safeVerb = (idx: number) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "use";
-        const safeNoun = (idx: number) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "service";
-
-        // Generate real answers from patterns instead of placeholder tokens
-        const answerTemplates = [
-            `Our ${safeNoun(193)} process is straightforward. ${safeAdj(195).charAt(0).toUpperCase() + safeAdj(195).slice(1)} ${safeVerb(196)}s get you started in minutes with no technical expertise required.`,
-            `We provide ${safeAdj(197)} ${safeNoun(194)}s tailored to your needs. Every ${safeNoun(198)} comes with dedicated support and clear outcomes.`,
-            `Getting started is simple: choose your ${safeNoun(199)}, configure your preferences, and ${safeVerb(200)} immediately. Most clients see results within their first session.`
-        ];
-
         return [
-            { 
-                question: `How do I ${safeVerb(192)} ${safeNoun(193)}?`, 
-                answer: answerTemplates[Math.floor(b(201) * answerTemplates.length)]
-            },
-            { 
-                question: `What ${safeNoun(194)}s do you offer?`, 
-                answer: `We offer ${safeAdj(202)} ${safeNoun(203)}s designed for every scale. From ${safeAdj(204)} starter options to enterprise-grade ${safeNoun(205)} solutions — each built to ${safeVerb(206)} your goals.`
-            }
+            { question: "FAQ Question 1?", answer: "FAQ answer placeholder - replace with actual answer" },
+            { question: "FAQ Question 2?", answer: "FAQ answer placeholder - replace with actual answer" }
         ];
     }
 
     /**
-     * Generate features from hash-driven patterns
+     * Generate features - placeholder only
+     * Real features must come from actual product definition
      */
     private generateFeaturesFromPatterns(sector: PrimarySector, ci: CopyIntelligence, b: (index: number) => number): { title: string; description: string }[] {
-        const banks = COPY_PATTERN_BANKS;
-        const nouns = (banks.industryTerms as any)[sector] || banks.industryTerms.technology;
-        const register = ci?.emotionalRegister || "professional";
-        const verbs = (banks.verbs as any)[register] || banks.verbs.professional;
-        const adjectives = (banks.adjectives as any)[register] || banks.adjectives.professional;
-        
-        // Defensive: ensure arrays are valid
-        const safeVerb = (idx: number) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "deliver";
-        const safeAdj = (idx: number) => adjectives[Math.floor(b(idx) * adjectives.length)] || adjectives[0] || "effective";
-        const safeNoun = (idx: number) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "solution";
-        
         return [
-            { 
-                title: `${safeVerb(195).charAt(0).toUpperCase() + safeVerb(195).slice(1)} ${safeNoun(196)}`, 
-                description: `${safeAdj(197).charAt(0).toUpperCase() + safeAdj(197).slice(1)} ${safeNoun(198)} that ${safeVerb(199)}s your needs with precision and reliability.`
-            },
-            { 
-                title: `${safeAdj(200).charAt(0).toUpperCase() + safeAdj(200).slice(1)} ${safeNoun(201)}`, 
-                description: `A ${safeAdj(202)} approach to ${safeNoun(203)} that scales with your team and adapts to your workflow.`
-            },
-            { 
-                title: `${safeNoun(204).charAt(0).toUpperCase() + safeNoun(204).slice(1)} Excellence`, 
-                description: `${safeVerb(205).charAt(0).toUpperCase() + safeVerb(205).slice(1)} ${safeNoun(206)} with ${safeAdj(207)} results, backed by industry-leading standards.`
-            }
+            { title: "Feature 1", description: "Feature description placeholder - replace with actual capability" },
+            { title: "Feature 2", description: "Feature description placeholder - replace with actual capability" },
+            { title: "Feature 3", description: "Feature description placeholder - replace with actual capability" }
         ];
     }
 

@@ -326,6 +326,18 @@ export interface GenerationOptions {
         emojiUsage: boolean;
         contractionUsage: boolean;
     };
+    // Copy content generated from intent by LLM
+    copy?: {
+        headline: string;
+        subheadline: string;
+        cta: string;
+        tagline: string;
+        companyName: string;
+        features: { title: string; description: string }[];
+        stats: { label: string; value: string }[];
+        testimonial: string;
+        faq: { question: string; answer: string }[];
+    };
 }
 
 // ============================================================================

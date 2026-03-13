@@ -8,7 +8,9 @@ import * as crypto from "crypto";
 export class CSSGenerator {
     getHashByte(seed, index) {
         const hash = crypto.createHash("sha256").update(seed).digest("hex");
-        return parseInt(hash.slice(index * 2, index * 2 + 2), 16) / 255;
+        // Wrap around hash for indices > 31 (SHA-256 produces 32 bytes = 64 hex chars)
+        const wrappedIndex = index % 32;
+        return parseInt(hash.slice(wrappedIndex * 2, wrappedIndex * 2 + 2), 16) / 255;
     }
     generate(genome, options = {}) {
         const { includeReset = true, includeVariables = true, format = "expanded" } = options;

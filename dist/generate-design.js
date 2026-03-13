@@ -22,7 +22,7 @@ export async function generateFromContent(content, brandColors, options) {
         const traits = analysis.traits;
         const sector = { primary: analysis.sector.primary };
         const subSector = { classification: `${sector.primary}_general` };
-        // Step 2: Configure sequencer
+        // Step 2: Configure sequencer with LLM-generated copy
         const config = {
             primarySector: sector.primary,
             brand: brandColors ? {
@@ -32,7 +32,9 @@ export async function generateFromContent(content, brandColors, options) {
             options: {
                 creativityLevel: "balanced",
                 brandWeight: 0.7,
-                sectorWeight: 0.5
+                sectorWeight: 0.5,
+                copyIntelligence: analysis.copyIntelligence,
+                copy: analysis.copy // Pass LLM-generated copy from intent
             }
         };
         // Step 3: Generate genome (deterministic seed from content hash)

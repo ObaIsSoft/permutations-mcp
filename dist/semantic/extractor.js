@@ -133,6 +133,29 @@ export class SemanticTraitExtractor {
                         emojiUsage: result.copyIntelligence?.emojiUsage ?? false,
                         contractionUsage: result.copyIntelligence?.contractionUsage ?? true,
                     },
+                    // Copy content generated from intent
+                    copy: {
+                        headline: result.copy?.headline || "Headline Placeholder",
+                        subheadline: result.copy?.subheadline || "Subheadline placeholder",
+                        cta: result.copy?.cta || "Get Started",
+                        tagline: result.copy?.tagline || "Tagline placeholder",
+                        companyName: result.copy?.companyName || "Your Product",
+                        features: result.copy?.features || [
+                            { title: "Feature 1", description: "Feature description placeholder" },
+                            { title: "Feature 2", description: "Feature description placeholder" },
+                            { title: "Feature 3", description: "Feature description placeholder" }
+                        ],
+                        stats: result.copy?.stats || [
+                            { label: "Stat 1", value: "{{VALUE_1}}" },
+                            { label: "Stat 2", value: "{{VALUE_2}}" },
+                            { label: "Stat 3", value: "{{VALUE_3}}" }
+                        ],
+                        testimonial: result.copy?.testimonial || "Testimonial placeholder - replace with actual customer quote",
+                        faq: result.copy?.faq || [
+                            { question: "FAQ Question 1?", answer: "FAQ answer placeholder" },
+                            { question: "FAQ Question 2?", answer: "FAQ answer placeholder" }
+                        ]
+                    },
                 };
             }
             catch (e) {
@@ -399,6 +422,43 @@ SECTOR COPY EXAMPLES:
 - Developer tools: "Ship faster with automated workflows" (technical, moderate, how-to)
 
 ═══════════════════════════════════════════════════════════════
+COPY CONTENT GENERATION (from intent)
+═══════════════════════════════════════════════════════════════
+
+Generate ACTUAL copy content by extracting key information from the user's intent:
+
+1. headline: Main hero headline (5-8 words). Extract product name + key benefit from intent.
+   Example: "Mathematical Design DNA for AI-Generated Websites"
+   Example: "Automated Trading for Serious Investors"
+
+2. subheadline: Supporting text (12-20 words). Expand on the headline with how it works.
+   Example: "Generate unique, deterministic design systems from SHA-256 hashes and content intent."
+   Example: "Algorithmic portfolio management that adapts to market conditions in real-time."
+
+3. cta: Call-to-action button text (2-4 words). Action-oriented.
+   Example: "Generate Your DNA", "Start Free Trial", "View Documentation"
+
+4. tagline: Short brand promise (4-8 words).
+   Example: "No Templates. Only Math.", "Build Wealth Automatically"
+
+5. companyName: Product/company name from intent. If not explicitly stated, derive from context.
+   Example: "Permutations", "TradeAI", "HealthFlow"
+
+6. features: Array of 3 key features extracted from intent. Each has title (3-5 words) and description (15-25 words).
+   Example: [{"title": "SHA-256 Design DNA", "description": "Every design is mathematically generated from a hash, ensuring uniqueness and reproducibility."}, ...]
+
+7. stats: Array of 3 metrics that would matter to this product. Label + value (use realistic placeholders if unknown).
+   Example: [{"label": "Designs Generated", "value": "10,000+"}, {"label": "Uptime", "value": "99.9%"}, ...]
+
+8. testimonial: One customer quote (25-40 words). Write from perspective of target user.
+   Example: "This completely changed how we approach design. No more template fatigue—every client gets a unique system."
+
+9. faq: Array of 2 FAQ items. Common questions someone would ask about this product.
+   Example: [{"question": "How is this different from templates?", "answer": "Templates are static. Our system generates unique designs mathematically from your content."}, ...]
+
+RULE: All copy MUST be derived from intent content. Do NOT use generic placeholders.
+
+═══════════════════════════════════════════════════════════════
 OUTPUT INSTRUCTIONS
 ═══════════════════════════════════════════════════════════════
 
@@ -407,7 +467,8 @@ OUTPUT INSTRUCTIONS
 3. Detect SUB-SECTOR (e.g., "healthcare_wellness", "fintech_trading")
 4. Detect ARCHETYPE from functional purpose
 5. Extract COPY INTELLIGENCE for the copy engine (how text should sound)
-6. Output EXACTLY this JSON (no markdown, no explanation):
+6. GENERATE COPY CONTENT from intent (headlines, features, etc.)
+7. Output EXACTLY this JSON (no markdown, no explanation):
 
 {
   "traits": {
@@ -439,6 +500,17 @@ OUTPUT INSTRUCTIONS
     "sentenceStructure": "short_punchy|balanced|complex_periodic",
     "emojiUsage": true|false,
     "contractionUsage": true|false
+  },
+  "copy": {
+    "headline": "string",
+    "subheadline": "string",
+    "cta": "string",
+    "tagline": "string",
+    "companyName": "string",
+    "features": [{"title": "string", "description": "string"}],
+    "stats": [{"label": "string", "value": "string"}],
+    "testimonial": "string",
+    "faq": [{"question": "string", "answer": "string"}]
   }
 }
 `;
@@ -447,7 +519,7 @@ OUTPUT INSTRUCTIONS
         if (!this.groq)
             throw new Error("Groq client not initialized");
         const response = await this.groq.chat.completions.create({
-            model: "llama-4-scout-17b-16e-instruct",
+            model: "llama-3.3-70b-versatile",
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             temperature: 0.2,
@@ -505,7 +577,7 @@ OUTPUT INSTRUCTIONS
         if (!this.openrouter)
             throw new Error("OpenRouter client not initialized");
         const response = await this.openrouter.chat.completions.create({
-            model: "meta-llama/llama-4-scout-17b-16e-instruct", // Default to Llama 4 Scout
+            model: "meta-llama/llama-3.3-70b-versatile", // Default to Llama 4 Scout
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             temperature: 0.2,

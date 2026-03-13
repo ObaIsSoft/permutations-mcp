@@ -132,77 +132,21 @@ export function generateHeadlineFromPatterns(style, sector, register, b) {
         const subject = banks.headlineFragments.proof_subject[Math.floor(b(148) * banks.headlineFragments.proof_subject.length)];
         return `${metric} ${number} ${subject}`;
     }
-    if (safeStyle === "how_to") {
-        const action = banks.headlineFragments.benefit_action[Math.floor(b(149) * banks.headlineFragments.benefit_action.length)];
-        const term = banks.industryTerms[sector]?.[Math.floor(b(150) * 8) % 8] || "Results";
-        return `How to ${action} ${term}`;
-    }
-    // direct style
-    const term = banks.industryTerms[sector]?.[Math.floor(b(151) * 8) % 8] || "Solutions";
-    const adj = banks.adjectives[safeRegister]?.[Math.floor(b(152) * 6) % 6] || "Professional";
-    return `${adj} ${term}`;
+    // NOTE: Headlines should be derived from user intent, not generic patterns
+    // Return placeholder indicating customization needed
+    return "Headline Placeholder - Customize with your value proposition";
 }
 export function generateCTAFromPatterns(aggression, sector, register, b) {
-    const banks = COPY_PATTERN_BANKS;
-    // Select verb bank by aggression
-    let verbBank;
-    if (aggression > 0.75)
-        verbBank = banks.ctaVerbs.aggressive;
-    else if (aggression > 0.5)
-        verbBank = banks.ctaVerbs.strong;
-    else if (aggression > 0.25)
-        verbBank = banks.ctaVerbs.moderate;
-    else
-        verbBank = banks.ctaVerbs.soft;
-    const verb = verbBank[Math.floor(b(153) * verbBank.length)];
-    // Select noun by sector
-    const sectorNouns = banks.ctaNouns[sector] || banks.ctaNouns.technology;
-    const noun = sectorNouns[Math.floor(b(154) * sectorNouns.length)];
-    // Optional modifier (50% chance)
-    if (b(155) > 0.5) {
-        let modifierBank;
-        if (register === "luxury" || register === "professional")
-            modifierBank = banks.ctaModifiers.premium;
-        else if (register === "conversational" || register === "playful")
-            modifierBank = banks.ctaModifiers.casual;
-        else
-            modifierBank = banks.ctaModifiers.formal;
-        const modifier = modifierBank[Math.floor(b(156) * modifierBank.length)];
-        return `${verb} ${noun} ${modifier}`;
-    }
-    return `${verb} ${noun}`;
+    // NOTE: CTA text should be derived from user intent, not generic patterns
+    // Return generic action placeholder
+    return "Get Started";
 }
 export function generateTaglineFromPatterns(sector, register, b) {
-    const banks = COPY_PATTERN_BANKS;
-    const prefix = banks.taglineFragments.prefix[Math.floor(b(157) * banks.taglineFragments.prefix.length)];
-    const audience = banks.taglineFragments.audience[Math.floor(b(158) * banks.taglineFragments.audience.length)];
-    const suffix = banks.taglineFragments.suffix[Math.floor(b(159) * banks.taglineFragments.suffix.length)];
-    return `${prefix} ${audience} ${suffix}`;
+    // NOTE: Taglines should be derived from user intent, not generic patterns
+    return "Tagline placeholder - your product's unique value proposition";
 }
 export function generateSentenceFromTemplate(structure, sector, register, b) {
-    const banks = COPY_PATTERN_BANKS;
-    const safeStructure = structure || "balanced";
-    const templates = banks.sentenceTemplates[safeStructure] || banks.sentenceTemplates.balanced;
-    const template = templates[Math.floor(b(160) * templates.length)] || templates[0] || "{benefit}.";
-    const safeRegister = register || "professional";
-    const verbs = banks.verbs[safeRegister] || banks.verbs.professional;
-    const adjectives = banks.adjectives[safeRegister] || banks.adjectives.professional;
-    const nouns = banks.industryTerms[sector] || banks.industryTerms.technology;
-    const safeVerb = (idx) => verbs[Math.floor(b(idx) * verbs.length)] || verbs[0] || "deliver";
-    const safeAdj = (idx) => adjectives[Math.floor(b(idx) * adjectives.length)] || adjectives[0] || "great";
-    const safeNoun = (idx) => nouns[Math.floor(b(idx) * nouns.length)] || nouns[0] || "results";
-    const safeAudience = () => banks.taglineFragments.audience[Math.floor(b(164) * 5) % 5] || "teams";
-    return template
-        .replace("{verb}", safeVerb(161))
-        .replace("{noun}", safeNoun(162))
-        .replace("{adj}", safeAdj(163))
-        .replace("{audience}", safeAudience())
-        .replace("{problem}", safeNoun(165))
-        .replace("{condition}", `you need ${safeNoun(166)}`)
-        .replace("{solution}", `${safeVerb(167)} ${safeNoun(168)}`)
-        .replace("{desire}", `want ${safeAdj(169)} ${safeNoun(170)}`)
-        .replace("{offering}", `${safeVerb(171)} ${safeNoun(172)}`)
-        .replace("{benefit}", `${safeVerb(173)}s ${safeNoun(174)}`)
-        .replace("{reason}", `it's ${safeAdj(175)}`)
-        .replace("{criteria}", `${safeVerb(176)} ${safeNoun(177)}`);
+    // NOTE: Subheadlines should be derived from user intent, not generic templates
+    // Return placeholder indicating customization needed
+    return "Subheadline placeholder - describe your product's key benefit or differentiator";
 }
