@@ -472,42 +472,82 @@ class DesignGenomeServer {
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
                         const svgBiomarker = this.svgGen.generateBiomarker(genome);
-                        // 7. HTML routing by complexity tier
-                        let html;
+                        // 7. Ecosystem-first civilization pipeline
+                        //
+                        // Biology rule: civilization cannot precede ecosystem.
+                        // Ecosystem (organisms + relationships) must exist before civilization
+                        // (architecture) can emerge from it.
+                        //
+                        // Thresholds:
+                        //   < 0.40  microbial/flora  — HTML/CSS only, no organisms yet
+                        //   0.40–0.54 fauna          — ecosystem runs, organisms exist, no civilization
+                        //   0.55+  neural+            — civilization emerges FROM ecosystem
+                        //
+                        // When below civilization threshold: ecosystemOutput is populated,
+                        // civilizationOutput is null, and civilizationGap tells the caller
+                        // how far complexity needs to increase to cross the threshold.
+                        // HTML always generated for every tier
+                        const html = this.htmlGen.generate(genome, {
+                            includeHeader: true,
+                            includeFooter: true,
+                            includeSections: true
+                        });
+                        let ecosystemOutput;
                         let civilizationOutput;
-                        if (finalComplexity < 0.55) {
-                            // microbial / prokaryotic / flora / fauna — static HTML/CSS only
-                            html = this.htmlGen.generate(genome, {
-                                includeHeader: true,
-                                includeFooter: true,
-                                includeSections: true
+                        if (finalComplexity >= 0.40) {
+                            // Life exists — run ecosystem before any civilization step
+                            const eco = ecosystemGenerator.generate(seed, traits, {
+                                primarySector: detectedSector
                             });
-                        }
-                        else if (finalComplexity < 0.80) {
-                            // neural / sentient — HTML + civilization component specs
-                            html = this.htmlGen.generate(genome, {
-                                includeHeader: true,
-                                includeFooter: true,
-                                includeSections: true
-                            });
-                            try {
-                                const civTier = this.civilizationGen.generate(intent, finalContext ?? "", traits);
-                                civilizationOutput = generateCivilizationOutput(civTier, genome, css);
+                            const allOrganisms = [
+                                ...eco.organisms.microbial,
+                                ...eco.organisms.flora,
+                                ...eco.organisms.fauna
+                            ];
+                            ecosystemOutput = {
+                                organisms: {
+                                    counts: {
+                                        microbial: eco.organisms.microbial.length,
+                                        flora: eco.organisms.flora.length,
+                                        fauna: eco.organisms.fauna.length,
+                                        total: eco.organisms.total
+                                    },
+                                    microbial: eco.organisms.microbial.map(o => ({
+                                        id: o.id, name: o.name, category: o.category,
+                                        colorTreatment: o.characteristics.colorTreatment
+                                    })),
+                                    flora: eco.organisms.flora.map(o => ({
+                                        id: o.id, name: o.name, category: o.category,
+                                        motionStyle: o.characteristics.motionStyle
+                                    })),
+                                    fauna: eco.organisms.fauna.map(o => ({
+                                        id: o.id, name: o.name, category: o.category,
+                                        complexity: o.adaptation.entropy
+                                    }))
+                                },
+                                relationships: eco.relationships
+                                    .filter(r => r.type === "containment")
+                                    .slice(0, 10)
+                                    .map(r => ({
+                                    container: r.organisms[0],
+                                    contained: r.organisms[1],
+                                    pattern: r.pattern
+                                })),
+                                evolution: eco.evolution,
+                                civilizationReady: eco.civilizationReady,
+                                // How far complexity needs to grow to reach neural threshold
+                                civilizationGap: parseFloat(Math.max(0, 0.55 - eco.evolution.complexity).toFixed(3))
+                            };
+                            // Civilization emerges from ecosystem when complexity crosses neural (0.55)
+                            if (finalComplexity >= 0.55) {
+                                try {
+                                    const civTier = this.civilizationGen.generate(intent, finalContext ?? "", traits);
+                                    // Pass ecosystem organisms — civilization uses topology-derived
+                                    // organism specs, not the generic tier component list
+                                    civilizationOutput = generateCivilizationOutput(civTier, genome, css, undefined, allOrganisms);
+                                }
+                                catch { /* ecosystem output still valid without civilization */ }
                             }
-                            catch { /* graceful skip */ }
-                        }
-                        else {
-                            // civilized / networked / advanced — full civilization output (React components, design system)
-                            html = this.htmlGen.generate(genome, {
-                                includeHeader: true,
-                                includeFooter: true,
-                                includeSections: true
-                            });
-                            try {
-                                const civTier = this.civilizationGen.generate(intent, finalContext ?? "", traits);
-                                civilizationOutput = generateCivilizationOutput(civTier, genome, css);
-                            }
-                            catch { /* graceful skip */ }
                         }
                         // 8. Auto pattern detection on generated output
                         const patternViolations = this.patternDetector.detectInGenome(genome, css, html ?? "");
@@ -522,7 +562,13 @@ class DesignGenomeServer {
                                         topology,
                                         css,
                                         html,
-                                        civilizationOutput,
+                                        // ecosystem: present when complexity >= 0.40 (fauna+)
+                                        // null below that — too simple for organism model
+                                        ecosystemOutput: ecosystemOutput ?? null,
+                                        // civilization: present when complexity >= 0.55 (neural+)
+                                        // emerges FROM ecosystem, never standalone
+                                        // null when complexity < 0.55 — use ecosystemOutput.civilizationGap
+                                        civilizationOutput: civilizationOutput ?? null,
                                         webglComponents,
                                         fxAtmosphere,
                                         svgBiomarker,

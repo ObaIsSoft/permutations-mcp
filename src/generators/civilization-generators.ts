@@ -25,8 +25,17 @@ ${spec.variants.map(v => `    ${v}: "${generateVariantStyle(v, genome)}",`).join
         ? `  transition={{ duration: ${genome.chromosomes.ch8_motion.durationScale}, ease: "${genome.chromosomes.ch8_motion.physics}" }}`
         : '';
     
+    // Scaffold note: aria attributes listed as comments — wire up to props in implementation
+    const ariaComment = spec.accessibility.ariaProps.length > 0
+        ? `      {/* aria: ${spec.accessibility.ariaProps.join(', ')} — add to element when implementing */}`
+        : '';
+
     return `import React from 'react';
 import { motion } from 'framer-motion';
+
+// SCAFFOLD — civilized tier output. Implement props/logic before shipping.
+// Required aria: ${spec.accessibility.ariaProps.join(', ') || 'none'}
+// Keyboard: ${spec.accessibility.keyboard.join(', ') || 'none'}
 
 interface ${spec.name}Props {
 ${propsInterface}
@@ -34,18 +43,18 @@ ${propsInterface}
 
 export function ${spec.name}({ ${propsDestructuring} }: ${spec.name}Props) {
   ${variantsHandling}
-  
+
   return (
     <motion.div
       role="${spec.accessibility.role}"
-      ${spec.accessibility.ariaProps.map(a => `${a}={${a}}`).join('\n      ')}
       style={{
         borderRadius: '${edgeRadius}px',
-        // Primary color: hsl(${primaryColor.hue}, ${primaryColor.saturation * 100}%, ${primaryColor.lightness * 100}%)
+        // Primary color: hsl(${primaryColor.hue}, ${Math.round(primaryColor.saturation * 100)}%, ${Math.round(primaryColor.lightness * 100)}%)
       }}
       ${animationProps}
     >
-      {/* Component implementation */}
+${ariaComment}
+      {/* ${spec.name} implementation goes here */}
     </motion.div>
   );
 }
@@ -191,77 +200,105 @@ export function Router() {
 }
 
 /**
- * Generates design tokens as CSS variables and JS config
+ * Generates design tokens as a CSS :root block (tokens.css)
  */
-export function generateDesignTokens(tier: CivilizationTier, genome: DesignGenome): string {
+export function generateDesignTokensCSS(tier: CivilizationTier, genome: DesignGenome): string {
     const primary = genome.chromosomes.ch5_color_primary;
     const ch6 = genome.chromosomes.ch6_color_temp;
     const radius = genome.chromosomes.ch7_edge.radius;
     const motion = genome.chromosomes.ch8_motion;
-    
-    // CHROMOSOME-DRIVEN: Use surfaceStack from genome, not hardcoded colors
     const surfaceStack = ch6.surfaceStack;
-    
-    // CSS Custom Properties
-    const cssVars = `:root {
-  /* Colors - FROM CHROMOSOMES */
-  --color-primary: hsl(${primary.hue}, ${primary.saturation * 100}%, ${primary.lightness * 100}%);
-  --color-primary-hue: ${primary.hue};
+
+    return `:root {
+  /* Colors — from genome chromosomes */
+  --color-primary: hsl(${primary.hue}, ${Math.round(primary.saturation * 100)}%, ${Math.round(primary.lightness * 100)}%);
+  --primary-hue: ${primary.hue};
+  --primary-sat: ${Math.round(primary.saturation * 100)}%;
+  --primary-light: ${Math.round(primary.lightness * 100)}%;
+  --color-primary-dim: hsla(${primary.hue}, ${Math.round(primary.saturation * 100)}%, ${Math.round(primary.lightness * 100)}%, 0.12);
+  --color-primary-glow: hsla(${primary.hue}, ${Math.round(primary.saturation * 100)}%, ${Math.round(primary.lightness * 100)}%, 0.35);
   --color-background: ${surfaceStack[0]};
   --color-surface: ${surfaceStack[1]};
   --color-surface-elevated: ${surfaceStack[2]};
   --color-surface-overlay: ${surfaceStack[3]};
-  
-  /* Spacing */
+
+  /* Spacing — base unit: ${genome.chromosomes.ch2_rhythm.baseSpacing}px */
   --spacing-unit: ${genome.chromosomes.ch2_rhythm.baseSpacing}px;
-  --spacing-density: ${genome.chromosomes.ch2_rhythm.density};
-  
+  --space-xs: ${Math.round(genome.chromosomes.ch2_rhythm.baseSpacing * 0.25)}px;
+  --space-sm: ${Math.round(genome.chromosomes.ch2_rhythm.baseSpacing * 0.5)}px;
+  --space-md: ${genome.chromosomes.ch2_rhythm.baseSpacing}px;
+  --space-lg: ${genome.chromosomes.ch2_rhythm.baseSpacing * 2}px;
+  --space-xl: ${genome.chromosomes.ch2_rhythm.baseSpacing * 4}px;
+  --space-2xl: ${genome.chromosomes.ch2_rhythm.baseSpacing * 8}px;
+
   /* Typography */
   --font-display: ${genome.chromosomes.ch3_type_display.family};
   --font-body: ${genome.chromosomes.ch4_type_body.family};
-  
-  /* Border Radius */
-  --radius-genome: ${radius}px;
-  
-  /* Motion */
-  --duration-genome: ${motion.durationScale * 1000}ms;
-  --easing-genome: ${motion.physics === 'spring' ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'ease-out'};
-  
-  /* Accessibility */
-  --focus-ring: 0 0 0 3px hsl(${primary.hue}, ${primary.saturation * 100}%, ${primary.lightness * 100}%, 0.5);
-}`;
 
-    // Tailwind extension
-    const tailwindConfig = `// tailwind.config.js
+  /* Shape */
+  --radius-genome: ${radius}px;
+  --radius-sm: ${Math.max(0, Math.round(radius * 0.5))}px;
+  --radius-lg: ${radius * 2}px;
+
+  /* Motion */
+  --duration-genome: ${Math.round(motion.durationScale * 1000)}ms;
+  --easing-genome: ${motion.physics === 'spring' ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'ease-out'};
+
+  /* Accessibility */
+  --focus-ring: 0 0 0 3px hsla(${primary.hue}, ${Math.round(primary.saturation * 100)}%, ${Math.round(primary.lightness * 100)}%, 0.5);
+}`;
+}
+
+/**
+ * Generates Tailwind config extension (tailwind.config.js)
+ */
+export function generateTailwindConfig(tier: CivilizationTier, genome: DesignGenome): string {
+    const primary = genome.chromosomes.ch5_color_primary;
+    const motion = genome.chromosomes.ch8_motion;
+    const radius = genome.chromosomes.ch7_edge.radius;
+
+    return `/** @type {import('tailwindcss').Config} */
 module.exports = {
+  content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
         primary: {
           DEFAULT: 'var(--color-primary)',
-          hue: ${primary.hue},
+          dim: 'var(--color-primary-dim)',
+          glow: 'var(--color-primary-glow)',
         },
         background: 'var(--color-background)',
-        surface: 'var(--color-surface)',
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          elevated: 'var(--color-surface-elevated)',
+          overlay: 'var(--color-surface-overlay)',
+        },
       },
       fontFamily: {
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         body: ['var(--font-body)', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        genome: 'var(--radius-genome)',
+        genome: '${radius}px',
       },
       transitionTimingFunction: {
-        genome: 'var(--easing-genome)',
+        genome: '${motion.physics === 'spring' ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'ease-out'}',
       },
       transitionDuration: {
-        genome: 'var(--duration-genome)',
+        genome: '${Math.round(motion.durationScale * 1000)}ms',
       },
     },
   },
 };`;
+}
 
-    return `${cssVars}\n\n${tailwindConfig}`;
+/**
+ * @deprecated Use generateDesignTokensCSS + generateTailwindConfig separately.
+ * Kept for call-site compatibility — returns CSS only.
+ */
+export function generateDesignTokens(tier: CivilizationTier, genome: DesignGenome): string {
+    return generateDesignTokensCSS(tier, genome);
 }
 
 /**
@@ -386,30 +423,53 @@ export function useCommandPalette(commands: Command[]) {
 }
 
 /**
- * Generates the complete civilization tier output
+ * Generates the complete civilization tier output.
+ * tokensCss  → write as tokens.css (CSS :root block only)
+ * tailwindConfig → write as tailwind.config.js (module.exports block only)
+ * components → valid TypeScript file with multiple named exports, no --- separators
+ *
+ * @param organisms - When provided (from EcosystemGenerator), uses their topology-derived
+ *   specs instead of the tier's generic component list. Civilization should always emerge
+ *   from an ecosystem — pass organisms whenever available.
  */
 export function generateCivilizationOutput(
-    tier: CivilizationTier, 
+    tier: CivilizationTier,
     genome: DesignGenome,
-    cssOutput?: string,  // UNIFIED: Full CSS from CSSGenerator
-    topologyOutput?: string  // UNIFIED: HTML topology from HTMLGenerator
+    cssOutput?: string,
+    topologyOutput?: string,
+    organisms?: Array<{ spec: ComponentSpec }>  // ecosystem organisms, preferred over tier.components.list
 ): {
     components: string;
     animations: string;
     architecture: string;
+    /** @deprecated Use tokensCss instead */
     tokens: string;
+    tokensCss: string;
+    tailwindConfig: string;
     interactions: string;
     index: string;
     css?: string;
     topology?: string;
 } {
+    const tokensCss = generateDesignTokensCSS(tier, genome);
+    const tailwindConfig = generateTailwindConfig(tier, genome);
+
+    // Use ecosystem organisms (topology-derived, relationship-aware) when provided.
+    // Fall back to tier's generic component list only when no ecosystem was run.
+    const componentSpecs = organisms
+        ? organisms.map(o => o.spec)
+        : tier.components.list;
+
     return {
-        components: tier.components.list
+        // Valid TS file: named exports separated by blank lines, no --- markers
+        components: componentSpecs
             .map(c => generateComponentCode(c, genome))
-            .join('\n\n---\n\n'),
+            .join('\n\n'),
         animations: generateAnimationConfig(tier.animations, genome),
         architecture: generateArchitectureSetup(tier.architecture, genome),
-        tokens: generateDesignTokens(tier, genome),
+        tokens: tokensCss, // kept for backwards compat — CSS only
+        tokensCss,
+        tailwindConfig,
         interactions: generateInteractionHandlers(tier.interactions),
         index: generateComponentLibraryIndex(tier.components.list, tier.tier),
         css: cssOutput,  // UNIFIED: Pass through from CSSGenerator

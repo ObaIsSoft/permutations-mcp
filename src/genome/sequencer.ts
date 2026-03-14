@@ -981,7 +981,7 @@ export class GenomeSequencer {
         else if (traits.informationDensity > 0.6) density = "airtight";
         else if (traits.informationDensity < 0.3) density = "empty";
 
-        const baseSpacing = Math.floor(b(4) * 16) + 4;
+        const baseSpacing = Math.floor(b(4) * 12) + 8; // 8–20px — minimum 8 ensures usable spacing at all density levels
 
         return {
             density,

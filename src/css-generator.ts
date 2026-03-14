@@ -212,12 +212,24 @@ ${indent}outline-offset: 2px;
         parts.push(`${indent}--text-ratio: ${typography.ratio.toFixed(2)};`);
         parts.push(`${indent}--text-base: ${typography.baseSize}px;`);
         
-        parts.push(`${indent}--text-display: ${typography.display.size};`);
-        parts.push(`${indent}--text-h1: ${typography.h1.size};`);
-        parts.push(`${indent}--text-h2: ${typography.h2.size};`);
-        parts.push(`${indent}--text-h3: ${typography.h3.size};`);
-        parts.push(`${indent}--text-body: ${typography.body.size};`);
-        parts.push(`${indent}--text-small: ${typography.small.size};`);
+        // Parse px → number for clamp() construction
+        const parsePx = (v: string | number): number => typeof v === "number" ? v : parseFloat(String(v));
+        const toRem = (px: number) => (px / 16).toFixed(3).replace(/\.?0+$/, "");
+        // clamp(min, preferred_vw, max) — preferred is ~1% per 4px of max size
+        const fluidType = (size: string | number): string => {
+            const px = parsePx(size);
+            const rem = px / 16;
+            const minRem = Math.max(0.875, rem * 0.55); // floor at 14px
+            const vw = +(rem * 0.9).toFixed(2);        // scale with viewport
+            return `clamp(${toRem(minRem * 16)}rem, ${vw}vw + 0.5rem, ${toRem(px)}rem)`;
+        };
+
+        parts.push(`${indent}--text-display: ${fluidType(typography.display.size)};`);
+        parts.push(`${indent}--text-h1: ${fluidType(typography.h1.size)};`);
+        parts.push(`${indent}--text-h2: ${fluidType(typography.h2.size)};`);
+        parts.push(`${indent}--text-h3: ${fluidType(typography.h3.size)};`);
+        parts.push(`${indent}--text-body: ${fluidType(typography.body.size)};`);
+        parts.push(`${indent}--text-small: ${fluidType(typography.small.size)};`);
         
         parts.push(`${indent}--leading-display: ${typography.display.lineHeight};`);
         parts.push(`${indent}--leading-h1: ${typography.h1.lineHeight};`);
@@ -1388,7 +1400,11 @@ ${indent}${indent}width: 100%;
 ${indent}${indent}height: ${Math.floor(250 + b(214) * 150)}px;
 ${indent}${indent}margin-top: var(--space-lg);
 ${indent}}
-${indent}.grid {
+${indent}.grid,
+${indent}.features-grid,
+${indent}.trust-grid,
+${indent}.hero-services-grid,
+${indent}.footer-grid {
 ${indent}${indent}grid-template-columns: 1fr;
 ${indent}}
 ${indent}.hero-stats {
@@ -1397,6 +1413,12 @@ ${indent}${indent}gap: var(--space-md);
 ${indent}}
 ${indent}.testimonials-grid {
 ${indent}${indent}grid-template-columns: 1fr;
+${indent}}
+${indent}.nav-links {
+${indent}${indent}display: none;
+${indent}}
+${indent}.hero-ctas {
+${indent}${indent}justify-content: center;
 ${indent}}
 }`);
         

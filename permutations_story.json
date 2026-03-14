@@ -203,12 +203,14 @@
     },
     
     "civilization_tiers": {
-      "microbial_0_0_29": "Atomic components only (buttons, inputs)",
-      "flora_0_30_0_49": "Growing components (cards, dropdowns)",
-      "fauna_0_50_0_69": "Complex organisms (data tables, wizards)",
-      "sentient_0_70_0_84": "CIVILIZATION BEGINS - Full architecture, state management",
-      "civilized_0_85_0_94": "Multi-page app, routing, advanced patterns",
-      "advanced_0_95_1_0": "AI-driven, micro-frontends, generative components"
+      "microbial_0_00_0_24": "Atomic components only — buttons, inputs, labels. Emits CSS + token vars. No CivilizationGenerator.",
+      "flora_0_25_0_39": "Growing components — cards, dropdowns, modals. Layout topology established.",
+      "fauna_0_40_0_54": "Complex organisms — data tables, wizards, multi-step forms. Component specs generated.",
+      "neural_0_55_0_67": "Self-organising layout — first tier where CivilizationGenerator activates. Component scaffolds + animation config.",
+      "sentient_0_68_0_79": "Full architecture — state management, routing, design token system. React/TS scaffolds + framer-motion.",
+      "civilized_0_80_0_89": "Multi-page app — compound components, command palette, tailwind.config.js emitted. (0.898 lands here.)",
+      "networked_0_90_0_94": "Distributed system — micro-frontend patterns, distributed state, edge-ready components.",
+      "advanced_0_95_1_00": "Generative — components on-demand, AI-driven layout, personalization. Partially implemented roadmap."
     }
   },
 
@@ -398,12 +400,14 @@
     },
     
     "type_of_life": {
-      "microbial": "0.00-0.29 complexity: Atomic components—buttons, inputs, labels. Like bacteria: simple, numerous, essential",
-      "flora": "0.30-0.49 complexity: Growing components—cards, dropdowns, modals. Like plants: rooted but responsive to environment",
-      "fauna": "0.50-0.69 complexity: Complex organisms—data tables, wizards, editors. Like animals: mobile, interactive, purposeful",
-      "sentient": "0.70-0.84 complexity: Self-aware systems—full applications with state, routing, architecture. Like early humans: tool-using, pattern-recognizing",
-      "civilized": "0.85-0.94 complexity: Organized societies—multi-page apps, design systems, accessibility compliance. Like cities: structured, interconnected, governed by rules",
-      "advanced": "0.95-1.0 complexity: Post-singularity—AI-driven, generative, personalized per user. Like transhuman intelligence: beyond current comprehension"
+      "microbial": "0.00–0.24: Atomic components—buttons, inputs, labels. Like bacteria: simple, numerous, essential",
+      "flora": "0.25–0.39: Growing components—cards, dropdowns, modals. Like plants: rooted but responsive to environment",
+      "fauna": "0.40–0.54: Complex organisms—data tables, wizards, editors. Like animals: mobile, interactive, purposeful",
+      "neural": "0.55–0.67: CIVILIZATION BEGINS — CivilizationGenerator activates. Component scaffolds, animation configs. Like early nervous systems: coordinated, responsive",
+      "sentient": "0.68–0.79: Self-aware systems—full app architecture, state management, routing. Like early humans: tool-using, pattern-recognizing",
+      "civilized": "0.80–0.89: Organised societies—compound components, multi-route apps, tailwind.config emitted. Like cities: structured, governed by rules. (0.898 complexity lands here.)",
+      "networked": "0.90–0.94: Distributed systems—micro-frontend patterns, edge-ready, distributed state. Like interconnected city-states",
+      "advanced": "0.95–1.00: Post-singularity—generative, AI-driven, personalised per user. Like transhuman intelligence: partially implemented roadmap"
     },
     
     "definition_of_life": {

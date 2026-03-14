@@ -136,16 +136,13 @@ export class ComplexityAnalyzer {
             return 'fauna';
         if (complexity >= 0.25)
             return 'flora';
-        if (complexity >= 0.12)
-            return 'prokaryotic';
-        return 'microbial';
+        return 'microbial'; // 0.00–0.24 — atomic components only
     }
     // Force minimum complexity for explicit civilization requests
     forceMinimumTier(intent, context, traits, minTier) {
         const analysis = this.analyze(intent, context, traits);
         const minComplexity = {
             'microbial': 0.00,
-            'prokaryotic': 0.12,
             'flora': 0.25,
             'fauna': 0.40,
             'neural': 0.55,

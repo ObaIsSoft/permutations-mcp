@@ -5,7 +5,7 @@ export interface ComplexityAnalysis {
     intentMultiplier: number;
     sophisticationBonus: number;
     finalComplexity: number;
-    tier: 'microbial' | 'prokaryotic' | 'flora' | 'fauna' | 'neural' | 'sentient' | 'civilized' | 'networked' | 'advanced';
+    tier: 'microbial' | 'flora' | 'fauna' | 'neural' | 'sentient' | 'civilized' | 'networked' | 'advanced';
     detectedKeywords: string[];
     sophisticationFactors: string[];
 }
@@ -168,8 +168,7 @@ export class ComplexityAnalyzer {
         if (complexity >= 0.55) return 'neural';
         if (complexity >= 0.40) return 'fauna';
         if (complexity >= 0.25) return 'flora';
-        if (complexity >= 0.12) return 'prokaryotic';
-        return 'microbial';
+        return 'microbial'; // 0.00–0.24 — atomic components only
     }
 
     // Force minimum complexity for explicit civilization requests
@@ -177,15 +176,14 @@ export class ComplexityAnalyzer {
         const analysis = this.analyze(intent, context, traits);
 
         const minComplexity = {
-            'microbial':   0.00,
-            'prokaryotic': 0.12,
-            'flora':       0.25,
-            'fauna':       0.40,
-            'neural':      0.55,
-            'sentient':    0.68,
-            'civilized':   0.80,
-            'networked':   0.90,
-            'advanced':    0.95,
+            'microbial':  0.00,
+            'flora':      0.25,
+            'fauna':      0.40,
+            'neural':     0.55,
+            'sentient':   0.68,
+            'civilized':  0.80,
+            'networked':  0.90,
+            'advanced':   0.95,
         }[minTier];
         
         if (analysis.finalComplexity < minComplexity) {
