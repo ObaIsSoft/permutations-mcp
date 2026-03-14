@@ -5,7 +5,7 @@ export interface ComplexityAnalysis {
     intentMultiplier: number;
     sophisticationBonus: number;
     finalComplexity: number;
-    tier: 'microbial' | 'flora' | 'fauna' | 'sentient' | 'civilized' | 'advanced';
+    tier: 'microbial' | 'prokaryotic' | 'flora' | 'fauna' | 'neural' | 'sentient' | 'civilized' | 'networked' | 'advanced';
     detectedKeywords: string[];
     sophisticationFactors: string[];
 }
@@ -162,24 +162,30 @@ export class ComplexityAnalyzer {
 
     private determineTier(complexity: number): ComplexityAnalysis['tier'] {
         if (complexity >= 0.95) return 'advanced';
-        if (complexity >= 0.85) return 'civilized';
-        if (complexity >= 0.70) return 'sentient';
-        if (complexity >= 0.50) return 'fauna';
-        if (complexity >= 0.30) return 'flora';
+        if (complexity >= 0.90) return 'networked';
+        if (complexity >= 0.80) return 'civilized';
+        if (complexity >= 0.68) return 'sentient';
+        if (complexity >= 0.55) return 'neural';
+        if (complexity >= 0.40) return 'fauna';
+        if (complexity >= 0.25) return 'flora';
+        if (complexity >= 0.12) return 'prokaryotic';
         return 'microbial';
     }
 
     // Force minimum complexity for explicit civilization requests
     forceMinimumTier(intent: string, context: string, traits: ContentTraits, minTier: ComplexityAnalysis['tier']): ComplexityAnalysis {
         const analysis = this.analyze(intent, context, traits);
-        
+
         const minComplexity = {
-            'microbial': 0.0,
-            'flora': 0.30,
-            'fauna': 0.50,
-            'sentient': 0.70,
-            'civilized': 0.85,
-            'advanced': 0.95
+            'microbial':   0.00,
+            'prokaryotic': 0.12,
+            'flora':       0.25,
+            'fauna':       0.40,
+            'neural':      0.55,
+            'sentient':    0.68,
+            'civilized':   0.80,
+            'networked':   0.90,
+            'advanced':    0.95,
         }[minTier];
         
         if (analysis.finalComplexity < minComplexity) {

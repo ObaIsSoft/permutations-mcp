@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "Permutations MCP: The Complete Journey",
-    "version": "0.0.6",
-    "last_updated": "2026-03-12",
+    "version": "0.0.7",
+    "last_updated": "2026-03-14",
     "author": "ObaIsSoft",
     "repository": "https://github.com/ObaIsSoft/Permutations",
-    "lines_of_code": 12361,
+    "lines_of_code": 15550,
     "test_count": 49
   },
   
@@ -113,7 +113,6 @@
         "Deterministic output: removed Date.now() from seeds, content-hash based",
         "Double LLM call fix: uses analyze() instead of extractTraits()+classifySector()",
         "Zero Math.random(): all jitter uses crypto hash for deterministic backoff",
-        "Zero hardcoded values: all colors, sizes, timing derived from genome",
         "12 MCP tools including validate_design, mutate_genome, extract_genome_from_url",
         "Production-verified: TypeScript clean build, 49 tests passing"
       ],
@@ -124,6 +123,28 @@
         "Added ecosystem/civilization bridge for organism-based websites"
       ],
       "lines_of_code": 12361,
+      "test_coverage": "49 tests: Genome, Sequencer, Production, Ecosystem/Civilization"
+    },
+    "v0_0_7_full_rendering": {
+      "date": "March 2026",
+      "features": [
+        "ch27_motion_choreography fully rendered: stagger delays, entry sequences, hover microinteractions, page transitions, choreography easing curves",
+        "ch28_iconography fully rendered: --icon-size/--icon-stroke/--icon-color CSS vars, .icon base rule, animation keyframes (bounce/pulse/spin/draw), CDN script injection in <head>",
+        "ch11_texture fully rendered: grain SVG noise filter with animated variant, glass backdrop-filter, chrome metallic gradient",
+        "HTMLGenerator zero fallbacks: no || 'Testimonials' / 'Features' / 'FAQ' / 'Dashboard' / 'Starting at' / 'Featured Story' / 'Ready to Experience' — render nothing if LLM returns nothing",
+        "Footer nav fully LLM-extracted: footerNavProduct, footerNavCompany, footerProductTitle, footerCompanyTitle as dedicated copy fields",
+        "Complexity-based HTML routing in server: below 0.70 = static HTML/CSS, 0.70-0.84 = HTML + civilization specs, 0.85+ = full React component output",
+        "PatternDetector auto-runs on every generate_design_genome call — violations returned in response, no manual validate_design needed",
+        "CSSGenerator now generates complete page CSS: nav, hero variants, trust grid, social proof, features, FAQ, CTA, footer — all values via CSS custom properties",
+        "Rating stars derived from numeric stat value, star count computed from LLM-returned rating"
+      ],
+      "architecture_changes": [
+        "generatePageSectionStyles() added to CSSGenerator — covers all HTML sections previously unstyled",
+        "generateChoreographyStyles(), generateIconographyStyles(), generateTextureStyles() added to CSSGenerator",
+        "ComplexityAnalyzer wired into generate_design_genome server handler for tier-based routing",
+        "extractor.analyze() return uses ?? '' / ?? [] instead of placeholder strings — LLM failure = empty, not fake data"
+      ],
+      "lines_of_code": 15550,
       "test_coverage": "49 tests: Genome, Sequencer, Production, Ecosystem/Civilization"
     }
   },
@@ -298,7 +319,9 @@
     "url_extraction": "Triple backend: Playwright (JS sites), Scrapy (pro crawling), Native fetch (zero deps)",
     "css_validation": "AST-based genome-aware validation with drift scoring 0-100",
     "full_mutation_coverage": "All 29 chromosomes mutable with viability scoring",
-    "zero_hardcoding": "All values derived from SHA-256 hash—no magic numbers",
+    "zero_hardcoding": "All values derived from SHA-256 hash and LLM extraction—no magic numbers, no placeholder fallbacks",
+    "full_chromosome_rendering": "All 29 chromosomes produce CSS/HTML output — ch27 motion choreography, ch28 iconography, ch11 texture now fully rendered (previously generated as data only)",
+    "complete_page_css": "CSSGenerator covers every HTML section: navigation, hero variants, trust grid, social proof, features, FAQ, CTA, footer — zero unstyled elements",
     "api_optimization": "50% cost reduction through unified analysis calls"
   },
 

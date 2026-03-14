@@ -1,0 +1,14 @@
+<svg viewBox="0 0 100 100" class="w-full h-full text-current" xmlns="http://www.w3.org/2000/svg"
+  data-geometry="monolithic"
+  data-complexity="0.000"
+  data-entropy="0.816"
+  data-dna="726fd2ad">
+  <!-- Permutations P(n,r) Biomarker — monolithic / complexity=0.00 / entropy=0.82 -->
+  <g stroke-width="9" fill="none" stroke="currentColor">
+    <line x1="25" y1="8" x2="25" y2="92" stroke-linecap="square" />
+    <line x1="19" y1="8" x2="31" y2="8" stroke-linecap="square" />
+    <line x1="19" y1="92" x2="31" y2="92" stroke-linecap="square" />
+    <path d="M 25,8 C 35,8 70,13 70,20.6 C 70,28.200000000000003 35,33.2 25,33.2" stroke-linecap="square" />
+    <line x1="25" y1="33.2" x2="40" y2="33.2" stroke-linecap="square" />
+  </g>
+</svg>

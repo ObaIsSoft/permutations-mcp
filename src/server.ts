@@ -1,6 +1,20 @@
 import * as fs from "fs/promises";
+import * as fsSync from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
+
+// Load .env if present (no dotenv dep — pure Node.js)
+// Does NOT override vars already set in the environment, so shell vars win.
+try {
+    const envFile = path.join(path.dirname(new URL(import.meta.url).pathname), "../.env");
+    if (fsSync.existsSync(envFile)) {
+        const lines = fsSync.readFileSync(envFile, "utf-8").split("\n");
+        for (const line of lines) {
+            const m = line.match(/^\s*([^#=\s][^=]*?)\s*=\s*(.*)\s*$/);
+            if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+        }
+    }
+} catch { /* ignore */ }
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -21,6 +35,7 @@ import { detectArchetype } from "./genome/archetypes.js";
 import { PatternDetector } from "./constraints/pattern-detector.js";
 import { ecosystemGenerator, Ecosystem } from "./genome/ecosystem.js";
 import { CivilizationGenerator } from "./genome/civilization.js";
+import { ComplexityAnalyzer } from "./genome/complexity-analyzer.js";
 import { generateCivilizationOutput } from "./generators/civilization-generators.js";
 
 import { DesignFileWriter } from "./generators/file-writer.js";
@@ -43,12 +58,13 @@ class DesignGenomeServer {
     private patternDetector: PatternDetector;
 
     private civilizationGen: CivilizationGenerator;
+    private complexityAnalyzer: ComplexityAnalyzer;
 
     private fileWriter: DesignFileWriter;
 
     constructor() {
         this.server = new Server(
-            { name: "permutations", version: "0.0.6" },
+            { name: "permutations", version: "0.0.7" },
             { capabilities: { tools: {} } }
         );
 
@@ -63,6 +79,7 @@ class DesignGenomeServer {
         this.patternDetector = new PatternDetector();
 
         this.civilizationGen = new CivilizationGenerator();
+        this.complexityAnalyzer = new ComplexityAnalyzer();
 
         this.fileWriter = new DesignFileWriter();
 
@@ -181,8 +198,8 @@ class DesignGenomeServer {
                             },
                             min_tier: {
                                 type: "string",
-                                enum: ["sentient", "civilized", "advanced"],
-                                description: "Minimum civilization tier to generate (optional - forces complexity)"
+                                enum: ["neural", "sentient", "civilized", "networked", "advanced"],
+                                description: "Minimum civilization tier (optional - forces complexity). neural=0.55+, sentient=0.68+, civilized=0.80+, networked=0.90+, advanced=0.95+"
                             },
                             generate_code: {
                                 type: "boolean",
@@ -467,29 +484,90 @@ class DesignGenomeServer {
                         // 2. Semantic Extraction (single LLM call: traits + sector + archetype + copy intelligence)
                         const finalContext = epigeneticData?.brandContext || context;
                         const analysis = await this.extractor.analyze(intent, finalContext);
-                        const { traits, sector, copyIntelligence } = analysis;
+                        const { traits, sector, copyIntelligence, copy } = analysis;
                         const detectedSector = sector.primary as any;
 
-                        // 4. DNA Sequencing (pass copy intelligence to sequencer)
+                        // 4. DNA Sequencing (pass copy intelligence + LLM copy to sequencer)
                         const genome = this.sequencer.generate(seed, traits, {
                             primarySector: detectedSector,
-                            options: { 
+                            options: {
                                 fontProvider: args.font_provider,
-                                copyIntelligence
+                                copyIntelligence,
+                                copy
                             }
                         }, epigeneticData);
 
-                        // 5. Component Generation
-                        const tailwindConfig = this.cssGen.generate(genome, { format: "compressed" });
+                        // 5. Complexity Analysis — determines output tier
+                        const complexityResult = this.complexityAnalyzer.analyze(intent, finalContext ?? "", traits);
+                        const { finalComplexity, tier } = complexityResult;
+
+                        // 6. CSS (always generated)
+                        const css = this.cssGen.generate(genome, { format: "expanded" });
                         const topology = this.htmlGen.generateTopology(genome);
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
                         const svgBiomarker = this.svgGen.generateBiomarker(genome);
 
+                        // 7. HTML routing by complexity tier
+                        let html: string | undefined;
+                        let civilizationOutput: unknown | undefined;
+
+                        if (finalComplexity < 0.55) {
+                            // microbial / prokaryotic / flora / fauna — static HTML/CSS only
+                            html = this.htmlGen.generate(genome, {
+                                includeHeader: true,
+                                includeFooter: true,
+                                includeSections: true
+                            });
+                        } else if (finalComplexity < 0.80) {
+                            // neural / sentient — HTML + civilization component specs
+                            html = this.htmlGen.generate(genome, {
+                                includeHeader: true,
+                                includeFooter: true,
+                                includeSections: true
+                            });
+                            try {
+                                const civTier = this.civilizationGen.generate(intent, finalContext ?? "", traits);
+                                civilizationOutput = generateCivilizationOutput(civTier, genome, css);
+                            } catch { /* graceful skip */ }
+                        } else {
+                            // civilized / networked / advanced — full civilization output (React components, design system)
+                            html = this.htmlGen.generate(genome, {
+                                includeHeader: true,
+                                includeFooter: true,
+                                includeSections: true
+                            });
+                            try {
+                                const civTier = this.civilizationGen.generate(intent, finalContext ?? "", traits);
+                                civilizationOutput = generateCivilizationOutput(civTier, genome, css);
+                            } catch { /* graceful skip */ }
+                        }
+
+                        // 8. Auto pattern detection on generated output
+                        const patternViolations = this.patternDetector.detectInGenome(
+                            genome as any,
+                            css,
+                            html ?? ""
+                        );
+                        const patternReport = this.patternDetector.generateReport(patternViolations);
+
                         return {
                             content: [{
                                 type: "text",
-                                text: JSON.stringify({ genome, topology, tailwindConfig, webglComponents, fxAtmosphere, svgBiomarker }, null, 2)
+                                text: JSON.stringify({
+                                    genome,
+                                    tier,
+                                    finalComplexity,
+                                    topology,
+                                    css,
+                                    html,
+                                    civilizationOutput,
+                                    webglComponents,
+                                    fxAtmosphere,
+                                    svgBiomarker,
+                                    patternReport,
+                                    patternViolations: patternViolations.filter(v => v.severity === "error")
+                                }, null, 2)
                             }]
                         };
                     }

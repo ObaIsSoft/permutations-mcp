@@ -152,10 +152,20 @@ export function generateHeadlineFromPatterns(
         const subject = banks.headlineFragments.proof_subject[Math.floor(b(148) * banks.headlineFragments.proof_subject.length)];
         return `${metric} ${number} ${subject}`;
     }
-    
-    // NOTE: Headlines should be derived from user intent, not generic patterns
-    // Return placeholder indicating customization needed
-    return "Headline Placeholder - Customize with your value proposition";
+
+    if (safeStyle === "how_to") {
+        const verb = banks.verbs[safeRegister as keyof typeof banks.verbs]?.[Math.floor(b(149) * 6)] || "build";
+        const object = banks.headlineFragments.benefit_object[Math.floor(b(150) * banks.headlineFragments.benefit_object.length)];
+        const outcome = banks.headlineFragments.benefit_outcome[Math.floor(b(151) * banks.headlineFragments.benefit_outcome.length)];
+        return `How to ${verb} ${object} ${outcome}`;
+    }
+
+    // direct style — verb + industry term + outcome
+    const verb = banks.headlineFragments.benefit_action[Math.floor(b(152) * banks.headlineFragments.benefit_action.length)];
+    const terms = banks.industryTerms[sector as keyof typeof banks.industryTerms] || banks.industryTerms.technology;
+    const term = terms[Math.floor(b(153) * terms.length)];
+    const outcome = banks.headlineFragments.benefit_outcome[Math.floor(b(154) * banks.headlineFragments.benefit_outcome.length)];
+    return `${verb} ${term} ${outcome}`;
 }
 
 export function generateCTAFromPatterns(
@@ -164,9 +174,30 @@ export function generateCTAFromPatterns(
     register: string,
     b: (index: number) => number
 ): string {
-    // NOTE: CTA text should be derived from user intent, not generic patterns
-    // Return generic action placeholder
-    return "Get Started";
+    const banks = COPY_PATTERN_BANKS;
+
+    // Select verb tier from aggression level
+    let verbTier: keyof typeof banks.ctaVerbs;
+    if (aggression > 0.75) verbTier = "aggressive";
+    else if (aggression > 0.5) verbTier = "strong";
+    else if (aggression > 0.25) verbTier = "moderate";
+    else verbTier = "soft";
+
+    const verbs = banks.ctaVerbs[verbTier];
+    const verb = verbs[Math.floor(b(160) * verbs.length)];
+
+    const nouns = banks.ctaNouns[sector as keyof typeof banks.ctaNouns] || banks.ctaNouns.technology;
+    const noun = nouns[Math.floor(b(161) * nouns.length)];
+
+    // Add modifier for strong/aggressive tiers
+    if (aggression > 0.5) {
+        const modTier = register === "luxury" ? "premium" : aggression > 0.75 ? "formal" : "casual";
+        const mods = banks.ctaModifiers[modTier];
+        const mod = mods[Math.floor(b(162) * mods.length)];
+        return `${verb} ${noun} ${mod}`;
+    }
+
+    return `${verb} ${noun}`;
 }
 
 export function generateTaglineFromPatterns(
@@ -174,8 +205,13 @@ export function generateTaglineFromPatterns(
     register: string,
     b: (index: number) => number
 ): string {
-    // NOTE: Taglines should be derived from user intent, not generic patterns
-    return "Tagline placeholder - your product's unique value proposition";
+    const banks = COPY_PATTERN_BANKS;
+
+    const prefix = banks.taglineFragments.prefix[Math.floor(b(170) * banks.taglineFragments.prefix.length)];
+    const audience = banks.taglineFragments.audience[Math.floor(b(171) * banks.taglineFragments.audience.length)];
+    const suffix = banks.taglineFragments.suffix[Math.floor(b(172) * banks.taglineFragments.suffix.length)];
+
+    return `${prefix} ${audience} ${suffix}`;
 }
 
 export function generateSentenceFromTemplate(
@@ -184,7 +220,24 @@ export function generateSentenceFromTemplate(
     register: string,
     b: (index: number) => number
 ): string {
-    // NOTE: Subheadlines should be derived from user intent, not generic templates
-    // Return placeholder indicating customization needed
-    return "Subheadline placeholder - describe your product's key benefit or differentiator";
+    const banks = COPY_PATTERN_BANKS;
+    const safeStructure = structure || "balanced";
+    const safeRegister = register || "professional";
+
+    const adj = (banks.adjectives[safeRegister as keyof typeof banks.adjectives] || banks.adjectives.professional)[Math.floor(b(180) * 6)];
+    const verb = (banks.verbs[safeRegister as keyof typeof banks.verbs] || banks.verbs.professional)[Math.floor(b(181) * 6)];
+    const terms = banks.industryTerms[sector as keyof typeof banks.industryTerms] || banks.industryTerms.technology;
+    const noun = terms[Math.floor(b(182) * terms.length)];
+    const audience = banks.taglineFragments.audience[Math.floor(b(183) * banks.taglineFragments.audience.length)];
+
+    if (safeStructure === "short_punchy") {
+        return `${adj.charAt(0).toUpperCase() + adj.slice(1)} ${noun}. ${verb.charAt(0).toUpperCase() + verb.slice(1)} more.`;
+    }
+
+    if (safeStructure === "complex_periodic") {
+        return `For ${audience} who demand ${adj} ${noun}, we ${verb} what others can't.`;
+    }
+
+    // balanced
+    return `${verb.charAt(0).toUpperCase() + verb.slice(1)} ${adj} ${noun} for ${audience} who expect more.`;
 }

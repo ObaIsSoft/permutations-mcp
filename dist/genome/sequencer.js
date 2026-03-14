@@ -7,7 +7,7 @@
 import * as crypto from "crypto";
 import { GenomeConstraintSolver } from "./constraint-solver.js";
 import { getSectorProfile, generateHueFromBias, generateSaturationFromBias, generateLightnessFromBias, selectHeroType, selectTrustApproach, SUB_SECTOR_KEYWORDS } from "./sector-profiles.js";
-import { generateHeadlineFromPatterns, generateCTAFromPatterns, generateTaglineFromPatterns, generateSentenceFromTemplate } from "./copy-patterns.js";
+import { COPY_PATTERN_BANKS, generateHeadlineFromPatterns, generateCTAFromPatterns, generateTaglineFromPatterns, generateSentenceFromTemplate } from "./copy-patterns.js";
 export class GenomeSequencer {
     /**
      * Generate a design genome with full sector awareness
@@ -120,7 +120,7 @@ export class GenomeSequencer {
         const ch28_iconography = isForced('ch28_iconography') || this.generateIconography(traits, b, primaryProfile);
         const ch13_atmosphere = isForced('ch13_atmosphere') || this.generateAtmosphere(traits, b, isDisabled('ch13_atmosphere'));
         const ch14_physics = isForced('ch14_physics') || this.generatePhysics(traits, b, isDisabled('ch14_physics'));
-        const ch15_biomarker = isForced('ch15_biomarker') || this.generateBiomarker(traits, b, primaryProfile, isDisabled('ch15_atmosphere'), options?.enable3D);
+        const ch15_biomarker = isForced('ch15_biomarker') || this.generateBiomarker(traits, b, primaryProfile, isDisabled('ch15_biomarker'), options?.enable3D);
         const ch16_typography = isForced('ch16_typography') || this.generateTypography(traits, b);
         const ch17_accessibility = isForced('ch17_accessibility') || this.generateAccessibility(traits, b);
         const ch18_rendering = isForced('ch18_rendering') || this.generateRendering(traits, b);
@@ -380,44 +380,57 @@ export class GenomeSequencer {
         };
     }
     /**
-     * Generate copy engine
-     * Uses LLM-generated copy from intent if available, otherwise falls back to patterns
+     * Generate copy engine — LLM output only, no pattern fallback.
+     * All copy is derived from intent via the extractor. Pattern banks are not used here.
      */
     generateCopyEngine(profile, b, copyIntelligence, copy) {
-        // If LLM-generated copy is provided from intent, use it directly
         if (copy) {
             return {
                 headline: copy.headline,
                 subheadline: copy.subheadline,
                 cta: copy.cta,
-                authorName: "Customer Name", // Placeholder - should come from actual testimonial
-                authorTitle: "Role", // Placeholder
-                testimonial: copy.testimonial,
-                companyName: copy.companyName,
+                ctaSecondary: copy.ctaSecondary,
                 tagline: copy.tagline,
+                companyName: copy.companyName,
+                authorName: copy.authorName,
+                authorTitle: copy.authorTitle,
+                testimonial: copy.testimonial,
+                sectionTitleTestimonials: copy.sectionTitleTestimonials,
+                sectionTitleFeatures: copy.sectionTitleFeatures,
+                sectionTitleFAQ: copy.sectionTitleFAQ,
                 stats: copy.stats,
                 faq: copy.faq,
-                features: copy.features
+                features: copy.features,
+                footerProductTitle: copy.footerProductTitle,
+                footerCompanyTitle: copy.footerCompanyTitle,
+                footerNavProduct: copy.footerNavProduct,
+                footerNavCompany: copy.footerNavCompany,
             };
         }
-        // Fallback: Generate from patterns (for archetype mode without LLM)
+        // No LLM — structural copy from pattern banks, all personal/content fields empty.
+        // HTML generator skips sections with empty content.
         const ci = copyIntelligence || this.generateDefaultCopyIntelligence(profile);
         const sector = profile.sector;
-        // Pattern-based generation (fallback only)
-        const headline = generateHeadlineFromPatterns(ci.headlineStyle, sector, ci.emotionalRegister, b);
-        const cta = generateCTAFromPatterns(ci.ctaAggression, sector, ci.emotionalRegister, b);
-        const tagline = generateTaglineFromPatterns(sector, ci.emotionalRegister, b);
-        const subheadline = generateSentenceFromTemplate(ci.sentenceStructure, sector, ci.emotionalRegister, b);
-        const testimonial = this.generateTestimonialFromPatterns(sector, ci.emotionalRegister, b);
-        const stats = this.generateStatsFromPatterns(sector, b);
-        const faq = this.generateFAQFromPatterns(sector, ci, b);
-        const features = this.generateFeaturesFromPatterns(sector, ci, b);
-        const authorName = "Customer Name";
-        const authorTitle = "Role";
-        const companyName = "Your Product";
         return {
-            headline, subheadline, cta, authorName, authorTitle,
-            testimonial, companyName, tagline, stats, faq, features
+            headline: generateHeadlineFromPatterns(ci.headlineStyle, sector, ci.emotionalRegister, b),
+            subheadline: generateSentenceFromTemplate(ci.sentenceStructure, sector, ci.emotionalRegister, b),
+            cta: generateCTAFromPatterns(ci.ctaAggression, sector, ci.emotionalRegister, b),
+            ctaSecondary: "",
+            tagline: generateTaglineFromPatterns(sector, ci.emotionalRegister, b),
+            companyName: "",
+            authorName: "",
+            authorTitle: "",
+            testimonial: "",
+            sectionTitleTestimonials: "",
+            sectionTitleFeatures: "",
+            sectionTitleFAQ: "",
+            stats: this.generateStatsFromPatterns(sector, b),
+            faq: this.generateFAQFromPatterns(sector, ci, b),
+            features: this.generateFeaturesFromPatterns(sector, ci, b),
+            footerProductTitle: "",
+            footerCompanyTitle: "",
+            footerNavProduct: [],
+            footerNavCompany: [],
         };
     }
     /**
@@ -572,43 +585,79 @@ export class GenomeSequencer {
         return sectorDefaults[profile.sector] || sectorDefaults.technology;
     }
     /**
-     * Generate testimonial - placeholder only
-     * Real testimonials must come from actual user feedback
-     */
-    generateTestimonialFromPatterns(sector, register, b) {
-        return "Testimonial placeholder - replace with actual customer quote";
-    }
-    /**
-     * Generate stats - placeholder only
-     * Real stats must come from actual business data
+     * Generate stats with sector-appropriate labels
+     * Values remain as placeholders — real numbers must come from actual business data
      */
     generateStatsFromPatterns(sector, b) {
+        const statLabels = {
+            healthcare: ["Patients Served", "Satisfaction Rate", "Years of Experience"],
+            fintech: ["Assets Managed", "Average Returns", "Clients Worldwide"],
+            legal: ["Cases Won", "Years of Practice", "Client Satisfaction"],
+            technology: ["Users Onboarded", "Uptime", "Customer Satisfaction"],
+            education: ["Students Enrolled", "Completion Rate", "Course Satisfaction"],
+            commerce: ["Products Sold", "Customer Rating", "Repeat Buyers"],
+            automotive: ["Vehicles Serviced", "Customer Satisfaction", "Years of Excellence"],
+            real_estate: ["Properties Sold", "Client Satisfaction", "Years in Market"],
+            travel: ["Trips Booked", "Traveler Rating", "Destinations Covered"],
+            food: ["Dishes Served", "Customer Rating", "Years of Craft"],
+            sports: ["Athletes Trained", "Win Rate", "Championships"],
+            manufacturing: ["Units Produced", "Quality Rate", "Years of Precision"],
+            entertainment: ["Events Hosted", "Audience Rating", "Content Hours"]
+        };
+        const labels = statLabels[sector] || statLabels.technology;
         return [
-            { label: "Stat 1 Label", value: "{{VALUE_1}}" },
-            { label: "Stat 2 Label", value: "{{VALUE_2}}" },
-            { label: "Stat 3 Label", value: "{{VALUE_3}}" }
+            { label: labels[0], value: "{{VALUE_1}}" },
+            { label: labels[1], value: "{{VALUE_2}}" },
+            { label: labels[2], value: "{{VALUE_3}}" }
         ];
     }
     /**
-     * Generate FAQ - placeholder only
-     * Real FAQs must come from actual user questions
+     * Generate FAQ from copy pattern banks
      */
     generateFAQFromPatterns(sector, ci, b) {
+        const banks = COPY_PATTERN_BANKS;
+        const terms = banks.industryTerms[sector] || banks.industryTerms.technology;
+        const verbs = banks.verbs[ci.emotionalRegister] || banks.verbs.professional;
+        const t0 = terms[Math.floor(b(200) * terms.length)];
+        const t1 = terms[Math.floor(b(201) * terms.length)];
+        const t2 = terms[Math.floor(b(202) * terms.length)];
+        const v0 = verbs[Math.floor(b(203) * verbs.length)];
+        const v1 = verbs[Math.floor(b(204) * verbs.length)];
         return [
-            { question: "FAQ Question 1?", answer: "FAQ answer placeholder - replace with actual answer" },
-            { question: "FAQ Question 2?", answer: "FAQ answer placeholder - replace with actual answer" }
+            {
+                question: `How does your ${t0} approach work?`,
+                answer: `We ${v0} ${t0} through a process built around your specific needs and goals.`
+            },
+            {
+                question: `What makes your ${t1} different?`,
+                answer: `Our ${t1} is designed to ${v1} outcomes that matter — faster and more reliably than alternatives.`
+            },
+            {
+                question: `Can I get started with ${t2} right away?`,
+                answer: `Yes. Getting started takes minutes. Our onboarding is designed to deliver value from day one.`
+            }
         ];
     }
     /**
-     * Generate features - placeholder only
-     * Real features must come from actual product definition
+     * Generate features from copy pattern banks
      */
     generateFeaturesFromPatterns(sector, ci, b) {
-        return [
-            { title: "Feature 1", description: "Feature description placeholder - replace with actual capability" },
-            { title: "Feature 2", description: "Feature description placeholder - replace with actual capability" },
-            { title: "Feature 3", description: "Feature description placeholder - replace with actual capability" }
-        ];
+        const banks = COPY_PATTERN_BANKS;
+        const terms = banks.industryTerms[sector] || banks.industryTerms.technology;
+        const adjs = banks.adjectives[ci.emotionalRegister] || banks.adjectives.professional;
+        const actions = banks.headlineFragments.benefit_action;
+        const outcomes = banks.headlineFragments.benefit_outcome;
+        return [0, 1, 2].map(i => {
+            const term = terms[Math.floor(b(210 + i) * terms.length)];
+            const adj = adjs[Math.floor(b(213 + i) * adjs.length)];
+            const action = actions[Math.floor(b(216 + i) * actions.length)];
+            const outcome = outcomes[Math.floor(b(219 + i) * outcomes.length)];
+            const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+            return {
+                title: `${action} ${cap(term)}`,
+                description: `${cap(adj)} ${term} that ${outcome.toLowerCase()}s your results.`
+            };
+        });
     }
     /**
      * Hash-derived sub-sector selection

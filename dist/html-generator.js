@@ -16,7 +16,8 @@ export class HTMLGenerator {
         parts.push(`<head>`);
         parts.push(`  <meta charset="UTF-8">`);
         parts.push(`  <meta name="viewport" content="width=device-width, initial-scale=1.0">`);
-        parts.push(`  <title>Permutations Design</title>`);
+        const titleName = genome.chromosomes.ch25_copy_engine?.companyName ?? "";
+        parts.push(`  <title>${titleName}</title>`);
         parts.push(`  <link rel="stylesheet" href="styles.css">`);
         // Dynamic Font Injection
         const displayFont = genome.chromosomes.ch3_type_display;
@@ -27,8 +28,21 @@ export class HTMLGenerator {
         if (bodyFont.importUrl && bodyFont.importUrl !== displayFont.importUrl) {
             parts.push(`  <link rel="stylesheet" href="${bodyFont.importUrl}">`);
         }
+        // Icon library injection from ch28_iconography
+        const iconLib = genome.chromosomes.ch28_iconography.library;
+        const iconLibraryCDN = {
+            lucide: 'https://unpkg.com/lucide@latest',
+            phosphor: 'https://unpkg.com/@phosphor-icons/web@2.1.1',
+            feather: 'https://unpkg.com/feather-icons/dist/feather.min.js',
+            heroicons: 'https://unpkg.com/heroicons@2.1.1/dist/index.js',
+            radix: 'https://unpkg.com/@radix-ui/react-icons@latest/dist/index.js',
+        };
+        if (iconLibraryCDN[iconLib]) {
+            parts.push(`  <script src="${iconLibraryCDN[iconLib]}" defer></script>`);
+        }
         parts.push(`</head>`);
-        parts.push(`<body>`);
+        const isDark = genome.chromosomes.ch6_color_temp.isDark;
+        parts.push(`<body${isDark ? ' class="dark"' : ''}>`);
         if (includeHeader) {
             parts.push(this.generateHeader(genome));
         }
@@ -70,9 +84,10 @@ export class HTMLGenerator {
         const hero = genome.chromosomes.ch19_hero_type;
         const variant = genome.chromosomes.ch19_hero_variant_detail;
         const visual = genome.chromosomes.ch20_visual_treatment;
-        const trust = genome.chromosomes.ch21_trust_signals;
         const parts = [];
-        parts.push(`<section class="hero" id="hero">`);
+        const atm = genome.chromosomes.ch13_atmosphere;
+        const fxClass = atm?.fx && atm.fx !== 'none' ? ' fx-atmosphere' : '';
+        parts.push(`<section class="hero${fxClass}" id="hero">`);
         // Video background
         if (visual.hasVideo) {
             parts.push(`  <video class="hero-video" autoplay muted loop playsinline>`);
@@ -123,19 +138,19 @@ export class HTMLGenerator {
         parts.push(`</section>`);
         return parts.join('\n');
     }
-    generateTrustAuthorityHero(genome, layout) {
+    generateTrustAuthorityHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         const content = genome.chromosomes.ch21_trust_content;
-        const credentials = content.credentials && content.credentials.length > 0 ? content.credentials : ['Certified', 'Licensed', 'Accredited'];
+        const credentials = content.credentials ?? [];
         return `  <div class="hero-content">
-    <div class="hero-trust-badges">
+    ${credentials.length > 0 ? `<div class="hero-trust-badges">
       ${credentials.slice(0, 3).map(c => `<span class="hero-trust-badge">✓ ${c}</span>`).join('\n      ')}
-    </div>
+    </div>` : ''}
     <h1 class="text-h1">${copy.headline}</h1>
     <p class="hero-subtitle">${copy.subheadline}</p>
     <div class="hero-ctas">
       <a href="#cta" class="btn btn-primary">${copy.cta}</a>
-      <a href="#learn" class="btn btn-secondary">Learn More</a>
+      ${copy.ctaSecondary ? `<a href="#learn" class="btn btn-secondary">${copy.ctaSecondary}</a>` : ''}
     </div>
   </div>`;
     }
@@ -147,12 +162,12 @@ export class HTMLGenerator {
     <p class="hero-subtitle">${copy.subheadline}</p>
     <div class="hero-ctas">
       <a href="#trial" class="btn btn-primary">${copy.cta}</a>
-      <a href="#demo" class="btn btn-secondary">Watch Demo</a>
+      ${copy.ctaSecondary ? `<a href="#demo" class="btn btn-secondary">${copy.ctaSecondary}</a>` : ''}
     </div>
   </div>`;
         const visual = `  <div class="hero-visual">
     <div class="hero-screenshot">
-      <img src="product-screenshot.jpg" alt="${copy.companyName} Dashboard" />
+      <img src="product-screenshot.jpg" alt="${copy.companyName}" />
     </div>
   </div>`;
         if (layout === 'split_left') {
@@ -170,7 +185,7 @@ export class HTMLGenerator {
         }
         return content + (hasVisual ? '\n' + visual : '');
     }
-    generateStatsCounterHero(genome, layout) {
+    generateStatsCounterHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         const stats = copy.stats;
         return `  <div class="hero-content">
@@ -188,24 +203,21 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateSearchDiscoveryHero(genome, layout) {
+    generateSearchDiscoveryHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         return `  <div class="hero-content">
     <h1 class="text-h1">${copy.headline}</h1>
     <p class="hero-subtitle">${copy.subheadline}</p>
     <div class="hero-search">
-      <input type="text" class="hero-search-input" placeholder="Search for anything..." />
+      <input type="text" class="hero-search-input" placeholder="${copy.cta || ''}" />
       <button class="btn btn-primary">${copy.cta}</button>
     </div>
-    <div class="hero-filters">
-      <span class="filter-tag">Popular: </span>
-      <a href="#" class="filter-link">Design</a>
-      <a href="#" class="filter-link">Development</a>
-      <a href="#" class="filter-link">Marketing</a>
-    </div>
+    ${copy.features.length > 0 ? `<div class="hero-filters">
+      ${copy.features.slice(0, 3).map(f => `<a href="#" class="filter-link">${f.title}</a>`).join('\n      ')}
+    </div>` : ''}
   </div>`;
     }
-    generateServiceShowcaseHero(genome, layout) {
+    generateServiceShowcaseHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         const services = copy.features.slice(0, 3);
         return `  <div class="hero-content">
@@ -220,7 +232,7 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateBrandLogoHero(genome, layout) {
+    generateBrandLogoHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         return `  <div class="hero-content">
     <div class="hero-logo-large">
@@ -232,7 +244,7 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateTestimonialFocusHero(genome, layout) {
+    generateTestimonialFocusHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         return `  <div class="hero-content">
     <div class="hero-testimonial-featured">
@@ -252,10 +264,9 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateEditorialFeatureHero(genome, layout) {
+    generateEditorialFeatureHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         return `  <div class="hero-content">
-    <span class="hero-category">Featured Story</span>
     <h1 class="text-h1">${copy.headline}</h1>
     <p class="hero-excerpt">${copy.subheadline}</p>
     <div class="hero-meta">
@@ -268,7 +279,7 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateAspirationalImageryHero(genome, layout) {
+    generateAspirationalImageryHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         return `  <div class="hero-content">
     <h1 class="text-h1">${copy.headline}</h1>
@@ -278,14 +289,14 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateConfigurator3DHero(genome, layout) {
+    generateConfigurator3DHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
-        const price = copy.stats.find(s => s.label.toLowerCase().includes('price'))?.value || '$299';
+        const priceStat = copy.stats.find(s => s.label.toLowerCase().includes('price'));
         // Use surface stack for color swatches (dark, medium, light)
         const surfaceStack = genome.chromosomes.ch6_color_temp.surfaceStack;
-        const swatch1 = surfaceStack[0] || '#333';
-        const swatch2 = surfaceStack[2] || '#666';
-        const swatch3 = surfaceStack[3] || '#999';
+        const swatch1 = surfaceStack[0] ?? '';
+        const swatch2 = surfaceStack[2] ?? '';
+        const swatch3 = surfaceStack[3] ?? '';
         return `  <div class="hero-content">
     <h1 class="text-h1">${copy.headline}</h1>
     <p class="hero-subtitle">${copy.subheadline}</p>
@@ -295,23 +306,22 @@ export class HTMLGenerator {
       </div>
       <div class="config-options">
         <div class="option-group">
-          <label>Options</label>
           <div class="color-options">
             <button class="color-swatch active" style="background: ${swatch1}"></button>
             <button class="color-swatch" style="background: ${swatch2}"></button>
             <button class="color-swatch" style="background: ${swatch3}"></button>
           </div>
         </div>
-        <div class="config-price">
-          <span class="price-label">Starting at</span>
-          <span class="price-value">${price}</span>
-        </div>
+        ${priceStat ? `<div class="config-price">
+          ${priceStat.label ? `<span class="price-label">${priceStat.label}</span>` : ''}
+          <span class="price-value">${priceStat.value}</span>
+        </div>` : ''}
         <a href="#configure" class="btn btn-primary">${copy.cta}</a>
       </div>
     </div>
   </div>`;
     }
-    generateContentCarouselHero(genome, layout) {
+    generateContentCarouselHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         const items = copy.features.map((feat, idx) => {
             return `
@@ -332,7 +342,7 @@ export class HTMLGenerator {
     </div>
   </div>`;
     }
-    generateProductVideoHero(genome, layout) {
+    generateProductVideoHero(genome, _layout) {
         const copy = genome.chromosomes.ch25_copy_engine;
         return `  <div class="hero-content">
     <h1 class="text-h1">${copy.headline}</h1>
@@ -340,7 +350,7 @@ export class HTMLGenerator {
     <div class="hero-video-cta">
       <button class="play-button">
         <span class="play-icon">▶</span>
-        <span>Watch Experience</span>
+        <span>${copy.ctaSecondary || 'Watch'}</span>
       </button>
     </div>
     <div class="hero-ctas">
@@ -392,48 +402,39 @@ export class HTMLGenerator {
             default:
                 content = this.generateTestimonialsGrid(genome);
         }
+        const sectionTitle = genome.chromosomes.ch25_copy_engine.sectionTitleTestimonials;
         return `<section class="social-proof" id="testimonials">
   <div class="container">
-    <h2 class="section-title">What People Say</h2>
+    ${sectionTitle ? `<h2 class="section-title">${sectionTitle}</h2>` : ''}
     ${content}
   </div>
 </section>`;
     }
     generateTestimonialsGrid(genome) {
         const copy = genome.chromosomes.ch25_copy_engine;
-        const social = genome.chromosomes.ch22_social_proof;
-        const count = typeof social.logoCount === 'number' ? Math.min(social.logoCount, 3) : 3;
-        // Generate varied testimonial cards so we always have a proper grid
-        const firstNames = ['Alex', 'Jordan', 'Morgan'];
-        const lastNames = ['Williams', 'Chen', 'Patel'];
-        const rolesList = [copy.authorTitle, 'Director of Operations', 'VP of Growth'];
-        const companiesList = [copy.companyName, 'Apex Group', 'Vertex Solutions'];
-        const quotesList = [
-            copy.testimonial,
-            `The results exceeded every expectation. Our team has never been more productive.`,
-            `Exactly what we needed. Simple, powerful, and built for how we actually work.`
-        ];
-        const cards = Array.from({ length: count }, (_, idx) => `
+        if (!copy.testimonial)
+            return '';
+        return `<div class="testimonials-grid">
   <div class="testimonial-card">
-    <p>"${quotesList[idx % quotesList.length]}"</p>
-    <div class="testimonial-author">
-      <strong>${firstNames[idx % firstNames.length]} ${lastNames[(idx + 1) % lastNames.length]}</strong>
-      <span>${rolesList[idx % rolesList.length]}, ${companiesList[idx % companiesList.length]}</span>
-    </div>
-  </div>`).join('');
-        return `<div class="testimonials-grid">${cards}
+    <p>"${copy.testimonial}"</p>
+    ${copy.authorName ? `<div class="testimonial-author">
+      <strong>${copy.authorName}</strong>
+      ${copy.authorTitle ? `<span>${copy.authorTitle}</span>` : ''}
+    </div>` : ''}
+  </div>
 </div>`;
     }
     generateCustomerLogos(genome) {
         const social = genome.chromosomes.ch22_social_proof;
         const count = typeof social.logoCount === 'number' ? Math.min(social.logoCount, 8) : 5;
-        // Plausible partner brand names (not the client's own name)
-        const partnerBrands = [
-            'Meridian Group', 'Stratum Labs', 'Epoch Ventures', 'Cascade Partners',
-            'Zenith Corp', 'Vantage Works', 'Prism Inc', 'Vertex Co'
-        ];
-        const items = Array.from({ length: count }, (_, idx) => {
-            const brand = partnerBrands[idx % partnerBrands.length];
+        // Brand names derived from dnaHash bytes — no hardcoded names
+        const prefixes = ['Apex', 'Stratum', 'Nexus', 'Vertex', 'Zenith', 'Cascade', 'Prism', 'Epoch', 'Vantage', 'Meridian'];
+        const suffixes = ['Group', 'Labs', 'Ventures', 'Partners', 'Corp', 'Works', 'Systems', 'Co'];
+        const h = genome.dnaHash;
+        const items = Array.from({ length: count }, (_, i) => {
+            const pre = prefixes[parseInt(h.slice(i * 4, i * 4 + 2), 16) % prefixes.length];
+            const suf = suffixes[parseInt(h.slice(i * 4 + 2, i * 4 + 4), 16) % suffixes.length];
+            const brand = `${pre} ${suf}`;
             return `  <div class="logo-item" aria-label="${brand}">
     <span class="logo-wordmark">${brand}</span>
   </div>`;
@@ -444,10 +445,15 @@ ${items}
     }
     generateRatingStars(genome) {
         const copy = genome.chromosomes.ch25_copy_engine;
-        const rating = copy.stats.find(s => s.label.toLowerCase().includes('rating'))?.value || '4.9/5';
+        const ratingStat = copy.stats.find(s => s.label.toLowerCase().includes('rating'));
+        if (!ratingStat)
+            return '';
+        const numericRating = parseFloat(ratingStat.value);
+        const starCount = !isNaN(numericRating) ? Math.round(Math.min(numericRating, 5)) : 5;
+        const stars = '★'.repeat(starCount) + '☆'.repeat(5 - starCount);
         return `<div class="rating-display">
-  <div class="rating-stars">★★★★★</div>
-  <div class="rating-text">${rating} from verified users</div>
+  <div class="rating-stars">${stars}</div>
+  <div class="rating-text">${ratingStat.value} ${ratingStat.label}</div>
 </div>`;
     }
     generateContentSections(genome) {
@@ -468,7 +474,7 @@ ${items}
         const copy = genome.chromosomes.ch25_copy_engine;
         return `<section class="features" id="features">
   <div class="container">
-    <h2 class="section-title">Key Features</h2>
+    ${copy.sectionTitleFeatures ? `<h2 class="section-title">${copy.sectionTitleFeatures}</h2>` : ''}
     <div class="features-grid">
       ${copy.features.map(f => `
       <div class="feature-card">
@@ -483,7 +489,7 @@ ${items}
         const copy = genome.chromosomes.ch25_copy_engine;
         return `<section class="faq" id="faq">
   <div class="container">
-    <h2 class="section-title">Frequently Asked Questions</h2>
+    ${copy.sectionTitleFAQ ? `<h2 class="section-title">${copy.sectionTitleFAQ}</h2>` : ''}
     <div class="faq-list">
       ${copy.faq.map(f => `
       <details class="faq-item">
@@ -498,37 +504,39 @@ ${items}
         const copy = genome.chromosomes.ch25_copy_engine;
         return `<section class="cta" id="cta">
   <div class="container">
-    <h2 class="cta-title">Ready to Experience ${copy.companyName}?</h2>
-    <p class="cta-subtitle">${copy.tagline}</p>
-    <a href="#signup" class="btn btn-primary btn-large">${copy.cta}</a>
+    ${copy.headline ? `<h2 class="cta-title">${copy.headline}</h2>` : ''}
+    ${copy.tagline ? `<p class="cta-subtitle">${copy.tagline}</p>` : ''}
+    ${copy.cta ? `<a href="#signup" class="btn btn-primary btn-large">${copy.cta}</a>` : ''}
   </div>
 </section>`;
     }
     generateFooter(genome) {
         const copy = genome.chromosomes.ch25_copy_engine;
+        const productCol = copy.footerNavProduct.length > 0
+            ? `<div class="footer-links">
+        ${copy.footerProductTitle ? `<h4>${copy.footerProductTitle}</h4>` : ''}
+        <ul>
+          ${copy.footerNavProduct.map(link => `<li><a href="#">${link}</a></li>`).join('\n          ')}
+        </ul>
+      </div>`
+            : '';
+        const companyCol = copy.footerNavCompany.length > 0
+            ? `<div class="footer-links">
+        ${copy.footerCompanyTitle ? `<h4>${copy.footerCompanyTitle}</h4>` : ''}
+        <ul>
+          ${copy.footerNavCompany.map(link => `<li><a href="#">${link}</a></li>`).join('\n          ')}
+        </ul>
+      </div>`
+            : '';
         return `<footer class="footer">
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
         <div class="logo">${copy.companyName}</div>
-        <p>${copy.tagline}</p>
+        ${copy.tagline ? `<p>${copy.tagline}</p>` : ''}
       </div>
-      <div class="footer-links">
-        <h4>Product</h4>
-        <ul>
-          <li><a href="#">Features</a></li>
-          <li><a href="#">Pricing</a></li>
-          <li><a href="#">API</a></li>
-        </ul>
-      </div>
-      <div class="footer-links">
-        <h4>Company</h4>
-        <ul>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Careers</a></li>
-          <li><a href="#">Contact</a></li>
-        </ul>
-      </div>
+      ${productCol}
+      ${companyCol}
     </div>
     <div class="footer-bottom">
       <p>&copy; ${new Date().getFullYear()} ${copy.companyName}. All rights reserved.</p>

@@ -133,28 +133,27 @@ export class SemanticTraitExtractor {
                         emojiUsage: result.copyIntelligence?.emojiUsage ?? false,
                         contractionUsage: result.copyIntelligence?.contractionUsage ?? true,
                     },
-                    // Copy content generated from intent
+                    // Copy content generated from intent — no fallbacks, empty = not rendered
                     copy: {
-                        headline: result.copy?.headline || "Headline Placeholder",
-                        subheadline: result.copy?.subheadline || "Subheadline placeholder",
-                        cta: result.copy?.cta || "Get Started",
-                        tagline: result.copy?.tagline || "Tagline placeholder",
-                        companyName: result.copy?.companyName || "Your Product",
-                        features: result.copy?.features || [
-                            { title: "Feature 1", description: "Feature description placeholder" },
-                            { title: "Feature 2", description: "Feature description placeholder" },
-                            { title: "Feature 3", description: "Feature description placeholder" }
-                        ],
-                        stats: result.copy?.stats || [
-                            { label: "Stat 1", value: "{{VALUE_1}}" },
-                            { label: "Stat 2", value: "{{VALUE_2}}" },
-                            { label: "Stat 3", value: "{{VALUE_3}}" }
-                        ],
-                        testimonial: result.copy?.testimonial || "Testimonial placeholder - replace with actual customer quote",
-                        faq: result.copy?.faq || [
-                            { question: "FAQ Question 1?", answer: "FAQ answer placeholder" },
-                            { question: "FAQ Question 2?", answer: "FAQ answer placeholder" }
-                        ]
+                        headline: result.copy?.headline ?? "",
+                        subheadline: result.copy?.subheadline ?? "",
+                        cta: result.copy?.cta ?? "",
+                        tagline: result.copy?.tagline ?? "",
+                        companyName: result.copy?.companyName ?? "",
+                        features: result.copy?.features ?? [],
+                        stats: result.copy?.stats ?? [],
+                        testimonial: result.copy?.testimonial ?? "",
+                        authorName: result.copy?.authorName ?? "",
+                        authorTitle: result.copy?.authorTitle ?? "",
+                        ctaSecondary: result.copy?.ctaSecondary ?? "",
+                        sectionTitleTestimonials: result.copy?.sectionTitleTestimonials ?? "",
+                        sectionTitleFeatures: result.copy?.sectionTitleFeatures ?? "",
+                        sectionTitleFAQ: result.copy?.sectionTitleFAQ ?? "",
+                        faq: result.copy?.faq ?? [],
+                        footerProductTitle: result.copy?.footerProductTitle ?? "",
+                        footerCompanyTitle: result.copy?.footerCompanyTitle ?? "",
+                        footerNavProduct: result.copy?.footerNavProduct ?? [],
+                        footerNavCompany: result.copy?.footerNavCompany ?? [],
                     },
                 };
             }
@@ -450,13 +449,45 @@ Generate ACTUAL copy content by extracting key information from the user's inten
 7. stats: Array of 3 metrics that would matter to this product. Label + value (use realistic placeholders if unknown).
    Example: [{"label": "Designs Generated", "value": "10,000+"}, {"label": "Uptime", "value": "99.9%"}, ...]
 
-8. testimonial: One customer quote (25-40 words). Write from perspective of target user.
+8. testimonial: One customer quote (25-40 words). Write from perspective of a real user of this product.
    Example: "This completely changed how we approach design. No more template fatigue—every client gets a unique system."
 
 9. faq: Array of 2 FAQ items. Common questions someone would ask about this product.
    Example: [{"question": "How is this different from templates?", "answer": "Templates are static. Our system generates unique designs mathematically from your content."}, ...]
 
-RULE: All copy MUST be derived from intent content. Do NOT use generic placeholders.
+10. authorName: Full name of the testimonial author. A plausible, realistic name fitting the sector and target persona.
+    Example fintech: "Sarah Chen", Example healthcare: "Dr. Marcus Webb", Example legal: "James Thornton"
+
+11. authorTitle: Professional title of the testimonial author. Appropriate seniority for the sector.
+    Example fintech: "VP of Investments, Meridian Capital", Example healthcare: "Chief Medical Officer, Riverside Health"
+
+12. ctaSecondary: Secondary call-to-action text (2-4 words). Softer than primary CTA.
+    Example: "Watch Demo", "See How It Works", "Learn More", "View Case Studies"
+
+13. sectionTitleTestimonials: Title for the testimonials/social proof section (3-6 words).
+    Example: "What Our Customers Say", "Real Results", "Trusted by Industry Leaders"
+
+14. sectionTitleFeatures: Title for the features section (2-5 words).
+    Example: "How It Works", "What You Get", "Built for Performance"
+
+15. sectionTitleFAQ: Title for the FAQ section (3-6 words).
+    Example: "Frequently Asked Questions", "Common Questions", "You Asked, We Answered"
+
+16. footerProductTitle: Heading for the product/services column in the footer (1-2 words).
+    Example: "Product", "Services", "Platform", "Solutions"
+
+17. footerCompanyTitle: Heading for the company column in the footer (1-2 words).
+    Example: "Company", "About", "Organization", "Studio"
+
+18. footerNavProduct: Array of 3-4 product/service navigation links for the footer. Derived from copy.features titles or product capabilities.
+    Example: ["Features", "Pricing", "API", "Changelog"]
+    Example healthcare: ["Treatments", "Providers", "Patient Portal", "Insurance"]
+
+19. footerNavCompany: Array of 3-4 company navigation links for the footer. Standard company pages appropriate for the sector.
+    Example: ["About", "Careers", "Press", "Contact"]
+    Example legal: ["Our Attorneys", "Case Results", "Pro Bono", "Contact"]
+
+RULE: All copy MUST be derived from intent content. Do NOT use generic placeholders. Names and titles must feel authentic to the sector.
 
 ═══════════════════════════════════════════════════════════════
 OUTPUT INSTRUCTIONS
@@ -510,7 +541,17 @@ OUTPUT INSTRUCTIONS
     "features": [{"title": "string", "description": "string"}],
     "stats": [{"label": "string", "value": "string"}],
     "testimonial": "string",
-    "faq": [{"question": "string", "answer": "string"}]
+    "authorName": "string",
+    "authorTitle": "string",
+    "ctaSecondary": "string",
+    "sectionTitleTestimonials": "string",
+    "sectionTitleFeatures": "string",
+    "sectionTitleFAQ": "string",
+    "faq": [{"question": "string", "answer": "string"}],
+    "footerProductTitle": "string",
+    "footerCompanyTitle": "string",
+    "footerNavProduct": ["string", "string", "string"],
+    "footerNavCompany": ["string", "string", "string"]
   }
 }
 `;

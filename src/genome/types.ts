@@ -336,7 +336,17 @@ export interface GenerationOptions {
         features: { title: string; description: string }[];
         stats: { label: string; value: string }[];
         testimonial: string;
+        authorName: string;
+        authorTitle: string;
+        ctaSecondary: string;
+        sectionTitleTestimonials: string;
+        sectionTitleFeatures: string;
+        sectionTitleFAQ: string;
         faq: { question: string; answer: string }[];
+        footerProductTitle: string;
+        footerCompanyTitle: string;
+        footerNavProduct: string[];
+        footerNavCompany: string[];
     };
 }
 
@@ -693,14 +703,22 @@ export interface DesignGenome {
             headline: string;
             subheadline: string;
             cta: string;
+            ctaSecondary: string;
             authorName: string;
             authorTitle: string;
             testimonial: string;
             companyName: string;
             tagline: string;
+            sectionTitleTestimonials: string;
+            sectionTitleFeatures: string;
+            sectionTitleFAQ: string;
             stats: { label: string; value: string }[];
             faq: { question: string; answer: string }[];
             features: { title: string; description: string }[];
+            footerProductTitle: string;
+            footerCompanyTitle: string;
+            footerNavProduct: string[];
+            footerNavCompany: string[];
         };
         ch29_copy_intelligence: {
             industryTerminology: string[];

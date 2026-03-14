@@ -5,64 +5,102 @@ export class CivilizationGenerator {
         this.complexityAnalyzer = new ComplexityAnalyzer();
     }
     generate(intent, context, traits, minTier) {
-        // Analyze complexity
         const analysis = minTier
             ? this.complexityAnalyzer.forceMinimumTier(intent, context, traits, minTier)
             : this.complexityAnalyzer.analyze(intent, context, traits);
-        // Only generate civilization tier if complexity is high enough
-        if (analysis.finalComplexity < 0.70) {
-            throw new Error(`Complexity ${analysis.finalComplexity.toFixed(2)} is below civilization threshold (0.70). ` +
-                `Add more sophisticated keywords to intent (e.g., "dashboard", "3D", "real-time") ` +
-                `or specify minTier explicitly.`);
+        // Civilization requires at least neural tier (0.55+)
+        if (analysis.finalComplexity < 0.55) {
+            throw new Error(`Complexity ${analysis.finalComplexity.toFixed(2)} is below civilization threshold (0.55). ` +
+                `Current tier: ${analysis.tier}. Add sophistication keywords or specify minTier.`);
         }
-        // Generate tier-specific outputs
         return this.generateTier(analysis);
     }
     generateTier(analysis) {
         switch (analysis.tier) {
+            case 'neural':
+                return this.generateNeuralTier(analysis);
             case 'sentient':
                 return this.generateSentientTier(analysis);
             case 'civilized':
                 return this.generateCivilizedTier(analysis);
+            case 'networked':
+                return this.generateNetworkedTier(analysis);
             case 'advanced':
                 return this.generateAdvancedTier(analysis);
             default:
                 throw new Error(`Cannot generate civilization for tier: ${analysis.tier}`);
         }
     }
+    // 0.55–0.68 — Signal propagation: nervous system forms, components wire together
+    generateNeuralTier(analysis) {
+        return {
+            tier: 'neural',
+            complexity: analysis.finalComplexity,
+            architecture: {
+                pattern: 'component-based',
+                modules: 4,
+                stateManagement: 'context',
+                routing: 'static'
+            },
+            components: {
+                count: [14, 22],
+                list: this.generateComponentLibrary('neural')
+            },
+            animations: {
+                physics: 'spring',
+                types: ['fade', 'slide', 'scale', 'spring'],
+                choreography: 'sequential',
+                reducedMotion: 'respect'
+            },
+            designSystem: {
+                count: [28, 45],
+                themes: [1, 2],
+                modes: ['light', 'dark'],
+                semanticTokens: false
+            },
+            interactions: {
+                gestures: ['click', 'hover', 'focus'],
+                keyboard: 'basic',
+                focus: 'basic'
+            }
+        };
+    }
+    // 0.68–0.80 — Consciousness: intent-aware, multi-modal, motion system active
     generateSentientTier(analysis) {
         return {
             tier: 'sentient',
             complexity: analysis.finalComplexity,
             architecture: {
                 pattern: 'component-based',
-                modules: 3,
+                layers: ['view', 'logic'],
+                modules: 5,
                 stateManagement: 'context',
                 routing: 'static'
             },
             components: {
-                count: 15,
+                count: [20, 35],
                 list: this.generateComponentLibrary('sentient')
             },
             animations: {
-                physics: 'simple',
-                types: ['fade', 'slide', 'scale'],
-                choreography: 'sequential',
+                physics: 'spring',
+                types: ['fade', 'slide', 'scale', 'spring', 'stagger'],
+                choreography: 'staggered',
                 reducedMotion: 'respect'
             },
             designSystem: {
-                count: 40,
-                themes: 1,
-                modes: ['light'],
-                semanticTokens: false
+                count: [45, 65],
+                themes: [1, 2],
+                modes: ['light', 'dark'],
+                semanticTokens: true
             },
             interactions: {
-                gestures: ['click', 'hover'],
-                keyboard: 'basic',
+                gestures: ['click', 'hover', 'swipe', 'focus'],
+                keyboard: 'full',
                 focus: 'basic'
             }
         };
     }
+    // 0.80–0.90 — Society: organized, composable, token-driven, data-rich
     generateCivilizedTier(analysis) {
         return {
             tier: 'civilized',
@@ -70,39 +108,79 @@ export class CivilizationGenerator {
             architecture: {
                 pattern: 'layered',
                 layers: ['presentation', 'domain', 'data'],
-                modules: 6,
+                modules: 8,
                 stateManagement: 'store',
                 routing: 'dynamic'
             },
             components: {
-                count: 35,
+                count: [32, 50],
                 list: this.generateComponentLibrary('civilized')
             },
             animations: {
                 physics: 'advanced',
-                types: ['spring', 'glitch', 'morph', 'particle'],
+                types: ['spring', 'glitch', 'morph', 'particle', 'stagger'],
                 choreography: 'staggered',
                 reducedMotion: 'alternative'
             },
             designSystem: {
-                count: 80,
-                themes: 2,
+                count: [75, 100],
+                themes: [2, 4],
                 modes: ['light', 'dark', 'high-contrast'],
                 semanticTokens: true
             },
             interactions: {
-                gestures: ['swipe', 'pinch', 'hover', 'drag'],
+                gestures: ['swipe', 'pinch', 'hover', 'drag', 'long-press'],
                 keyboard: 'full',
                 focus: 'managed'
             }
         };
     }
+    // 0.90–0.95 — Networked civilization: distributed, real-time, multi-surface
+    generateNetworkedTier(analysis) {
+        return {
+            tier: 'networked',
+            complexity: analysis.finalComplexity,
+            architecture: {
+                pattern: 'micro-frontend',
+                layers: ['shell', 'feature', 'shared', 'platform'],
+                modules: 12,
+                stateManagement: 'distributed',
+                routing: 'dynamic',
+                edge: true
+            },
+            components: {
+                count: [48, 72],
+                list: this.generateComponentLibrary('networked')
+            },
+            animations: {
+                physics: 'advanced',
+                types: ['spring', 'morph', 'particle', 'procedural', 'physics-sim'],
+                choreography: 'responsive-to-user',
+                reducedMotion: 'alternative'
+            },
+            designSystem: {
+                count: [100, 160],
+                themes: [3, 6],
+                modes: ['light', 'dark', 'high-contrast', 'print', 'motion-reduced'],
+                semanticTokens: true,
+                generative: true
+            },
+            interactions: {
+                gestures: ['swipe', 'pinch', 'drag', 'multi-touch', 'long-press', 'hover'],
+                keyboard: 'command-palette',
+                focus: 'managed',
+                haptic: true
+            }
+        };
+    }
+    // 0.95–1.00 — Post-civilization: generative, ML-optimized, intent-based, adaptive
     generateAdvancedTier(analysis) {
         return {
             tier: 'advanced',
             complexity: analysis.finalComplexity,
             architecture: {
-                pattern: 'micro-frontend',
+                pattern: 'fractal',
+                layers: ['intent', 'generation', 'surface', 'data', 'edge'],
                 modules: 'dynamic',
                 stateManagement: 'distributed',
                 routing: 'intent-based',
@@ -114,8 +192,8 @@ export class CivilizationGenerator {
             },
             animations: {
                 physics: 'custom-engine',
-                types: ['procedural'],
-                choreography: 'responsive-to-user',
+                types: ['procedural', 'physics-sim', 'ml-driven', 'reactive'],
+                choreography: 'procedural',
                 reducedMotion: 'alternative',
                 mlOptimized: true
             },
@@ -189,12 +267,26 @@ export class CivilizationGenerator {
                 }
             }
         ];
+        if (tier === 'neural') {
+            return [
+                ...baseComponents,
+                this.createNavComponent(),
+                this.createModalComponent(),
+                this.createDropdownComponent(),
+                this.createToastComponent(),
+                this.createTooltipComponent()
+            ];
+        }
         if (tier === 'sentient') {
             return [
                 ...baseComponents,
                 this.createNavComponent(),
                 this.createModalComponent(),
-                this.createDropdownComponent()
+                this.createDropdownComponent(),
+                this.createTabsComponent(),
+                this.createAccordionComponent(),
+                this.createToastComponent(),
+                this.createTooltipComponent()
             ];
         }
         if (tier === 'civilized') {
@@ -212,7 +304,25 @@ export class CivilizationGenerator {
                 this.createTooltipComponent()
             ];
         }
-        // Advanced tier - components are generative/config-driven
+        if (tier === 'networked') {
+            return [
+                ...baseComponents,
+                this.createNavComponent(),
+                this.createModalComponent(),
+                this.createDropdownComponent(),
+                this.createDataTableComponent(),
+                this.createChartComponent(),
+                this.createFormComponent(),
+                this.createTabsComponent(),
+                this.createAccordionComponent(),
+                this.createToastComponent(),
+                this.createTooltipComponent(),
+                this.createCommandPaletteComponent(),
+                this.createVirtualListComponent(),
+                this.createComboboxComponent()
+            ];
+        }
+        // Advanced tier — components are generative/config-driven
         return [
             ...baseComponents,
             {
@@ -419,6 +529,61 @@ export class CivilizationGenerator {
                 role: 'tooltip',
                 ariaProps: ['aria-describedby'],
                 keyboard: []
+            }
+        };
+    }
+    createCommandPaletteComponent() {
+        return {
+            name: 'CommandPalette',
+            category: 'overlay',
+            props: [
+                { name: 'isOpen', type: 'boolean', required: true },
+                { name: 'onClose', type: '() => void', required: true },
+                { name: 'commands', type: 'Command[]', required: true },
+                { name: 'placeholder', type: 'string', required: false, default: '"Search commands…"' }
+            ],
+            variants: ['default', 'compact'],
+            accessibility: {
+                role: 'dialog',
+                ariaProps: ['aria-modal', 'aria-label', 'aria-activedescendant'],
+                keyboard: ['Escape', 'ArrowKeys', 'Enter', 'Cmd+K']
+            }
+        };
+    }
+    createVirtualListComponent() {
+        return {
+            name: 'VirtualList',
+            category: 'data',
+            props: [
+                { name: 'items', type: 'any[]', required: true },
+                { name: 'itemHeight', type: 'number', required: true },
+                { name: 'renderItem', type: '(item: any, index: number) => ReactNode', required: true },
+                { name: 'overscan', type: 'number', required: false, default: 5 }
+            ],
+            variants: ['default', 'infinite'],
+            accessibility: {
+                role: 'list',
+                ariaProps: ['aria-rowcount', 'aria-rowindex'],
+                keyboard: ['Tab', 'ArrowKeys', 'PageUp', 'PageDown']
+            }
+        };
+    }
+    createComboboxComponent() {
+        return {
+            name: 'Combobox',
+            category: 'input',
+            props: [
+                { name: 'options', type: 'Option[]', required: true },
+                { name: 'value', type: 'string | string[]', required: true },
+                { name: 'onChange', type: '(value: string | string[]) => void', required: true },
+                { name: 'creatable', type: 'boolean', required: false, default: false },
+                { name: 'async', type: 'boolean', required: false, default: false }
+            ],
+            variants: ['single', 'multi', 'creatable', 'async'],
+            accessibility: {
+                role: 'combobox',
+                ariaProps: ['aria-expanded', 'aria-haspopup', 'aria-activedescendant', 'aria-autocomplete'],
+                keyboard: ['Enter', 'Space', 'ArrowKeys', 'Escape', 'Tab']
             }
         };
     }

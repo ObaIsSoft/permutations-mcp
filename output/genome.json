@@ -1,19 +1,19 @@
 {
-  "dnaHash": "8888caac4c062a485d124b5ca4ac621d6dcccc129be655e08415797baa860379",
+  "dnaHash": "726fd2ad4102e727773f35aa0ef7c0190dd0488c66e8adb84fd544bbbc2ca30a",
   "traits": {
-    "informationDensity": 0,
-    "temporalUrgency": 0,
-    "emotionalTemperature": 0,
+    "informationDensity": 0.8,
+    "temporalUrgency": 0.4,
+    "emotionalTemperature": 0.3,
     "playfulness": 0.2,
-    "spatialDependency": 0,
-    "trustRequirement": 0,
-    "visualEmphasis": 0.3,
-    "conversionFocus": 0
+    "spatialDependency": 0.6,
+    "trustRequirement": 0.7,
+    "visualEmphasis": 0.5,
+    "conversionFocus": 0.6
   },
   "sectorContext": {
     "primary": "technology",
     "secondary": null,
-    "subSector": "technology_general"
+    "subSector": "technology_infrastructure"
   },
   "chromosomes": {
     "ch0_sector_primary": {
@@ -25,9 +25,24 @@
       "influence": 0
     },
     "ch0_sub_sector": {
-      "classification": "technology_general",
-      "confidence": 0,
-      "keywords": []
+      "classification": "technology_infrastructure",
+      "confidence": 0.7,
+      "keywords": [
+        "data-rich",
+        "structured",
+        "tabular",
+        "static",
+        "documentation",
+        "reference",
+        "professional",
+        "corporate",
+        "neutral",
+        "clean",
+        "restrained",
+        "trusted",
+        "verified",
+        "secure"
+      ]
     },
     "ch0_brand_weight": {
       "brandVsSector": 0.7,
@@ -36,222 +51,562 @@
     "ch1_structure": {
       "topology": "deep",
       "maxNesting": 3,
-      "sectionCount": 3
+      "sectionCount": 7,
+      "scrollBehavior": "continuous",
+      "breakpointStrategy": "fluid",
+      "contentFlow": "f_pattern"
     },
     "ch2_rhythm": {
-      "density": "empty",
+      "density": "airtight",
       "baseSpacing": 8,
-      "sectionSpacing": 32
+      "sectionSpacing": 32,
+      "componentSpacing": 4,
+      "verticalRhythm": 4,
+      "negativeSpaceRatio": 0.19999999999999996
     },
     "ch3_type_display": {
-      "family": "Space Grotesk, system-ui, sans-serif",
+      "family": "Space Grotesk, system-ui, -apple-system, sans-serif",
+      "displayName": "Space Grotesk",
+      "importUrl": "https://fonts.bunny.net/css?family=space-grotesk:400,700&display=swap",
+      "provider": "bunny",
       "charge": "geometric",
-      "fallback": "system-ui, -apple-system, sans-serif"
+      "weight": 900,
+      "fallback": "system-ui, -apple-system, sans-serif",
+      "tracking": "tight",
+      "casing": "normal"
     },
     "ch4_type_body": {
-      "family": "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      "xHeightRatio": 0.5729411764705883,
-      "contrast": 0.8282352941176471,
-      "fallback": "system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+      "family": "Public Sans, Arial, sans-serif",
+      "displayName": "Public Sans",
+      "importUrl": "https://fonts.bunny.net/css?family=public-sans:400,700&display=swap",
+      "provider": "bunny",
+      "charge": "grotesque",
+      "xHeightRatio": 0.5933333333333334,
+      "contrast": 0.8988235294117648,
+      "fallback": "Arial, sans-serif",
+      "optimalLineLength": "narrow",
+      "paragraphSpacing": 1.6,
+      "hyphenation": false
     },
     "ch5_color_primary": {
-      "hue": 5,
-      "saturation": 0,
-      "lightness": 0.1,
-      "temperature": "warm",
-      "hex": "#1a1a1a",
+      "hue": 234,
+      "saturation": 0.52,
+      "lightness": 0.22,
+      "temperature": "cool",
+      "hex": "#1b2054",
       "sectorAppropriate": true
     },
     "ch6_color_temp": {
-      "backgroundTemp": "neutral",
-      "contrastRatio": 11.245098039215687,
-      "surfaceColor": "#ffffff",
-      "elevatedSurface": "#f4f4f4"
+      "backgroundTemp": "cool",
+      "contrastRatio": 12.656862745098039,
+      "surfaceColor": "#2c2c2c",
+      "elevatedSurface": "#3f3f3f",
+      "isDark": true,
+      "accentColor": "#db7e57",
+      "surfaceStack": [
+        "#121212",
+        "#2c2c2c",
+        "#3f3f3f",
+        "#5d5d5d"
+      ]
     },
     "ch7_edge": {
       "radius": 3,
       "style": "soft",
-      "variableRadius": false
+      "variableRadius": false,
+      "componentRadius": 2,
+      "imageRadius": 1,
+      "asymmetric": false
     },
     "ch8_motion": {
-      "physics": "none",
-      "durationScale": 0.891764705882353,
-      "staggerDelay": 0.011372549019607844
+      "physics": "spring",
+      "durationScale": 1.5552941176470587,
+      "staggerDelay": 0.00980392156862745,
+      "enterDirection": "fade",
+      "exitBehavior": "slide",
+      "hoverIntensity": 0.1,
+      "reducedMotionFallback": "none"
+    },
+    "ch27_motion_choreography": {
+      "entrySequence": "simultaneous",
+      "staggerInterval": 42,
+      "scrollTrigger": {
+        "triggerPoint": 0.2380392156862745,
+        "scrubIntensity": 0.8196078431372549
+      },
+      "hoverMicrointeraction": {
+        "type": "scale",
+        "intensity": 0.2494117647058824,
+        "duration": 302
+      },
+      "pageTransition": "dissolve",
+      "choreographyStyle": "snappy"
     },
     "ch9_grid": {
-      "asymmetry": 0.7376470588235294,
-      "columns": 2,
-      "gap": 18
+      "logic": "column",
+      "asymmetry": 0.7470588235294118,
+      "columns": 4,
+      "gap": 9,
+      "mobileColumns": 2,
+      "alignment": "center"
     },
     "ch10_hierarchy": {
-      "depth": "overlapping",
+      "depth": "flat",
       "zIndexBehavior": "isolation",
-      "layerBlur": 8
+      "layerBlur": 8.156862745098039,
+      "elevationSystem": "material",
+      "shadowScale": 0.42352941176470593,
+      "depthCues": "none"
     },
     "ch11_texture": {
       "surface": "flat",
-      "noiseLevel": 0.21372549019607842,
-      "pattern": null
+      "noiseLevel": 0.025490196078431372,
+      "grainFrequency": 0.13058823529411764,
+      "overlayBlend": "overlay",
+      "animatedTexture": false
     },
     "ch12_signature": {
-      "entropy": 0.8,
-      "uniqueMutation": "8888caac",
-      "variantSeed": 0.8
+      "entropy": 0.8156862745098039,
+      "uniqueMutation": "726fd2ad",
+      "variantSeed": 0.2823529411764706
+    },
+    "ch28_iconography": {
+      "style": "filled",
+      "strokeWeight": "thin",
+      "cornerTreatment": "pill",
+      "sizeScale": 0.8305882352941177,
+      "library": "lucide",
+      "colorTreatment": "inherit",
+      "animation": "bounce"
     },
     "ch13_atmosphere": {
-      "fx": "none",
-      "intensity": 0,
-      "enabled": false
+      "fx": "crt_noise",
+      "intensity": 0.16941176470588235,
+      "enabled": true,
+      "coverage": "section",
+      "performanceBudget": "medium"
     },
     "ch14_physics": {
       "material": "metallic",
-      "roughness": 0.05647058823529412,
+      "roughness": 0.43921568627450985,
+      "metalness": 0.9470588235294117,
       "transmission": 0,
-      "enabled": false
+      "emissive": false,
+      "enabled": true
     },
     "ch15_biomarker": {
       "geometry": "monolithic",
-      "complexity": 0.5,
+      "shapeFamily": "geometric",
+      "animationStyle": "static",
+      "polycount": "low",
+      "colorTreatment": "monochrome",
+      "complexity": 0,
       "enabled": false,
       "usage": "none"
     },
     "ch16_typography": {
       "display": {
-        "size": "44px",
+        "size": "39px",
         "lineHeight": "1.60",
-        "letterSpacing": "0em"
+        "letterSpacing": "-0.01em"
       },
       "h1": {
-        "size": "35px",
+        "size": "31px",
         "lineHeight": "1.64",
-        "letterSpacing": "0em"
+        "letterSpacing": "-0.006em"
       },
       "h2": {
-        "size": "28px",
+        "size": "25px",
         "lineHeight": "1.68",
-        "letterSpacing": "0em"
+        "letterSpacing": "-0.004em"
       },
       "h3": {
-        "size": "23px",
+        "size": "20px",
         "lineHeight": "1.72",
-        "letterSpacing": "0em"
+        "letterSpacing": "-0.002em"
       },
       "body": {
-        "size": "18px",
+        "size": "16px",
         "lineHeight": "1.80",
         "letterSpacing": "0em"
       },
       "small": {
-        "size": "16px",
+        "size": "14px",
         "lineHeight": "1.76",
-        "letterSpacing": "0em"
+        "letterSpacing": "-0.004em"
       },
       "ratio": 1.25,
-      "baseSize": 18
+      "baseSize": 16
     },
     "ch17_accessibility": {
-      "minContrastRatio": 3,
+      "minContrastRatio": 7,
       "focusIndicator": "outline",
       "respectMotionPreference": true,
       "minTouchTarget": 44,
-      "screenReaderOptimized": false
+      "screenReaderOptimized": true
     },
     "ch18_rendering": {
       "primary": "css",
       "fallback": "css",
-      "animate": true,
+      "animate": false,
       "complexity": "balanced"
     },
     "ch19_hero_type": {
       "type": "product_ui",
-      "variant": "centered",
-      "variantIndex": 0
+      "variant": "floating_cards",
+      "variantIndex": 6
     },
     "ch19_hero_variant_detail": {
-      "layout": "centered",
+      "layout": "floating_cards",
       "elements": [
         "screenshot",
         "headline",
         "subheadline",
         "cta_primary",
         "cta_secondary"
-      ]
+      ],
+      "alignment": "left",
+      "textPosition": "adjacent",
+      "height": "compact",
+      "backgroundTreatment": "solid",
+      "overlayOpacity": 0.6607843137254902,
+      "mobileBehavior": "stack"
     },
     "ch20_visual_treatment": {
       "treatment": "product_screenshots",
       "videoStrategy": "none",
-      "hasVideo": false
+      "imageTreatment": "cool",
+      "hasVideo": false,
+      "imageAspectRatio": "portrait",
+      "colorGrading": "natural",
+      "imageCount": 1
     },
     "ch21_trust_signals": {
       "approach": "credentials",
-      "prominence": "subtle",
-      "layoutVariant": "trust_credentials_3",
+      "prominence": "prominent",
+      "layoutVariant": "trust_credentials_4",
       "contentProvided": false,
       "suggestedStats": [
-        "users",
-        "uptime",
-        "performance",
-        "integrations"
-      ]
+        "{{STAT_1}}",
+        "{{STAT_2}}",
+        "{{STAT_3}}"
+      ],
+      "animationType": "count_up"
     },
     "ch21_trust_content": {
       "credentials": [],
-      "testimonials": [],
-      "stats": [],
+      "testimonials": [
+        "{{TESTIMONIAL_1}}",
+        "{{TESTIMONIAL_2}}"
+      ],
+      "stats": [
+        {
+          "label": "{{STAT_1_LABEL}}",
+          "value": "{{STAT_1_VALUE}}"
+        },
+        {
+          "label": "{{STAT_2_LABEL}}",
+          "value": "{{STAT_2_VALUE}}"
+        },
+        {
+          "label": "{{STAT_3_LABEL}}",
+          "value": "{{STAT_3_VALUE}}"
+        }
+      ],
       "securityBadges": []
     },
     "ch22_social_proof": {
       "type": "customer_logos",
-      "prominence": "subtle"
+      "prominence": "prominent",
+      "layout": "grid",
+      "logoCount": 5,
+      "updateFrequency": "static",
+      "displayStyle": "full_testimonial"
     },
     "ch22_impact_demonstration": {
       "type": "live_counter",
       "realTime": true,
-      "interactive": true
+      "interactive": false,
+      "animationTrigger": "page_load",
+      "counterFormat": "abbreviated"
     },
     "ch23_content_depth": {
-      "level": "minimal",
-      "estimatedSections": 3,
+      "level": "extensive",
+      "estimatedSections": 7,
       "hasHero": true,
-      "hasFeatures": false,
-      "hasCTA": false,
-      "hasFAQ": false,
-      "hasTestimonials": false
+      "hasFeatures": true,
+      "hasCTA": true,
+      "hasFAQ": true,
+      "hasTestimonials": true
     },
     "ch23_information_architecture": {
-      "pattern": "hub_spoke"
+      "pattern": "data_dashboard",
+      "navigationType": "floating",
+      "footerType": "minimal"
     },
     "ch24_personalization": {
-      "approach": "static",
+      "approach": "behavior_based",
       "dynamicContent": true,
-      "userSegmentation": false
+      "userSegmentation": true,
+      "abTestingReady": true,
+      "segmentCount": 4
+    },
+    "ch25_copy_engine": {
+      "headline": "Mathematical Design DNA for AI-Generated Websites",
+      "subheadline": "Generate unique, deterministic design systems from SHA-256 hashes and content intent.",
+      "cta": "Generate Your DNA",
+      "ctaSecondary": "Learn More",
+      "tagline": "No Templates. Only Math.",
+      "companyName": "Permutations",
+      "authorName": "Alexandra Lee",
+      "authorTitle": "Lead Designer, Nova Spire",
+      "testimonial": "This completely changed how we approach design. No more template fatigue—every client gets a unique system.",
+      "sectionTitleTestimonials": "What Our Customers Say",
+      "sectionTitleFeatures": "How It Works",
+      "sectionTitleFAQ": "Frequently Asked Questions",
+      "stats": [
+        {
+          "label": "Lines of Code",
+          "value": "15,550"
+        },
+        {
+          "label": "Tests Passing",
+          "value": "49"
+        },
+        {
+          "label": "Chromosomes",
+          "value": "29"
+        }
+      ],
+      "faq": [
+        {
+          "question": "How is this different from templates?",
+          "answer": "Templates are static. Our system generates unique designs mathematically from your content."
+        },
+        {
+          "question": "Can I customize the design generation process?",
+          "answer": "Yes, our system allows for customization through sector-specific chromosomes and constraints."
+        }
+      ],
+      "features": [
+        {
+          "title": "SHA-256 Design DNA",
+          "description": "Every design is mathematically generated from a hash, ensuring uniqueness and reproducibility."
+        },
+        {
+          "title": "Sector-Aware Chromosomes",
+          "description": "Industry-specific psychology and constraints for tailored design generation."
+        },
+        {
+          "title": "Deterministic Output",
+          "description": "SHA-256 hash of seed ensures consistent and predictable results."
+        }
+      ],
+      "footerProductTitle": "Product",
+      "footerCompanyTitle": "Company",
+      "footerNavProduct": [
+        "Features",
+        "Pricing",
+        "API"
+      ],
+      "footerNavCompany": [
+        "About",
+        "Careers",
+        "Contact"
+      ]
+    },
+    "ch29_copy_intelligence": {
+      "industryTerminology": [
+        "AI",
+        "design systems",
+        "mathematical generation"
+      ],
+      "emotionalRegister": "professional",
+      "formalityLevel": 0.7,
+      "ctaAggression": 0.6,
+      "headlineStyle": "benefit_forward",
+      "vocabularyComplexity": "technical",
+      "sentenceStructure": "balanced",
+      "emojiUsage": false,
+      "contractionUsage": false
+    },
+    "ch26_color_system": {
+      "secondary": {
+        "hue": 54,
+        "saturation": 0.48,
+        "lightness": 0.34,
+        "hex": "#81792d",
+        "relationship": "complementary"
+      },
+      "accent": {
+        "hue": 154,
+        "saturation": 0.72,
+        "lightness": 0.46,
+        "hex": "#21cb81",
+        "usage": "success"
+      },
+      "semantic": {
+        "success": {
+          "hue": 135,
+          "hex": "#28bd4d"
+        },
+        "warning": {
+          "hue": 45,
+          "hex": "#f2b90d"
+        },
+        "error": {
+          "hue": 0,
+          "hex": "#df2020"
+        },
+        "info": {
+          "hue": 210,
+          "hex": "#1980e6"
+        }
+      },
+      "neutral": {
+        "scale": [
+          "#0d0d0d",
+          "#28282a",
+          "#424348",
+          "#5b5c67",
+          "#737587",
+          "#93949f",
+          "#b2b3b8",
+          "#d0d0d2",
+          "#ededed"
+        ],
+        "tintStrength": 0.08
+      },
+      "darkMode": {
+        "surfaceStack": [
+          "#0c0c0d",
+          "#18191b",
+          "#252528",
+          "#313135",
+          "#3d3e42",
+          "#494a50",
+          "#56565d",
+          "#62636a"
+        ],
+        "elevationMap": [
+          5,
+          10,
+          15,
+          20,
+          25,
+          30,
+          35,
+          40
+        ]
+      }
     }
   },
   "constraints": {
     "forbiddenPatterns": [],
-    "requiredPatterns": [],
+    "requiredPatterns": [
+      "trust_indicators"
+    ],
     "bondingRules": [
-      "[wcag_contrast_minimum] WCAG 1.4.3, informationDensity: 0.00 → Minimum contrast ratio 3:1 required for WCAG AA",
-      "[wcag_reduced_motion] WCAG 2.3.3, respectMotionPreference: true → Respect prefers-reduced-motion for users with vestibular disorders",
-      "[wcag_text_spacing] WCAG 1.4.12, informationDensity: 0.00 → Line height 1.5 minimum for readability",
-      "[cold_geometric] emotionalTemperature: 0.00 → Cold emotional tone requires geometric precision",
-      "[cold_metallic] emotionalTemperature: 0.00 → Metallic material conveys clinical precision"
+      "[wcag_contrast_minimum] WCAG 1.4.3, informationDensity: 0.80 → Minimum contrast ratio 7:1 required for WCAG AAA",
+      "[wcag_text_spacing] WCAG 1.4.12, informationDensity: 0.80 → Line height 1.5 minimum for readability",
+      "[trust_prominent] trustRequirement: 0.70 → High trust requirement mandates visible credentials and proof signals",
+      "[trust_credentials_approach] trustRequirement: 0.70 → High-stakes interfaces need hard credentials over social testimonials",
+      "[trust_required_pattern] trustRequirement: 0.70 → Trust-critical interfaces must include certifications, security, or authority signals",
+      "[density_behavior_personalization] informationDensity: 0.80 → Dense data interfaces benefit from behavior-based content personalization"
     ],
     "compensatorySignals": []
   },
   "viabilityScore": 1,
   "generation": {
-    "timestamp": "2026-03-10T20:47:54.555Z",
+    "timestamp": "2026-03-14T08:10:47.462Z",
     "version": "2.0.0",
     "options": {
-      "creativityLevel": "balanced",
-      "brandWeight": 0.7,
-      "sectorWeight": 0.5
+      "copyIntelligence": {
+        "industryTerminology": [
+          "AI",
+          "design systems",
+          "mathematical generation"
+        ],
+        "emotionalRegister": "professional",
+        "formalityLevel": 0.7,
+        "ctaAggression": 0.6,
+        "headlineStyle": "benefit_forward",
+        "vocabularyComplexity": "technical",
+        "sentenceStructure": "balanced",
+        "emojiUsage": false,
+        "contractionUsage": false
+      },
+      "copy": {
+        "headline": "Mathematical Design DNA for AI-Generated Websites",
+        "subheadline": "Generate unique, deterministic design systems from SHA-256 hashes and content intent.",
+        "cta": "Generate Your DNA",
+        "tagline": "No Templates. Only Math.",
+        "companyName": "Permutations",
+        "features": [
+          {
+            "title": "SHA-256 Design DNA",
+            "description": "Every design is mathematically generated from a hash, ensuring uniqueness and reproducibility."
+          },
+          {
+            "title": "Sector-Aware Chromosomes",
+            "description": "Industry-specific psychology and constraints for tailored design generation."
+          },
+          {
+            "title": "Deterministic Output",
+            "description": "SHA-256 hash of seed ensures consistent and predictable results."
+          }
+        ],
+        "stats": [
+          {
+            "label": "Lines of Code",
+            "value": "15,550"
+          },
+          {
+            "label": "Tests Passing",
+            "value": "49"
+          },
+          {
+            "label": "Chromosomes",
+            "value": "29"
+          }
+        ],
+        "testimonial": "This completely changed how we approach design. No more template fatigue—every client gets a unique system.",
+        "authorName": "Alexandra Lee",
+        "authorTitle": "Lead Designer, Nova Spire",
+        "ctaSecondary": "Learn More",
+        "sectionTitleTestimonials": "What Our Customers Say",
+        "sectionTitleFeatures": "How It Works",
+        "sectionTitleFAQ": "Frequently Asked Questions",
+        "faq": [
+          {
+            "question": "How is this different from templates?",
+            "answer": "Templates are static. Our system generates unique designs mathematically from your content."
+          },
+          {
+            "question": "Can I customize the design generation process?",
+            "answer": "Yes, our system allows for customization through sector-specific chromosomes and constraints."
+          }
+        ],
+        "footerProductTitle": "Product",
+        "footerCompanyTitle": "Company",
+        "footerNavProduct": [
+          "Features",
+          "Pricing",
+          "API"
+        ],
+        "footerNavCompany": [
+          "About",
+          "Careers",
+          "Contact"
+        ]
+      }
     },
     "brand": null,
     "rationale": [
-      "[Accessibility] Motion physics disabled per WCAG 2.3.3 (reduced motion preference)",
-      "[Accessibility Profile] Contrast: 3:1, Motion: reduced, Touch: 44px"
+      "[Accessibility] Motion physics preserved in genome; CSS generator will add prefers-reduced-motion media query per WCAG 2.3.3",
+      "[Accessibility] Screen reader landmarks enabled per WCAG 1.3.1 (info and relationships)",
+      "[Accessibility] ARIA labels required for data tables and complex components",
+      "[Accessibility Profile] Contrast: 7:1, Motion: reduced, Touch: 44px"
     ]
   }
 }

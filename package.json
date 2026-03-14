@@ -1,6 +1,6 @@
 {
   "name": "permutations",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Parametric Design Genome MCP Server",
   "type": "module",
   "main": "dist/server.js",
@@ -9,14 +9,14 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node --env-file=.env dist/server.js",
     "dev": "tsc --watch",
-    "test": "node tests/run-all.mjs",
-    "test:intent": "node tests/intent-epigenetics.test.mjs",
-    "test:genome": "node tests/genome.test.mjs",
-    "test:production": "node tests/production.test.mjs",
-    "test:sequencer": "node tests/sequencer.test.mjs",
-    "test:ecosystem": "node tests/ecosystem-civilization.test.mjs"
+    "test": "node --env-file=.env tests/run-all.mjs",
+    "test:intent": "node --env-file=.env tests/intent-epigenetics.test.mjs",
+    "test:genome": "node --env-file=.env tests/genome.test.mjs",
+    "test:production": "node --env-file=.env tests/production.test.mjs",
+    "test:sequencer": "node --env-file=.env tests/sequencer.test.mjs",
+    "test:ecosystem": "node --env-file=.env tests/ecosystem-civilization.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

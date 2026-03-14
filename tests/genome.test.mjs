@@ -5,6 +5,8 @@
 
 import { GenomeSequencer } from "../dist/genome/sequencer.js";
 import { PatternDetector } from "../dist/constraints/pattern-detector.js";
+import { ComplexityAnalyzer } from "../dist/genome/complexity-analyzer.js";
+import { CivilizationGenerator } from "../dist/genome/civilization.js";
 
 // Test utilities
 function assert(condition, message) {
