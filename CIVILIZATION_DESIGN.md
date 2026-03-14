@@ -2,30 +2,30 @@
 
 ## The Philosophy
 
-Finding life (basic design) is common. Finding **civilization** (advanced/sophisticated design) should require:
-- Intentional complexity in the input
-- Multi-layered constraints
-- Advanced interaction requirements
-- Architectural sophistication
+Finding life (basic design) is common. Finding **civilization** (advanced/sophisticated design) requires intentional complexity.
+
+The system uses a **14-tier biological model**: 8 ecosystem tiers (0.00–0.80) where organisms scale from zero to a full fauna, then 6 civilization tiers (0.81–1.00) where CivilizationGenerator activates and architecture emerges from the ecosystem.
+
+---
 
 ## Probability Mechanics (The Fermi Solution)
 
-Instead of pure randomness, we use **intent-driven complexity injection**:
+Intent-driven complexity injection — not pure randomness:
 
 ```
-Base Complexity = f(traits)  // 0.0 - 0.6 (normal range)
-Intent Multiplier = g(intent_keywords)  // 1.0 - 1.5x
-Sophistication Bonus = h(context_length, specificity)  // +0.0 - 0.3
+Base Complexity = f(traits)               // 0.0–0.6 (normal range)
+Intent Multiplier = g(intent_keywords)    // 1.0–1.5x (capped keyword boost)
+Sophistication Bonus = h(context)         // +0.0–0.3
 
-Final Complexity = min(1.0, Base * Multiplier + Bonus)
+Final Complexity = min(1.0, Base × Multiplier + Bonus)
 ```
 
 ### Intent Keywords That Boost Complexity:
-- "dashboard", "platform", "system", "suite" → +0.2
-- "3d", "immersive", "spatial", "webgl" → +0.15  
-- "animation", "motion", "physics", "spring" → +0.1
-- "data visualization", "real-time", "live" → +0.15
-- "multiplayer", "collaborative", "social" → +0.1
+- `dashboard`, `platform`, `system`, `suite` → +0.18–0.20
+- `3d`, `immersive`, `spatial`, `webgl` → +0.15–0.18
+- `data visualization`, `real-time`, `live` → +0.15–0.19
+- `animation`, `motion`, `physics`, `spring` → +0.10–0.12
+- `multiplayer`, `collaborative`, `social` → +0.11–0.14
 
 ### Context Sophistication Scoring:
 - Length > 100 chars → +0.05
@@ -35,199 +35,167 @@ Final Complexity = min(1.0, Base * Multiplier + Bonus)
 - Mentions accessibility requirements → +0.05
 - Specifies performance needs → +0.05
 
-## Civilization Tiers
+---
 
-### Tier 1: Sentient (0.70 - 0.84)
-**The threshold of awareness**
-- Single-page with 5-7 distinct sections
-- Basic component library (15-20 components)
-- 2-3 animation types
-- Simple state management
-- Responsive breakpoints
+## 14-Tier Biological Model
 
-**Outputs:**
+### Ecosystem Tiers (0.00–0.80) — EcosystemGenerator
+
+| Tier | Range | Organisms |
+|------|-------|-----------|
+| `abiotic` | 0.00–0.10 | 0 — no life, HTML/CSS only |
+| `prokaryotic` | 0.11–0.22 | First microbial organisms |
+| `protist` | 0.23–0.33 | Microbial + basic interaction states |
+| `bryophyte` | 0.34–0.44 | Microbial + first flora containers |
+| `vascular_flora` | 0.45–0.56 | Growing flora, stateful components |
+| `invertebrate_fauna` | 0.57–0.65 | First fauna organisms emerge |
+| `ectotherm_fauna` | 0.66–0.73 | Complex data-dense organisms |
+| `endotherm_fauna` | 0.74–0.80 | All 32 chromosomes active, max organism count |
+
+Organism counts scale from 0 (abiotic) to ~38 max (endotherm_fauna). No hardcoded ranges.
+
+### Civilization Tiers (0.81–1.00) — CivilizationGenerator
+
+Civilization **always emerges from an ecosystem**. CivilizationGenerator activates at complexity ≥ 0.81.
+
+---
+
+## Civilization Tier Specs
+
+Each tier progressively expands the allowed values for ch30 (`stateTopology`), ch31 (`routingPattern`), and ch32 (`tokenInheritance`). The chromosome biases within the tier's allowed set — it doesn't override tier constraints.
+
+### Tier 1: Tribal (0.81–0.86)
+**First civilization — shared resources, simple governance**
+
+- State: `local` (useState per-component)
+- Routing: `single_page` | `multi_page`
+- Tokens: `flat` | `semantic`
+- Components: 8–12, basic variants
+- Animation: sequential
+
 ```typescript
-{
-  tier: 'sentient',
-  architecture: {
-    pattern: 'component-based',
-    modules: 3,
-    stateManagement: 'context'
-  },
-  components: {
-    count: 15,
-    categories: ['layout', 'input', 'feedback', 'navigation'],
-    variants: 2 // Each component has 2 variants
-  },
-  animations: {
-    types: ['fade', 'slide', 'scale'],
-    physics: 'simple',
-    choreography: 'sequential'
-  },
-  designSystem: {
-    tokens: 40, // colors, spacing, typography
-    themes: 1,
-    modes: ['light']
-  }
+architecture: {
+  stateTopology: 'local',           // ch30 — capped to ['local']
+  routingPattern: 'single_page',    // ch31 — capped to ['single_page','multi_page']
+  tokenInheritance: 'flat'          // ch32 — capped to ['flat','semantic']
 }
 ```
 
-### Tier 2: Civilized (0.85 - 0.94)
-**Organized society with structure**
-- Multi-page application (4-6 pages)
-- Advanced component library (30-40 components)
-- Complex animation systems
-- State management with side effects
-- Design tokens system
-- Accessibility compliance (WCAG AA)
+---
 
-**Outputs:**
+### Tier 2: City-State (0.87–0.91)
+**Organised settlement — governed by rules**
+
+- State: `local` | `shared_context`
+- Routing: `single_page` | `multi_page` | `protected`
+- Tokens: `flat` | `semantic`
+- Components: 15–20, compound patterns
+- Keyboard: full navigation, command palette
+
 ```typescript
-{
-  tier: 'civilized',
-  architecture: {
-    pattern: 'layered',
-    layers: ['presentation', 'domain', 'data'],
-    modules: 6,
-    stateManagement: 'store',
-    routing: 'dynamic'
-  },
-  components: {
-    count: 35,
-    categories: ['layout', 'input', 'feedback', 'navigation', 'data', 'overlay'],
-    variants: 4,
-    composition: true // Compound components
-  },
-  animations: {
-    types: ['spring', 'glitch', 'morph', 'particle'],
-    physics: 'advanced',
-    choreography: 'staggered',
-    reducedMotion: 'respect'
-  },
-  designSystem: {
-    tokens: 80,
-    themes: 2, // light + dark
-    modes: ['light', 'dark', 'high-contrast'],
-    semanticTokens: true // color.meaning not color.value
-  },
-  interactions: {
-    gestures: ['swipe', 'pinch', 'hover'],
-    keyboard: 'full',
-    focus: 'managed'
-  }
+architecture: {
+  stateTopology: 'shared_context',  // ch30 — capped to ['local','shared_context']
+  routingPattern: 'protected',      // ch31 — capped to ['single_page','multi_page','protected']
+  tokenInheritance: 'semantic'      // ch32 — capped to ['flat','semantic']
 }
 ```
 
-### Tier 3: Advanced (0.95 - 1.0)
-**Post-singularity transcendence**
-- Application platform with micro-frontends
-- Generative component system
-- Physics-based animation engine
-- Real-time collaboration features
-- Multi-dimensional design system
-- Full accessibility (WCAG AAA)
+---
 
-**Outputs:**
+### Tier 3: Nation-State (0.92–0.94)
+**Unified governance — standardised systems**
+
+- State: `local` | `shared_context` | `reactive_store`
+- Routing: `multi_page` | `protected` | `platform`
+- Tokens: `flat` | `semantic` | `component`
+- Components: 25–35, design system
+- Tailwind config emitted, WCAG AA
+
 ```typescript
-{
-  tier: 'advanced',
-  architecture: {
-    pattern: 'micro-frontend',
-    modules: 'dynamic',
-    stateManagement: 'distributed',
-    routing: 'intent-based', // AI-driven routing
-    edge: true // Edge-compute ready
-  },
-  components: {
-    count: 'generative', // Components generated on-demand
-    categories: 'adaptive',
-    variants: 'infinite', // Config-driven variants
-    composition: 'fractal' // Components compose infinitely
-  },
-  animations: {
-    types: 'procedural', // Generated based on content
-    physics: 'custom-engine',
-    choreography: 'responsive-to-user',
-    ml: true // ML-optimized per user
-  },
-  designSystem: {
-    tokens: 'semantic-graph', // Network of meaning
-    themes: 'adaptive',
-    modes: 'contextual', // Based on time, location, device
-    generative: true // Colors adapt to content
-  },
-  interactions: {
-    gestures: 'predictive',
-    keyboard: 'command-palette',
-    voice: 'integrated',
-    haptic: 'optional'
-  },
-  ai: {
-    layout: 'ml-optimized',
-    content: 'contextual',
-    personalization: 'per-user'
-  }
+architecture: {
+  stateTopology: 'reactive_store',  // ch30 — capped to ['local','shared_context','reactive_store']
+  routingPattern: 'platform',       // ch31 — capped to ['multi_page','protected','platform']
+  tokenInheritance: 'component'     // ch32 — capped to ['flat','semantic','component']
 }
 ```
 
-## Generator Architecture
+---
 
-### New Generators Needed:
+### Tier 4: Empire (0.95–0.96)
+**Distributed authority — decentralised but coherent**
 
-1. **ComponentLibraryGenerator**
-   - Generates full component specs
-   - Includes props, variants, composition patterns
-   - Outputs React/Vue/Svelte component code
+- State: `shared_context` | `reactive_store` | `distributed`
+- Routing: `protected` | `platform` | `federated`
+- Tokens: `semantic` | `component` | `governed`
+- Components: 40+, micro-frontend ready
 
-2. **AnimationSystemGenerator**
-   - Physics configuration
-   - Choreography patterns
-   - Reduced motion alternatives
-
-3. **StateArchitectureGenerator**
-   - State management setup
-   - Data flow diagrams
-   - Side effect handling
-
-4. **InteractionPatternGenerator**
-   - Gesture definitions
-   - Keyboard navigation
-   - Focus management
-
-5. **DesignTokenGenerator** (Enhanced)
-   - Semantic token architecture
-   - Theme switching logic
-   - Accessibility mappings
-
-### Usage Flow:
-
-```bash
-# User wants civilization-level output
-"Generate a civilization-tier design system for a real-time collaborative data visualization platform with 3D spatial navigation, physics-based animations, and multi-user presence indicators"
-
-# System detects:
-- Keywords: "real-time", "collaborative", "3D", "spatial", "physics"
-- Complexity boost: +0.45
-- Context length: 150 chars (+0.05)
-- Technical specificity: high (+0.05)
-
-# Final complexity: 0.65 * 1.4 + 0.10 = 0.91 (Civilized tier)
-
-# Outputs:
-- 40-component library with composition patterns
-- Multi-layered architecture with store
-- Spring physics animation system
-- Dark/light/high-contrast modes
-- Full gesture + keyboard support
+```typescript
+architecture: {
+  stateTopology: 'distributed',     // Zustand + persist middleware
+  routingPattern: 'federated',      // Module Federation routing
+  tokenInheritance: 'governed'      // tokens only changed via design system PRs
+}
 ```
+
+---
+
+### Tier 5: Network (0.97–0.98)
+**Post-geographic coordination — protocol over geography**
+
+- State: `reactive_store` | `distributed` | `federated`
+- Routing: `platform` | `federated`
+- Tokens: `component` | `governed` | `cross_system`
+- Full Module Federation, cross-app event bus
+
+```typescript
+architecture: {
+  stateTopology: 'federated',       // cross-app event bus
+  routingPattern: 'federated',      // Module Federation routing
+  tokenInheritance: 'cross_system'  // tokens published as packages
+}
+```
+
+---
+
+### Tier 6: Singularity (0.99–1.00)
+**Convergence — one living system**
+
+- State: `distributed` | `federated`
+- Routing: `platform` | `federated`
+- Tokens: `governed` | `cross_system`
+- Full federated state + event bus + cross-system token graph
+
+```typescript
+architecture: {
+  stateTopology: 'federated',
+  routingPattern: 'federated',
+  tokenInheritance: 'cross_system'
+}
+```
+
+---
+
+## Architecture Fields (ArchitectureSpec)
+
+```typescript
+interface ArchitectureSpec {
+  pattern: string;
+  modules: number;
+  stateTopology: StateTopology;     // ch30: local | shared_context | reactive_store | distributed | federated
+  routingPattern: RoutingPattern;   // ch31: single_page | multi_page | protected | platform | federated
+  tokenInheritance: TokenInheritance; // ch32: flat | semantic | component | governed | cross_system
+}
+```
+
+> `stateManagement` and `routing` (old fields) have been removed. All architecture is driven by ch30–ch32.
+
+---
 
 ## The Probability Fix
 
-Instead of hoping for random chance, we let users **intentionally seek civilization** by:
-
-1. **Keyword Detection**: Recognize complexity words in intent
+1. **Keyword Detection**: Recognise complexity words in intent
 2. **Context Analysis**: Longer, more specific context = higher complexity
 3. **Archetype Override**: Choose "platform" or "system" archetype for +0.2 complexity
-4. **Explicit Request**: User can say "generate at civilization tier" to force minimum 0.85
+4. **Explicit Request**: Pass `min_tier: 'tribal'` (or higher) to `generate_civilization` to force minimum tier
 
-This makes civilization achievable (not random) but still requires intentional complexity in the request.
+Civilization is achievable (not random) but still requires intentional complexity ≥ 0.81.

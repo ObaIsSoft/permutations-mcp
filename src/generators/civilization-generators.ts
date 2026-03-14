@@ -124,28 +124,14 @@ export const staggerItem = {
 }
 
 /**
- * Generates architecture setup (routing, state management)
+ * Generates architecture setup (state topology, routing pattern, token inheritance)
  */
 export function generateArchitectureSetup(arch: ArchitectureSpec, genome: DesignGenome): string {
     const outputs: string[] = [];
-    
-    // State management
-    if (arch.stateManagement === 'store') {
-        outputs.push(`// State Management: Zustand Store
-import { create } from 'zustand';
 
-interface AppState {
-  // Define your state here
-  theme: 'light' | 'dark';
-  setTheme: (theme: 'light' | 'dark') => void;
-}
-
-export const useAppStore = create<AppState>((set) => ({
-  theme: 'light',
-  setTheme: (theme) => set({ theme }),
-}));`);
-    } else if (arch.stateManagement === 'context') {
-        outputs.push(`// State Management: React Context
+    // State topology
+    if (arch.stateTopology === 'shared_context') {
+        outputs.push(`// State: React Context (shared_context)
 import React, { createContext, useContext, useState } from 'react';
 
 interface AppContextType {
@@ -169,11 +155,68 @@ export const useApp = () => {
   if (!context) throw new Error('useApp must be used within AppProvider');
   return context;
 };`);
+    } else if (arch.stateTopology === 'reactive_store') {
+        outputs.push(`// State: Zustand Store (reactive_store)
+import { create } from 'zustand';
+
+interface AppState {
+  theme: 'light' | 'dark';
+  setTheme: (theme: 'light' | 'dark') => void;
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  theme: 'light',
+  setTheme: (theme) => set({ theme }),
+}));`);
+    } else if (arch.stateTopology === 'distributed') {
+        outputs.push(`// State: Zustand with persist middleware (distributed)
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+interface AppState {
+  theme: 'light' | 'dark';
+  setTheme: (theme: 'light' | 'dark') => void;
+}
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      theme: 'light',
+      setTheme: (theme) => set({ theme }),
+    }),
+    { name: 'app-storage' }
+  )
+);`);
+    } else if (arch.stateTopology === 'federated') {
+        outputs.push(`// State: Cross-app event bus (federated)
+type EventMap = Record<string, unknown>;
+
+class EventBus {
+  private handlers: Map<string, Array<(payload: unknown) => void>> = new Map();
+
+  on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): () => void {
+    const existing = this.handlers.get(event as string) ?? [];
+    this.handlers.set(event as string, [...existing, handler as (p: unknown) => void]);
+    return () => this.off(event, handler);
+  }
+
+  off<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): void {
+    const existing = this.handlers.get(event as string) ?? [];
+    this.handlers.set(event as string, existing.filter((h) => h !== handler));
+  }
+
+  emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): void {
+    (this.handlers.get(event as string) ?? []).forEach((h) => h(payload));
+  }
+}
+
+export const appBus = new EventBus();`);
     }
-    
-    // Routing
-    if (arch.routing === 'dynamic') {
-        outputs.push(`// Routing: React Router with lazy loading
+    // stateTopology === 'local' → no setup; useState is used per-component
+
+    // Routing pattern
+    if (arch.routingPattern === 'multi_page') {
+        outputs.push(`// Routing: React Router — multi-page (multi_page)
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 
@@ -194,9 +237,100 @@ export function Router() {
     </Suspense>
   );
 }`);
+    } else if (arch.routingPattern === 'protected') {
+        outputs.push(`// Routing: React Router with auth guard (protected)
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+
+const Home = lazy(() => import('./pages/Home'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Login = lazy(() => import('./pages/Login'));
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = false; // wire to your auth state
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+const router = createBrowserRouter([
+  { path: '/', element: <Home /> },
+  { path: '/login', element: <Login /> },
+  { path: '/dashboard', element: <RequireAuth><Dashboard /></RequireAuth> },
+]);
+
+export function Router() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
+}`);
+    } else if (arch.routingPattern === 'platform') {
+        outputs.push(`// Routing: Shell + lazy remote modules (platform)
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+
+// Remote modules loaded lazily — replace with actual Module Federation imports
+const Shell = lazy(() => import('./shell/Shell'));
+const RemoteApp = lazy(() => import('./remotes/RemoteApp'));
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Shell />,
+    children: [
+      { path: 'app/*', element: <RemoteApp /> },
+    ],
+  },
+]);
+
+export function Router() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
+}`);
+    } else if (arch.routingPattern === 'federated') {
+        outputs.push(`// Routing: Module Federation cross-app routing (federated)
+// Each federated app registers its own routes; the shell composes them.
+// Wire remoteEntry.js URLs in webpack.config.js ModuleFederationPlugin.
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+
+// Loaded at runtime via Module Federation
+const FederatedHome = lazy(() => import('host/Home'));
+const FederatedDashboard = lazy(() => import('host/Dashboard'));
+
+const router = createBrowserRouter([
+  { path: '/', element: <FederatedHome /> },
+  { path: '/dashboard', element: <FederatedDashboard /> },
+]);
+
+export function Router() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
+}`);
     }
-    
+    // routingPattern === 'single_page' → no routing setup; single root component
+
+    // Token inheritance hint (no runnable code — guides implementation)
+    outputs.push(`// Token inheritance: ${arch.tokenInheritance}
+// ${tokenInheritanceHint(arch.tokenInheritance)}`);
+
     return outputs.join('\n\n');
+}
+
+function tokenInheritanceHint(inheritance: ArchitectureSpec['tokenInheritance']): string {
+    switch (inheritance) {
+        case 'flat':         return 'All tokens in one :root block — no layering.';
+        case 'semantic':     return 'Primitive → semantic alias layers (color-primary → brand-action).';
+        case 'component':    return 'Semantic layer + per-component token namespaces (button-bg, card-border).';
+        case 'governed':     return 'Component layer + governance rules: tokens only changed via design system PRs.';
+        case 'cross_system': return 'Federated token graph — tokens published as packages, consumed across apps.';
+    }
 }
 
 /**

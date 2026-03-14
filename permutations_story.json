@@ -25,7 +25,7 @@
     "the_insight": {
       "realization": "Biological inheritance provides a perfect metaphor",
       "analogy": "Just as every organism has unique DNA but shares the building blocks of life, every design system can be unique while respecting functional constraints",
-      "breakthrough": "SHA-256 hash + 29 chromosomes = infinite unique design systems that are both reproducible (same seed = same output) and guaranteed distinct (different seed = different output)"
+      "breakthrough": "SHA-256 hash + 32 chromosomes = infinite unique design systems that are both reproducible (same seed = same output) and guaranteed distinct (different seed = different output)"
     },
     
     "the_manifesto": {
@@ -86,7 +86,7 @@
         "Complexity tier system (Microbial → Flora → Fauna → Sentient → Civilized → Advanced)",
         "Ecosystem generation: organisms share DNA",
         "Civilization layer for sophisticated applications",
-        "29 chromosomes (expanded from 15, full mutation coverage in v0.0.6)"
+        "32 chromosomes (ch30 state_topology, ch31 routing_pattern, ch32 token_inheritance added in v0.0.7)"
       ],
       "philosophy": "Finding life (basic design) is common. Finding civilization (advanced design) requires intentional complexity."
     },
@@ -153,7 +153,7 @@
     "the_pipeline": {
       "input_layer": "Intent + Context + Brand Assets",
       "extraction_layer": "LLM analyzes content → extracts 8 traits + sector + archetype",
-      "sequencing_layer": "SHA-256 hash + traits → 29 chromosomes",
+      "sequencing_layer": "SHA-256 hash + traits → 32 chromosomes",
       "constraint_layer": "Epistasis rules enforce cross-chromosome consistency",
       "generation_layer": "Tailwind CSS + WebGL + SVG + HTML topology"
     },
@@ -202,15 +202,26 @@
       ]
     },
     
-    "civilization_tiers": {
-      "microbial_0_00_0_24": "Atomic components only — buttons, inputs, labels. Emits CSS + token vars. No CivilizationGenerator.",
-      "flora_0_25_0_39": "Growing components — cards, dropdowns, modals. Layout topology established.",
-      "fauna_0_40_0_54": "Complex organisms — data tables, wizards, multi-step forms. Component specs generated.",
-      "neural_0_55_0_67": "Self-organising layout — first tier where CivilizationGenerator activates. Component scaffolds + animation config.",
-      "sentient_0_68_0_79": "Full architecture — state management, routing, design token system. React/TS scaffolds + framer-motion.",
-      "civilized_0_80_0_89": "Multi-page app — compound components, command palette, tailwind.config.js emitted. (0.898 lands here.)",
-      "networked_0_90_0_94": "Distributed system — micro-frontend patterns, distributed state, edge-ready components.",
-      "advanced_0_95_1_00": "Generative — components on-demand, AI-driven layout, personalization. Partially implemented roadmap."
+    "complexity_tiers": {
+      "comment": "14 tiers across two domains: ecosystem (0.00–0.80) and civilization (0.81–1.00)",
+      "ecosystem": {
+        "abiotic_0_00_0_10": "No life — environment only. HTML/CSS scaffold emitted, organism counts are zero.",
+        "prokaryotic_0_11_0_22": "First cells — minimal structure. Atomic tokens established, few microbial components.",
+        "protist_0_23_0_33": "Unicellular eukaryotes — basic interaction. Atoms + first interaction states.",
+        "bryophyte_0_34_0_44": "Non-vascular flora — simple containers. Cards, modals, basic layout components.",
+        "vascular_flora_0_45_0_56": "Rooted, complex internal structure. Growing components with state, dropdowns, data displays.",
+        "invertebrate_fauna_0_57_0_65": "First fauna, simple nervous systems. First fauna organisms emerge — tables, wizards.",
+        "ectotherm_fauna_0_66_0_73": "Cold-blooded mobile consumers. Complex multi-step flows, editors, data-dense components.",
+        "endotherm_fauna_0_74_0_80": "Warm-blooded, all chromosomes active. Full organism ecosystem — all 38 organisms active."
+      },
+      "civilization": {
+        "tribal_0_81_0_86": "First civilisation tier — CivilizationGenerator activates. Local state (useState), single/multi-page routing, flat/semantic tokens.",
+        "city_state_0_87_0_91": "Organised settlement. Shared context state, protected routing, semantic tokens. Command palette unlocked.",
+        "nation_state_0_92_0_94": "Unified governance. Reactive store (Zustand), platform routing (shell + lazy remotes), component-level tokens.",
+        "empire_0_95_0_96": "Distributed authority. Zustand + persist middleware, platform/federated routing, governed token system.",
+        "network_0_97_0_98": "Post-geographic coordination. Distributed/federated state, Module Federation routing, cross-system tokens.",
+        "singularity_0_99_1_00": "Convergence — all systems unified. Federated state + event bus, full Module Federation, cross-system token graph."
+      }
     }
   },
 
@@ -304,7 +315,7 @@
     },
     
     "struggle_9_mutation_gaps": {
-      "problem": "Only 20 of 29 chromosomes had mutation handlers—9 were static",
+      "problem": "Only 20 of 32 chromosomes had mutation handlers—12 were static",
       "impact": "Limited design space exploration, constrained breeding",
       "breakthrough": "Full coverage: mutation handlers for ch0, ch1, ch2, ch9-ch25"
     }
@@ -320,9 +331,9 @@
     "test_coverage": "49 production tests: determinism, uniqueness, sector-awareness, epistasis, pattern detection",
     "url_extraction": "Triple backend: Playwright (JS sites), Scrapy (pro crawling), Native fetch (zero deps)",
     "css_validation": "AST-based genome-aware validation with drift scoring 0-100",
-    "full_mutation_coverage": "All 29 chromosomes mutable with viability scoring",
+    "full_mutation_coverage": "All 32 chromosomes mutable with viability scoring",
     "zero_hardcoding": "All values derived from SHA-256 hash and LLM extraction—no magic numbers, no placeholder fallbacks",
-    "full_chromosome_rendering": "All 29 chromosomes produce CSS/HTML output — ch27 motion choreography, ch28 iconography, ch11 texture now fully rendered (previously generated as data only)",
+    "full_chromosome_rendering": "All 32 chromosomes produce output — ch30 state_topology, ch31 routing_pattern, ch32 token_inheritance drive civilization architecture; ch27 motion choreography, ch28 iconography, ch11 texture fully rendered",
     "complete_page_css": "CSSGenerator covers every HTML section: navigation, hero variants, trust grid, social proof, features, FAQ, CTA, footer — zero unstyled elements",
     "api_optimization": "50% cost reduction through unified analysis calls"
   },
@@ -361,7 +372,7 @@
 
   "the_cosmic_analogy": {
     "title": "Permutations as a Universe",
-    "subtitle": "From infinite possibility to sentient civilization",
+    "subtitle": "From infinite possibility to singularity civilization",
     
     "the_design_universe": {
       "description": "The SHA-256 address space (2^256 possible seeds) is our universe—vaster than atoms in the observable cosmos",
@@ -400,14 +411,20 @@
     },
     
     "type_of_life": {
-      "microbial": "0.00–0.24: Atomic components—buttons, inputs, labels. Like bacteria: simple, numerous, essential",
-      "flora": "0.25–0.39: Growing components—cards, dropdowns, modals. Like plants: rooted but responsive to environment",
-      "fauna": "0.40–0.54: Complex organisms—data tables, wizards, editors. Like animals: mobile, interactive, purposeful",
-      "neural": "0.55–0.67: CIVILIZATION BEGINS — CivilizationGenerator activates. Component scaffolds, animation configs. Like early nervous systems: coordinated, responsive",
-      "sentient": "0.68–0.79: Self-aware systems—full app architecture, state management, routing. Like early humans: tool-using, pattern-recognizing",
-      "civilized": "0.80–0.89: Organised societies—compound components, multi-route apps, tailwind.config emitted. Like cities: structured, governed by rules. (0.898 complexity lands here.)",
-      "networked": "0.90–0.94: Distributed systems—micro-frontend patterns, edge-ready, distributed state. Like interconnected city-states",
-      "advanced": "0.95–1.00: Post-singularity—generative, AI-driven, personalised per user. Like transhuman intelligence: partially implemented roadmap"
+      "abiotic": "0.00–0.10: No life — environment only. HTML/CSS scaffold, zero organisms.",
+      "prokaryotic": "0.11–0.22: First cells — minimal structure. Atomic tokens, sparse microbial components.",
+      "protist": "0.23–0.33: Unicellular eukaryotes — basic interaction. First interactive states emerge.",
+      "bryophyte": "0.34–0.44: Non-vascular flora — simple containers. Cards, modals, basic layout.",
+      "vascular_flora": "0.45–0.56: Rooted, complex internal structure. Like plants: growing upward, stateful but anchored.",
+      "invertebrate_fauna": "0.57–0.65: First fauna — simple nervous systems. Like insects: patterned, efficient, numerous.",
+      "ectotherm_fauna": "0.66–0.73: Cold-blooded mobile consumers. Like reptiles: fast when warm, complex data flows.",
+      "endotherm_fauna": "0.74–0.80: Warm-blooded, all 32 chromosomes active. Like mammals: self-regulating, rich organism ecosystem.",
+      "tribal": "0.81–0.86: CIVILIZATION BEGINS — CivilizationGenerator activates. Local state, basic routing, flat tokens. Like the first villages: shared resources, simple governance.",
+      "city_state": "0.87–0.91: Organised settlement. Shared context, protected routing, semantic tokens. Like Athens: governed by rules, commands obeyed.",
+      "nation_state": "0.92–0.94: Unified governance. Reactive store, platform routing, component tokens. Like nation-states: standardised systems.",
+      "empire": "0.95–0.96: Distributed authority. Persisted state, federated routing, governed tokens. Like Rome: decentralised but coherent.",
+      "network": "0.97–0.98: Post-geographic coordination. Federated state, Module Federation, cross-system tokens. Like the internet: protocol over geography.",
+      "singularity": "0.99–1.00: Convergence — all systems unified. Event bus + Module Federation + cross-system token graph. Like post-singularity intelligence: one living system."
     },
     
     "definition_of_life": {
@@ -460,9 +477,9 @@
     "advancement": {
       "thresholds": "Complexity isn't linear—it phase-transitions at critical points",
       "great_filters": {
-        "0_30": "From components to organisms—requires coordination (ecosystem layer)",
-        "0_70": "From organisms to civilization—requires architecture, state management, routing",
-        "0_85": "From civilization to advanced—requires AI integration, personalization, generative systems"
+        "0_34": "From abiotic to life—first bryophyte containers emerge at this threshold",
+        "0_81": "From ecosystem to civilization—tribal tier activates CivilizationGenerator (state topology, routing, token inheritance)",
+        "0_97": "From empire to network—Module Federation routing and cross-system token graph required"
       },
       "technological_leaps": {
         "fire": "Discovery of hero types—not all heroes need 3D",
@@ -488,5 +505,5 @@
     }
   },
 
-  "closing_thought": "We didn't build another design tool. We built a genetic framework for digital aesthetics. The 29 chromosomes are the letters of an alphabet. The SHA-256 hash is the seed. The constraints are the grammar. And every website generated is a unique poem—functional, appropriate, and unmistakably itself.\n\nIn the cosmic sense: We created a universe where design systems evolve, ecosystems thrive, and civilization emerges from the mathematical substrate. Every seed is a world. Every genome is a living thing. And every designer using Permutations is an astronomer, discovering new planets in an infinite design space."
+  "closing_thought": "We didn't build another design tool. We built a genetic framework for digital aesthetics. The 32 chromosomes are the letters of an alphabet. The SHA-256 hash is the seed. The constraints are the grammar. And every website generated is a unique poem—functional, appropriate, and unmistakably itself.\n\nIn the cosmic sense: We created a universe where design systems evolve, ecosystems thrive across 14 biological tiers, and civilization emerges from the mathematical substrate. Every seed is a world. Every genome is a living thing. And every designer using Permutations is an astronomer, discovering new planets in an infinite design space."
 }

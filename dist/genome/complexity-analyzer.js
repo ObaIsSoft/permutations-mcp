@@ -122,35 +122,56 @@ export class ComplexityAnalyzer {
         return Math.min(0.6, Math.max(0.3, base));
     }
     determineTier(complexity) {
+        // Civilization tiers (0.81–1.00) — 6 tiers, emerge FROM ecosystem
+        if (complexity >= 0.99)
+            return 'singularity'; // 0.99–1.00
+        if (complexity >= 0.97)
+            return 'network'; // 0.97–0.98
         if (complexity >= 0.95)
-            return 'advanced';
-        if (complexity >= 0.90)
-            return 'networked';
-        if (complexity >= 0.80)
-            return 'civilized';
-        if (complexity >= 0.68)
-            return 'sentient';
-        if (complexity >= 0.55)
-            return 'neural';
-        if (complexity >= 0.40)
-            return 'fauna';
-        if (complexity >= 0.25)
-            return 'flora';
-        return 'microbial'; // 0.00–0.24 — atomic components only
+            return 'empire'; // 0.95–0.96
+        if (complexity >= 0.92)
+            return 'nation_state'; // 0.92–0.94
+        if (complexity >= 0.87)
+            return 'city_state'; // 0.87–0.91
+        if (complexity >= 0.81)
+            return 'tribal'; // 0.81–0.86
+        // Ecosystem tiers (0.00–0.80) — 8 tiers, biology before civilization
+        if (complexity >= 0.74)
+            return 'endotherm_fauna'; // 0.74–0.80 — warm-blooded, all chromosomes active
+        if (complexity >= 0.66)
+            return 'ectotherm_fauna'; // 0.66–0.73 — cold-blooded, mobile consumers
+        if (complexity >= 0.57)
+            return 'invertebrate_fauna'; // 0.57–0.65 — first fauna, simple nervous systems
+        if (complexity >= 0.45)
+            return 'vascular_flora'; // 0.45–0.56 — rooted, complex internal structure
+        if (complexity >= 0.34)
+            return 'bryophyte'; // 0.34–0.44 — non-vascular, simple containers
+        if (complexity >= 0.23)
+            return 'protist'; // 0.23–0.33 — unicellular eukaryotes, basic interaction
+        if (complexity >= 0.11)
+            return 'prokaryotic'; // 0.11–0.22 — first cells, minimal structure
+        return 'abiotic'; // 0.00–0.10 — no life, environment only
     }
     // Force minimum complexity for explicit civilization requests
     forceMinimumTier(intent, context, traits, minTier) {
         const analysis = this.analyze(intent, context, traits);
-        const minComplexity = {
-            'microbial': 0.00,
-            'flora': 0.25,
-            'fauna': 0.40,
-            'neural': 0.55,
-            'sentient': 0.68,
-            'civilized': 0.80,
-            'networked': 0.90,
-            'advanced': 0.95,
-        }[minTier];
+        const TIER_FLOOR = {
+            'abiotic': 0.00,
+            'prokaryotic': 0.11,
+            'protist': 0.23,
+            'bryophyte': 0.34,
+            'vascular_flora': 0.45,
+            'invertebrate_fauna': 0.57,
+            'ectotherm_fauna': 0.66,
+            'endotherm_fauna': 0.74,
+            'tribal': 0.81,
+            'city_state': 0.87,
+            'nation_state': 0.92,
+            'empire': 0.95,
+            'network': 0.97,
+            'singularity': 0.99,
+        };
+        const minComplexity = TIER_FLOOR[minTier];
         if (analysis.finalComplexity < minComplexity) {
             // Boost complexity to reach minimum tier
             const boostNeeded = minComplexity - analysis.finalComplexity;

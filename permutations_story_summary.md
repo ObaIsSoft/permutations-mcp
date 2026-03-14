@@ -1,5 +1,5 @@
 # Permutations MCP: The Complete Journey
-**Version:** 0.0.5 | **Last Updated:** 2026-03-11
+**Version:** 0.0.8 | **Last Updated:** 2026-03-14
 
 ## The Origin Story
 

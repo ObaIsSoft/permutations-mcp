@@ -252,6 +252,27 @@ export class GenomeSequencer {
             // Copy regenerated content back to ch25_copy_engine
             Object.assign(ch25_copy_engine, regeneratedCopy);
         }
+        // Civilization Chromosomes (30–32)
+        // Always generated from hash bytes; only read when complexity >= 0.81 (tribal+).
+        // b() wraps at 32, so indices 219-224 map deterministically via modulo.
+        const ch30_state_topology = isForced('ch30_state_topology') || {
+            topology: this.selectFromHash(b(219), [
+                'local', 'shared_context', 'reactive_store', 'distributed', 'federated'
+            ]),
+            sharedSurfaces: Math.floor(b(220) * 6) // 0–5
+        };
+        const ch31_routing_pattern = isForced('ch31_routing_pattern') || {
+            pattern: this.selectFromHash(b(221), [
+                'single_page', 'multi_page', 'protected', 'platform', 'federated'
+            ]),
+            guardedRoutes: Math.floor(b(222) * 9) // 0–8
+        };
+        const ch32_token_inheritance = isForced('ch32_token_inheritance') || {
+            inheritance: this.selectFromHash(b(223), [
+                'flat', 'semantic', 'component', 'governed', 'cross_system'
+            ]),
+            themeLayers: Math.floor(b(224) * 4) + 1 // 1–4
+        };
         return {
             ch0_sector_primary,
             ch0_sector_secondary,
@@ -289,7 +310,10 @@ export class GenomeSequencer {
             ch24_personalization,
             ch25_copy_engine,
             ch29_copy_intelligence: ch26_copy_intelligence,
-            ch26_color_system: this.generateColorSystem(ch5_color_primary, primaryProfile, b)
+            ch26_color_system: this.generateColorSystem(ch5_color_primary, primaryProfile, b),
+            ch30_state_topology,
+            ch31_routing_pattern,
+            ch32_token_inheritance
         };
     }
     /**
@@ -576,6 +600,116 @@ export class GenomeSequencer {
                 formalityLevel: 0.6,
                 ctaAggression: 0.3,
                 headlineStyle: "direct",
+                vocabularyComplexity: "technical",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: false
+            },
+            nonprofit: {
+                industryTerminology: ["impact", "mission", "community", "change", "donate"],
+                emotionalRegister: "conversational",
+                formalityLevel: 0.4,
+                ctaAggression: 0.5,
+                headlineStyle: "social_proof",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            government: {
+                industryTerminology: ["services", "citizens", "public", "department", "authority"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.8,
+                ctaAggression: 0.2,
+                headlineStyle: "direct",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: false
+            },
+            media: {
+                industryTerminology: ["breaking", "exclusive", "analysis", "coverage", "report"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.5,
+                ctaAggression: 0.3,
+                headlineStyle: "curiosity_gap",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "short_punchy",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            crypto_web3: {
+                industryTerminology: ["decentralized", "protocol", "governance", "liquidity", "yield"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.4,
+                ctaAggression: 0.6,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "technical",
+                sentenceStructure: "short_punchy",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            gaming: {
+                industryTerminology: ["gameplay", "multiplayer", "level", "quest", "achievement"],
+                emotionalRegister: "playful",
+                formalityLevel: 0.2,
+                ctaAggression: 0.7,
+                headlineStyle: "curiosity_gap",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: true,
+                contractionUsage: true
+            },
+            hospitality: {
+                industryTerminology: ["experience", "amenities", "luxury", "comfort", "retreat"],
+                emotionalRegister: "luxury",
+                formalityLevel: 0.5,
+                ctaAggression: 0.4,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            beauty_fashion: {
+                industryTerminology: ["collection", "ritual", "radiance", "crafted", "curated"],
+                emotionalRegister: "luxury",
+                formalityLevel: 0.4,
+                ctaAggression: 0.5,
+                headlineStyle: "curiosity_gap",
+                vocabularyComplexity: "simple",
+                sentenceStructure: "short_punchy",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            insurance: {
+                industryTerminology: ["coverage", "protection", "policy", "claims", "premium"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.6,
+                ctaAggression: 0.4,
+                headlineStyle: "benefit_forward",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "balanced",
+                emojiUsage: false,
+                contractionUsage: false
+            },
+            agency: {
+                industryTerminology: ["strategy", "creative", "results", "brand", "growth"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.4,
+                ctaAggression: 0.5,
+                headlineStyle: "social_proof",
+                vocabularyComplexity: "moderate",
+                sentenceStructure: "short_punchy",
+                emojiUsage: false,
+                contractionUsage: true
+            },
+            energy: {
+                industryTerminology: ["capacity", "output", "grid", "emissions", "sustainable"],
+                emotionalRegister: "professional",
+                formalityLevel: 0.6,
+                ctaAggression: 0.3,
+                headlineStyle: "benefit_forward",
                 vocabularyComplexity: "technical",
                 sentenceStructure: "balanced",
                 emojiUsage: false,
@@ -1484,7 +1618,17 @@ export class GenomeSequencer {
             travel: { customer_logos: 0.1, user_count: 0.2, rating_stars: 0.3, testimonials_grid: 0.25, community_size: 0.1, press_mentions: 0.05 },
             food: { customer_logos: 0.1, user_count: 0.15, rating_stars: 0.4, testimonials_grid: 0.25, community_size: 0.05, press_mentions: 0.05 },
             sports: { customer_logos: 0.15, user_count: 0.3, rating_stars: 0.2, testimonials_grid: 0.15, community_size: 0.15, press_mentions: 0.05 },
-            technology: { customer_logos: 0.25, user_count: 0.25, rating_stars: 0.15, testimonials_grid: 0.15, community_size: 0.1, press_mentions: 0.1 }
+            technology: { customer_logos: 0.25, user_count: 0.25, rating_stars: 0.15, testimonials_grid: 0.15, community_size: 0.1, press_mentions: 0.1 },
+            nonprofit: { customer_logos: 0.1, user_count: 0.25, rating_stars: 0.1, testimonials_grid: 0.3, community_size: 0.2, press_mentions: 0.05 },
+            government: { customer_logos: 0.1, user_count: 0.3, rating_stars: 0.05, testimonials_grid: 0.2, community_size: 0.2, press_mentions: 0.15 },
+            media: { customer_logos: 0.05, user_count: 0.3, rating_stars: 0.1, testimonials_grid: 0.1, community_size: 0.15, press_mentions: 0.30 },
+            crypto_web3: { customer_logos: 0.15, user_count: 0.35, rating_stars: 0.1, testimonials_grid: 0.1, community_size: 0.25, press_mentions: 0.05 },
+            gaming: { customer_logos: 0.1, user_count: 0.35, rating_stars: 0.25, testimonials_grid: 0.1, community_size: 0.15, press_mentions: 0.05 },
+            hospitality: { customer_logos: 0.05, user_count: 0.15, rating_stars: 0.40, testimonials_grid: 0.3, community_size: 0.05, press_mentions: 0.05 },
+            beauty_fashion: { customer_logos: 0.1, user_count: 0.2, rating_stars: 0.3, testimonials_grid: 0.25, community_size: 0.1, press_mentions: 0.05 },
+            insurance: { customer_logos: 0.15, user_count: 0.2, rating_stars: 0.25, testimonials_grid: 0.25, community_size: 0.05, press_mentions: 0.1 },
+            agency: { customer_logos: 0.30, user_count: 0.1, rating_stars: 0.1, testimonials_grid: 0.25, community_size: 0.05, press_mentions: 0.2 },
+            energy: { customer_logos: 0.25, user_count: 0.2, rating_stars: 0.05, testimonials_grid: 0.15, community_size: 0.1, press_mentions: 0.25 }
         };
         const sector = profile.sector;
         const sectorWeights = weights[sector];
@@ -1513,7 +1657,17 @@ export class GenomeSequencer {
             travel: { live_counter: 0.2, cumulative_stats: 0.3, before_after: 0.1, roi_calculator: 0.2, timeline_progress: 0.2 },
             food: { live_counter: 0.15, cumulative_stats: 0.3, before_after: 0.1, roi_calculator: 0.15, timeline_progress: 0.3 },
             sports: { live_counter: 0.4, cumulative_stats: 0.3, before_after: 0.05, roi_calculator: 0.05, timeline_progress: 0.2 },
-            technology: { live_counter: 0.3, cumulative_stats: 0.3, before_after: 0.1, roi_calculator: 0.15, timeline_progress: 0.15 }
+            technology: { live_counter: 0.3, cumulative_stats: 0.3, before_after: 0.1, roi_calculator: 0.15, timeline_progress: 0.15 },
+            nonprofit: { live_counter: 0.2, cumulative_stats: 0.35, before_after: 0.2, roi_calculator: 0.05, timeline_progress: 0.2 },
+            government: { live_counter: 0.1, cumulative_stats: 0.35, before_after: 0.15, roi_calculator: 0.1, timeline_progress: 0.30 },
+            media: { live_counter: 0.3, cumulative_stats: 0.3, before_after: 0.05, roi_calculator: 0.05, timeline_progress: 0.30 },
+            crypto_web3: { live_counter: 0.5, cumulative_stats: 0.3, before_after: 0.05, roi_calculator: 0.1, timeline_progress: 0.05 },
+            gaming: { live_counter: 0.4, cumulative_stats: 0.35, before_after: 0.05, roi_calculator: 0.05, timeline_progress: 0.15 },
+            hospitality: { live_counter: 0.1, cumulative_stats: 0.2, before_after: 0.2, roi_calculator: 0.2, timeline_progress: 0.30 },
+            beauty_fashion: { live_counter: 0.1, cumulative_stats: 0.2, before_after: 0.35, roi_calculator: 0.1, timeline_progress: 0.25 },
+            insurance: { live_counter: 0.1, cumulative_stats: 0.25, before_after: 0.15, roi_calculator: 0.35, timeline_progress: 0.15 },
+            agency: { live_counter: 0.1, cumulative_stats: 0.3, before_after: 0.25, roi_calculator: 0.2, timeline_progress: 0.15 },
+            energy: { live_counter: 0.2, cumulative_stats: 0.35, before_after: 0.1, roi_calculator: 0.2, timeline_progress: 0.15 }
         };
         const sector = profile.sector;
         const sectorWeights = weights[sector];
@@ -1582,7 +1736,17 @@ export class GenomeSequencer {
             travel: ["lifestyle_photography", "architectural", "candid_moment"],
             food: ["macro_detail", "studio_product", "lifestyle_photography"],
             sports: ["candid_moment", "lifestyle_photography", "documentary"],
-            technology: ["product_screenshots", "abstract_gradient", "illustration"]
+            technology: ["product_screenshots", "abstract_gradient", "illustration"],
+            nonprofit: ["documentary", "lifestyle_photography", "candid_moment"],
+            government: ["architectural", "documentary", "lifestyle_photography"],
+            media: ["candid_moment", "documentary", "lifestyle_photography"],
+            crypto_web3: ["abstract_gradient", "product_screenshots", "illustration"],
+            gaming: ["illustration", "abstract_gradient", "candid_moment"],
+            hospitality: ["lifestyle_photography", "architectural", "macro_detail"],
+            beauty_fashion: ["studio_product", "lifestyle_photography", "macro_detail"],
+            insurance: ["lifestyle_photography", "documentary", "architectural"],
+            agency: ["abstract_gradient", "illustration", "studio_product"],
+            energy: ["architectural", "documentary", "abstract_gradient"]
         };
         const sector = profile.sector;
         const treatments = treatmentsBySector[sector] || ["lifestyle_photography"];
@@ -1604,7 +1768,17 @@ export class GenomeSequencer {
             travel: ["background_ambient", "brand_story", "testimonial"],
             food: ["product_demo", "background_ambient", "brand_story"],
             sports: ["background_ambient", "brand_story", "live_feed"],
-            technology: ["product_demo", "brand_story", "tutorial_walkthrough"]
+            technology: ["product_demo", "brand_story", "tutorial_walkthrough"],
+            nonprofit: ["brand_story", "testimonial", "tutorial_walkthrough"],
+            government: ["brand_story", "tutorial_walkthrough"],
+            media: ["background_ambient", "brand_story", "live_feed"],
+            crypto_web3: ["product_demo", "tutorial_walkthrough", "brand_story"],
+            gaming: ["background_ambient", "brand_story", "live_feed"],
+            hospitality: ["background_ambient", "brand_story", "testimonial"],
+            beauty_fashion: ["product_demo", "brand_story", "testimonial"],
+            insurance: ["testimonial", "brand_story", "tutorial_walkthrough"],
+            agency: ["brand_story", "product_demo", "background_ambient"],
+            energy: ["brand_story", "product_demo", "testimonial"]
         };
         const sector = profile.sector;
         const strategies = strategiesBySector[sector] || ["brand_story"];
@@ -1747,7 +1921,17 @@ export class GenomeSequencer {
             travel: [[170, 210], [20, 50]], // Teals, oranges
             food: [[10, 50], [90, 150]], // Oranges, greens
             sports: [[0, 60], [200, 260]], // Red/orange, blue
-            technology: [[200, 280]] // Blues, purples
+            technology: [[200, 280]], // Blues, purples
+            nonprofit: [[180, 240], [90, 130]], // Blues, greens (hopeful, trustworthy)
+            government: [[200, 260]], // Navy/institutional blues
+            media: [[0, 360]], // Any (media is sector-agnostic)
+            crypto_web3: [[260, 310], [180, 230]], // Purples, cyans
+            gaming: [[0, 360]], // Any (gaming is expressive)
+            hospitality: [[20, 60], [170, 210]], // Warm ambers, ocean teals
+            beauty_fashion: [[300, 360], [0, 30], [280, 330]], // Pinks, reds, mauves
+            insurance: [[200, 260], [150, 200]], // Blues, teals
+            agency: [[0, 360]], // Any (agencies adapt to clients)
+            energy: [[80, 150], [30, 60], [200, 240]] // Greens, ambers, blues
         };
         const ranges = appropriateRanges[sector];
         return ranges.some(([min, max]) => hue >= min && hue <= max);

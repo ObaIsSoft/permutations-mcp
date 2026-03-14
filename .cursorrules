@@ -1,6 +1,6 @@
-# Permutations MCP — Agent Rules (v0.0.5)
+# Permutations MCP — Agent Rules (v0.0.8)
 
-These rules govern how AI coding agents must interact with this codebase. The Permutations MCP server generates **26-chromosome design DNA** from SHA-256 hashes. **No aesthetic values may be invented manually.**
+These rules govern how AI coding agents must interact with this codebase. The Permutations MCP server generates **32-chromosome design DNA** from SHA-256 hashes across a **14-tier biological complexity model** (abiotic → prokaryotic → protist → bryophyte → vascular_flora → invertebrate_fauna → ectotherm_fauna → endotherm_fauna → tribal → city_state → nation_state → empire → network → singularity). **No aesthetic values may be invented manually.**
 
 ---
 

@@ -5,7 +5,7 @@
  * NO named colors. NO templates. Only mathematical constraints.
  * 
  * Philosophy: Sector provides BIAS, not SELECTION.
- * The SHA-256 hash + 26 chromosomes generate infinitely.
+ * The SHA-256 hash + 32 chromosomes generate infinitely.
  */
 
 import {
@@ -165,6 +165,96 @@ const SECTOR_COLOR_BIAS: Record<PrimarySector, ColorBias> = {
         lightnessBase: 0.35,
         lightnessVariance: 0.15,
         temperature: "cool"
+    },
+    nonprofit: {
+        // Warm green-teal (120-160°): hope, growth, compassion
+        hueRange: [120, 160],
+        saturationBase: 0.45,
+        saturationVariance: 0.15,
+        lightnessBase: 0.40,
+        lightnessVariance: 0.10,
+        temperature: "warm"
+    },
+    government: {
+        // Deep navy-blue (215-235°): authority, stability, public trust
+        hueRange: [215, 235],
+        saturationBase: 0.35,
+        saturationVariance: 0.10,
+        lightnessBase: 0.28,
+        lightnessVariance: 0.08,
+        temperature: "cool"
+    },
+    media: {
+        // Unrestricted — editorial voice defines palette
+        hueRange: [0, 360],
+        saturationBase: 0.50,
+        saturationVariance: 0.25,
+        lightnessBase: 0.35,
+        lightnessVariance: 0.15,
+        temperature: "neutral"
+    },
+    crypto_web3: {
+        // Purple-violet (265-300°): speculation, technology, dark-first
+        hueRange: [265, 300],
+        saturationBase: 0.65,
+        saturationVariance: 0.20,
+        lightnessBase: 0.45,
+        lightnessVariance: 0.15,
+        temperature: "cool"
+    },
+    gaming: {
+        // High-saturation purple-red (290-360°): energy, competition, dark
+        hueRange: [290, 360],
+        saturationBase: 0.70,
+        saturationVariance: 0.20,
+        lightnessBase: 0.45,
+        lightnessVariance: 0.15,
+        temperature: "warm"
+    },
+    hospitality: {
+        // Warm neutrals (25-50°): welcome, comfort, luxury-adjacent
+        hueRange: [25, 55],
+        saturationBase: 0.40,
+        saturationVariance: 0.15,
+        lightnessBase: 0.48,
+        lightnessVariance: 0.12,
+        temperature: "warm"
+    },
+    beauty_fashion: {
+        // Brand-led but skews warm-neutral (15-50° or 330-360°)
+        hueRange: [0, 360],
+        saturationBase: 0.45,
+        saturationVariance: 0.30,
+        lightnessBase: 0.50,
+        lightnessVariance: 0.20,
+        temperature: "warm"
+    },
+    insurance: {
+        // Trustworthy blue-green (190-215°): reliability, safety, calm
+        hueRange: [190, 215],
+        saturationBase: 0.40,
+        saturationVariance: 0.12,
+        lightnessBase: 0.35,
+        lightnessVariance: 0.10,
+        temperature: "cool"
+    },
+    agency: {
+        // Expressive / brand-led — no constraint, design language defines it
+        hueRange: [0, 360],
+        saturationBase: 0.60,
+        saturationVariance: 0.30,
+        lightnessBase: 0.40,
+        lightnessVariance: 0.20,
+        temperature: "neutral"
+    },
+    energy: {
+        // Renewable: blue-green (160-200°) / Oil-gas: orange-amber (20-45°) — wide
+        hueRange: [20, 200],
+        saturationBase: 0.50,
+        saturationVariance: 0.20,
+        lightnessBase: 0.38,
+        lightnessVariance: 0.12,
+        temperature: "neutral"
     }
 };
 
@@ -359,6 +449,146 @@ const HERO_TYPE_WEIGHTS: Record<PrimarySector, Record<HeroType, number>> = {
         configurator_3d: 0.00,
         aspirational_imagery: 0.05,
         testimonial_focus: 0.10
+    },
+    nonprofit: {
+        product_ui: 0.05,
+        product_video: 0.20,
+        brand_logo: 0.05,
+        stats_counter: 0.25,
+        search_discovery: 0.05,
+        content_carousel: 0.10,
+        trust_authority: 0.15,
+        service_showcase: 0.10,
+        editorial_feature: 0.20,
+        configurator_3d: 0.00,
+        aspirational_imagery: 0.25,
+        testimonial_focus: 0.20
+    },
+    government: {
+        product_ui: 0.10,
+        product_video: 0.05,
+        brand_logo: 0.05,
+        stats_counter: 0.15,
+        search_discovery: 0.25,
+        content_carousel: 0.05,
+        trust_authority: 0.30,
+        service_showcase: 0.30,
+        editorial_feature: 0.15,
+        configurator_3d: 0.00,
+        aspirational_imagery: 0.00,
+        testimonial_focus: 0.05
+    },
+    media: {
+        product_ui: 0.10,
+        product_video: 0.20,
+        brand_logo: 0.10,
+        stats_counter: 0.05,
+        search_discovery: 0.15,
+        content_carousel: 0.25,
+        trust_authority: 0.05,
+        service_showcase: 0.05,
+        editorial_feature: 0.40,
+        configurator_3d: 0.00,
+        aspirational_imagery: 0.10,
+        testimonial_focus: 0.05
+    },
+    crypto_web3: {
+        product_ui: 0.30,
+        product_video: 0.10,
+        brand_logo: 0.15,
+        stats_counter: 0.30,
+        search_discovery: 0.05,
+        content_carousel: 0.10,
+        trust_authority: 0.10,
+        service_showcase: 0.10,
+        editorial_feature: 0.05,
+        configurator_3d: 0.05,
+        aspirational_imagery: 0.05,
+        testimonial_focus: 0.05
+    },
+    gaming: {
+        product_ui: 0.15,
+        product_video: 0.40,
+        brand_logo: 0.10,
+        stats_counter: 0.10,
+        search_discovery: 0.05,
+        content_carousel: 0.25,
+        trust_authority: 0.00,
+        service_showcase: 0.05,
+        editorial_feature: 0.10,
+        configurator_3d: 0.10,
+        aspirational_imagery: 0.30,
+        testimonial_focus: 0.05
+    },
+    hospitality: {
+        product_ui: 0.05,
+        product_video: 0.20,
+        brand_logo: 0.10,
+        stats_counter: 0.05,
+        search_discovery: 0.20,
+        content_carousel: 0.25,
+        trust_authority: 0.10,
+        service_showcase: 0.25,
+        editorial_feature: 0.10,
+        configurator_3d: 0.00,
+        aspirational_imagery: 0.40,
+        testimonial_focus: 0.20
+    },
+    beauty_fashion: {
+        product_ui: 0.05,
+        product_video: 0.25,
+        brand_logo: 0.10,
+        stats_counter: 0.05,
+        search_discovery: 0.10,
+        content_carousel: 0.25,
+        trust_authority: 0.05,
+        service_showcase: 0.10,
+        editorial_feature: 0.25,
+        configurator_3d: 0.05,
+        aspirational_imagery: 0.45,
+        testimonial_focus: 0.15
+    },
+    insurance: {
+        product_ui: 0.10,
+        product_video: 0.05,
+        brand_logo: 0.05,
+        stats_counter: 0.20,
+        search_discovery: 0.15,
+        content_carousel: 0.05,
+        trust_authority: 0.35,
+        service_showcase: 0.20,
+        editorial_feature: 0.10,
+        configurator_3d: 0.00,
+        aspirational_imagery: 0.05,
+        testimonial_focus: 0.15
+    },
+    agency: {
+        product_ui: 0.15,
+        product_video: 0.15,
+        brand_logo: 0.10,
+        stats_counter: 0.10,
+        search_discovery: 0.05,
+        content_carousel: 0.20,
+        trust_authority: 0.10,
+        service_showcase: 0.15,
+        editorial_feature: 0.20,
+        configurator_3d: 0.05,
+        aspirational_imagery: 0.10,
+        testimonial_focus: 0.10
+    },
+    energy: {
+        product_ui: 0.05,
+        product_video: 0.15,
+        brand_logo: 0.10,
+        stats_counter: 0.30,
+        search_discovery: 0.10,
+        content_carousel: 0.10,
+        trust_authority: 0.15,
+        service_showcase: 0.25,
+        editorial_feature: 0.15,
+        configurator_3d: 0.00,
+        aspirational_imagery: 0.10,
+        testimonial_focus: 0.05
     }
 };
 
@@ -496,6 +726,106 @@ const TRUST_APPROACH_WEIGHTS: Record<PrimarySector, Record<TrustApproach, number
         case_studies: 0.10,
         guarantees: 0.05,
         transparency_reports: 0.05
+    },
+    nonprofit: {
+        credentials: 0.15,
+        testimonials: 0.20,
+        stats: 0.30,
+        security_badges: 0.05,
+        social_proof_logos: 0.10,
+        case_studies: 0.10,
+        guarantees: 0.05,
+        transparency_reports: 0.05
+    },
+    government: {
+        credentials: 0.30,
+        testimonials: 0.05,
+        stats: 0.25,
+        security_badges: 0.15,
+        social_proof_logos: 0.05,
+        case_studies: 0.05,
+        guarantees: 0.05,
+        transparency_reports: 0.10
+    },
+    media: {
+        credentials: 0.10,
+        testimonials: 0.10,
+        stats: 0.25,
+        security_badges: 0.05,
+        social_proof_logos: 0.25,
+        case_studies: 0.10,
+        guarantees: 0.10,
+        transparency_reports: 0.05
+    },
+    crypto_web3: {
+        credentials: 0.10,
+        testimonials: 0.05,
+        stats: 0.25,
+        security_badges: 0.30,
+        social_proof_logos: 0.10,
+        case_studies: 0.05,
+        guarantees: 0.05,
+        transparency_reports: 0.10
+    },
+    gaming: {
+        credentials: 0.05,
+        testimonials: 0.20,
+        stats: 0.35,
+        security_badges: 0.05,
+        social_proof_logos: 0.15,
+        case_studies: 0.05,
+        guarantees: 0.10,
+        transparency_reports: 0.05
+    },
+    hospitality: {
+        credentials: 0.10,
+        testimonials: 0.30,
+        stats: 0.15,
+        security_badges: 0.10,
+        social_proof_logos: 0.15,
+        case_studies: 0.05,
+        guarantees: 0.10,
+        transparency_reports: 0.05
+    },
+    beauty_fashion: {
+        credentials: 0.05,
+        testimonials: 0.25,
+        stats: 0.15,
+        security_badges: 0.10,
+        social_proof_logos: 0.20,
+        case_studies: 0.05,
+        guarantees: 0.10,
+        transparency_reports: 0.10
+    },
+    insurance: {
+        credentials: 0.25,
+        testimonials: 0.15,
+        stats: 0.20,
+        security_badges: 0.20,
+        social_proof_logos: 0.05,
+        case_studies: 0.05,
+        guarantees: 0.05,
+        transparency_reports: 0.05
+    },
+    agency: {
+        credentials: 0.10,
+        testimonials: 0.15,
+        stats: 0.15,
+        security_badges: 0.05,
+        social_proof_logos: 0.20,
+        case_studies: 0.30,
+        guarantees: 0.03,
+        transparency_reports: 0.02
+    },
+    energy: {
+        credentials: 0.20,
+        testimonials: 0.10,
+        stats: 0.30,
+        security_badges: 0.15,
+        social_proof_logos: 0.10,
+        case_studies: 0.10,
+        guarantees: 0.03,
+        transparency_reports: 0.02
     }
 };
 
@@ -588,6 +918,83 @@ export const SUB_SECTOR_KEYWORDS: Record<PrimarySector, Record<string, string[]>
         ai: ["AI", "machine learning", "artificial intelligence", "LLM"],
         infrastructure: ["infrastructure", "devops", "cloud", "server"],
         consumer: ["app", "consumer", "mobile", "social"]
+    },
+    nonprofit: {
+        advocacy: ["advocacy", "campaign", "petition", "awareness", "activism"],
+        charity: ["charity", "donation", "fundraising", "giving", "volunteer"],
+        foundation: ["foundation", "grant", "endowment", "scholarship"],
+        community: ["community", "neighborhood", "local", "mutual aid"],
+        environmental: ["environment", "climate", "sustainability", "conservation", "green"]
+    },
+    government: {
+        federal: ["federal", "national", "congress", "senate", "department"],
+        state: ["state", "governor", "legislature", "county"],
+        municipal: ["city", "town", "municipal", "mayor", "local government"],
+        regulatory: ["regulation", "compliance", "agency", "authority", "oversight"],
+        defense: ["defense", "military", "security", "intelligence", "national security"]
+    },
+    media: {
+        news: ["news", "breaking", "journalism", "reporter", "press", "headline"],
+        magazine: ["magazine", "feature", "editorial", "publication", "issue"],
+        podcast: ["podcast", "episode", "audio", "listen", "show"],
+        newsletter: ["newsletter", "subscribe", "weekly", "digest", "inbox"],
+        publishing: ["publishing", "book", "author", "manuscript", "imprint"],
+        broadcast: ["broadcast", "TV", "radio", "network", "channel", "streaming"]
+    },
+    crypto_web3: {
+        defi: ["DeFi", "yield", "liquidity", "protocol", "AMM", "lending", "staking"],
+        nft: ["NFT", "mint", "collection", "token", "marketplace", "opensea"],
+        dao: ["DAO", "governance", "vote", "proposal", "treasury", "community"],
+        infrastructure: ["Layer 2", "rollup", "node", "validator", "RPC", "indexer"],
+        exchange: ["exchange", "DEX", "CEX", "swap", "trading", "orderbook"],
+        wallet: ["wallet", "custody", "key", "seed phrase", "hardware wallet"]
+    },
+    gaming: {
+        mobile: ["mobile game", "iOS", "Android", "casual", "hypercasual", "gacha"],
+        console: ["console", "PlayStation", "Xbox", "Nintendo", "controller"],
+        pc: ["PC gaming", "Steam", "Epic", "launcher", "desktop game"],
+        indie: ["indie", "small studio", "itch.io", "solo dev", "jam"],
+        esports: ["esports", "tournament", "competitive", "team", "league", "pro"],
+        studio: ["game studio", "developer", "publisher", "AAA", "team"]
+    },
+    hospitality: {
+        hotel: ["hotel", "room", "check-in", "amenities", "concierge", "lobby"],
+        resort: ["resort", "all-inclusive", "spa", "pool", "beach resort"],
+        luxury: ["luxury hotel", "five star", "boutique", "suite", "villa"],
+        boutique: ["boutique", "design hotel", "lifestyle", "curated"],
+        rental: ["vacation rental", "Airbnb", "VRBO", "short-term", "holiday home"]
+    },
+    beauty_fashion: {
+        luxury_beauty: ["luxury beauty", "prestige", "high-end skincare", "premium"],
+        skincare: ["skincare", "serum", "moisturizer", "SPF", "retinol", "cleanser"],
+        fashion: ["fashion", "clothing", "apparel", "style", "collection", "runway"],
+        cosmetics: ["makeup", "cosmetics", "foundation", "lipstick", "eyeshadow"],
+        fragrance: ["fragrance", "perfume", "cologne", "scent", "eau de parfum"],
+        wellness: ["wellness", "self-care", "beauty routine", "clean beauty", "natural"]
+    },
+    insurance: {
+        health: ["health insurance", "medical", "coverage", "deductible", "premium", "HMO"],
+        life: ["life insurance", "term", "whole life", "beneficiary", "policy"],
+        auto: ["auto insurance", "car", "vehicle", "collision", "liability"],
+        home: ["home insurance", "property", "homeowners", "renters", "flood"],
+        business: ["business insurance", "commercial", "liability", "workers comp", "E&O"],
+        specialty: ["specialty", "cyber", "marine", "aviation", "events"]
+    },
+    agency: {
+        creative: ["creative agency", "design studio", "art direction", "campaign"],
+        digital: ["digital agency", "web", "UI/UX", "product", "development"],
+        branding: ["branding", "brand identity", "logo", "brand strategy", "rebrand"],
+        marketing: ["marketing agency", "growth", "demand gen", "performance", "SEO"],
+        pr: ["PR", "public relations", "communications", "press", "media relations"],
+        consulting: ["consulting", "strategy", "advisory", "transformation", "management"]
+    },
+    energy: {
+        renewable: ["solar", "wind", "renewable", "clean energy", "sustainable", "green energy"],
+        oil_gas: ["oil", "gas", "petroleum", "upstream", "downstream", "refinery", "drilling"],
+        utilities: ["utility", "electric", "grid", "power", "water", "natural gas"],
+        nuclear: ["nuclear", "reactor", "fission", "fusion", "uranium", "power plant"],
+        storage: ["battery storage", "energy storage", "grid storage", "ESS", "lithium"],
+        distribution: ["transmission", "distribution", "pipeline", "infrastructure", "smart grid"]
     }
 };
 
@@ -707,6 +1114,86 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "integrated",
         contentDepth: "moderate",
+        generate3D: false
+    },
+    nonprofit: {
+        typography: "humanist",
+        motion: "spring",
+        edge: "organic",
+        trustProminence: "prominent",
+        contentDepth: "extensive",
+        generate3D: false
+    },
+    government: {
+        typography: "transitional",
+        motion: "none",
+        edge: "sharp",
+        trustProminence: "hero_feature",
+        contentDepth: "comprehensive",
+        generate3D: false
+    },
+    media: {
+        typography: "slab_serif",
+        motion: "spring",
+        edge: "sharp",
+        trustProminence: "subtle",
+        contentDepth: "comprehensive",
+        generate3D: false
+    },
+    crypto_web3: {
+        typography: "geometric",
+        motion: "glitch",
+        edge: "techno",
+        trustProminence: "integrated",
+        contentDepth: "moderate",
+        generate3D: true
+    },
+    gaming: {
+        typography: "expressive",
+        motion: "spring",
+        edge: "sharp",
+        trustProminence: "subtle",
+        contentDepth: "moderate",
+        generate3D: true
+    },
+    hospitality: {
+        typography: "humanist",
+        motion: "spring",
+        edge: "organic",
+        trustProminence: "integrated",
+        contentDepth: "extensive",
+        generate3D: false
+    },
+    beauty_fashion: {
+        typography: "expressive",
+        motion: "spring",
+        edge: "soft",
+        trustProminence: "subtle",
+        contentDepth: "moderate",
+        generate3D: false
+    },
+    insurance: {
+        typography: "humanist",
+        motion: "none",
+        edge: "soft",
+        trustProminence: "hero_feature",
+        contentDepth: "extensive",
+        generate3D: false
+    },
+    agency: {
+        typography: "grotesque",
+        motion: "spring",
+        edge: "organic",
+        trustProminence: "integrated",
+        contentDepth: "moderate",
+        generate3D: true
+    },
+    energy: {
+        typography: "geometric",
+        motion: "step",
+        edge: "sharp",
+        trustProminence: "prominent",
+        contentDepth: "extensive",
         generate3D: false
     }
 };

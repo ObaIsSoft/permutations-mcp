@@ -22,7 +22,17 @@ export type PrimarySector =
     | "travel"
     | "food"
     | "sports"
-    | "technology";
+    | "technology"
+    | "nonprofit"
+    | "government"
+    | "media"
+    | "crypto_web3"
+    | "gaming"
+    | "hospitality"
+    | "beauty_fashion"
+    | "insurance"
+    | "agency"
+    | "energy";
 
 export type SecondarySector = PrimarySector | null;
 
@@ -69,6 +79,36 @@ export type SubSector =
     // Technology
     | "technology_saas" | "technology_developer" | "technology_infrastructure"
     | "technology_ai" | "technology_security" | "technology_hardware" | "technology_general"
+    // Nonprofit
+    | "nonprofit_advocacy" | "nonprofit_charity" | "nonprofit_foundation"
+    | "nonprofit_community" | "nonprofit_environmental" | "nonprofit_general"
+    // Government
+    | "government_federal" | "government_state" | "government_municipal"
+    | "government_regulatory" | "government_defense" | "government_general"
+    // Media
+    | "media_news" | "media_magazine" | "media_podcast"
+    | "media_newsletter" | "media_publishing" | "media_broadcast" | "media_general"
+    // Crypto / Web3
+    | "crypto_web3_defi" | "crypto_web3_nft" | "crypto_web3_dao"
+    | "crypto_web3_infrastructure" | "crypto_web3_exchange" | "crypto_web3_wallet" | "crypto_web3_general"
+    // Gaming
+    | "gaming_mobile" | "gaming_console" | "gaming_pc"
+    | "gaming_indie" | "gaming_esports" | "gaming_studio" | "gaming_general"
+    // Hospitality
+    | "hospitality_hotel" | "hospitality_resort" | "hospitality_luxury"
+    | "hospitality_boutique" | "hospitality_rental" | "hospitality_general"
+    // Beauty & Fashion
+    | "beauty_fashion_luxury_beauty" | "beauty_fashion_skincare" | "beauty_fashion_fashion"
+    | "beauty_fashion_cosmetics" | "beauty_fashion_fragrance" | "beauty_fashion_wellness" | "beauty_fashion_general"
+    // Insurance
+    | "insurance_health" | "insurance_life" | "insurance_auto"
+    | "insurance_home" | "insurance_business" | "insurance_specialty" | "insurance_general"
+    // Agency
+    | "agency_creative" | "agency_digital" | "agency_branding"
+    | "agency_marketing" | "agency_pr" | "agency_consulting" | "agency_general"
+    // Energy
+    | "energy_renewable" | "energy_oil_gas" | "energy_utilities"
+    | "energy_nuclear" | "energy_storage" | "energy_distribution" | "energy_general"
     // Default
     | "general";
 
@@ -113,7 +153,10 @@ export type VisualTreatment =
     | "architectural"         // Spaces, buildings, environments
     | "candid_moment"         // Natural, unposed
     | "abstract_gradient"     // Color fields, gradients
-    | "illustration";         // Custom illustrations
+    | "illustration"          // Custom illustrations
+    | "3d_render"             // CGI / product renders (automotive, tech, fashion)
+    | "data_viz"              // Charts, graphs, dashboards as primary visual
+    | "motion_graphic";       // Animated illustration / lottie as hero
 
 export type VideoStrategy =
     | "background_ambient"    // Atmospheric, no sound
@@ -191,7 +234,7 @@ export interface ContentAnalysis {
     visualMarkers: {
         dominantColors: string[];
         colorTemperature: "warm" | "cool" | "neutral";
-        textureProfile: "smooth" | "grainy" | "high_contrast";
+        textureProfile: "smooth" | "grainy" | "high_contrast" | "minimal" | "rich";
         imageAspectRatios: ("landscape" | "portrait" | "square")[];
         visualDensity: "sparse" | "medium" | "dense";
     };
@@ -199,13 +242,13 @@ export interface ContentAnalysis {
         averageWordLength: number;
         textVolume: "minimal" | "medium" | "extensive";
         hierarchyDepth: number;
-        contentTone: "technical" | "narrative" | "commercial";
+        contentTone: "technical" | "narrative" | "commercial" | "editorial" | "authoritative" | "conversational";
         scanVsReadRatio: number;
         keywords: string[];           // Extracted key terms
         entities: string[];           // Named entities (org, product)
     };
     structuralMarkers: {
-        contentType: "high_frequency_data" | "long_form" | "portfolio" | "commerce" | "dashboard";
+        contentType: "high_frequency_data" | "long_form" | "portfolio" | "commerce" | "dashboard" | "editorial" | "directory" | "community" | "tool" | "saas_app";
         updateFrequency: "static" | "periodic" | "realtime";
         itemCount: number;
         chronology: boolean;
@@ -354,7 +397,7 @@ export interface GenerationOptions {
 // CHROMOSOME VALUE RANGES
 // ============================================================================
 
-export type Topology = "flat" | "deep" | "graph" | "radial";
+export type Topology = "flat" | "deep" | "graph" | "radial" | "bento" | "editorial";
 export type ScrollBehavior = "paginated" | "continuous" | "snap";
 export type BreakpointStrategy = "mobile_first" | "desktop_first" | "fluid";
 export type ContentFlow = "reading_order" | "z_pattern" | "f_pattern";
@@ -364,18 +407,18 @@ export type FontProvider = "bunny" | "google";
 export type TypeTracking = "tight" | "normal" | "wide" | "ultra";
 export type TypeCasing = "normal" | "uppercase" | "small_caps";
 export type ColorTemp = "warm" | "cool" | "neutral";
-export type EdgeStyle = "sharp" | "soft" | "organic" | "techno";
+export type EdgeStyle = "sharp" | "soft" | "organic" | "techno" | "brutalist";
 export type MotionPhysics = "none" | "spring" | "step" | "glitch";
 export type EnterDirection = "up" | "down" | "left" | "right" | "scale" | "fade";
 export type ExitBehavior = "fade" | "slide" | "none";
-export type GridLogic = "column" | "masonry" | "radial" | "broken";
+export type GridLogic = "column" | "masonry" | "radial" | "broken" | "bento" | "editorial";
 export type GridAlignment = "stretch" | "center" | "start";
 export type HierarchyDepth = "flat" | "overlapping" | "3d-stack";
 export type ElevationSystem = "flat" | "material" | "neumorphic";
 export type DepthCue = "blur" | "scale" | "opacity" | "none";
-export type TextureSurface = "flat" | "grain" | "glass" | "chrome";
+export type TextureSurface = "flat" | "grain" | "glass" | "chrome" | "matte_paper" | "brushed_metal";
 export type OverlayBlend = "multiply" | "screen" | "overlay" | "none";
-export type AtmosphereFX = "glassmorphism" | "crt_noise" | "fluid_mesh" | "none";
+export type AtmosphereFX = "glassmorphism" | "crt_noise" | "fluid_mesh" | "aurora" | "noise_gradient" | "holographic" | "none";
 export type AtmosphereCoverage = "full" | "section" | "element";
 export type PerformanceBudget = "high" | "medium" | "low";
 export type PhysicsMaterial = "neumorphism" | "metallic" | "glass" | "matte";
@@ -383,9 +426,9 @@ export type BiomarkerGeometry = "monolithic" | "organic" | "fractal";
 export type BiomarkerShapeFamily = "geometric" | "biological" | "crystalline" | "fluid" | "architectural";
 export type BiomarkerAnimStyle = "rotate" | "breathe" | "morph" | "static";
 export type PolyCount = "low" | "medium" | "high";
-export type ColorTreatment = "primary" | "complementary" | "monochrome";
+export type ColorTreatment = "primary" | "complementary" | "monochrome" | "analogous" | "split_complementary";
 export type ImageAspectRatio = "16:9" | "4:3" | "1:1" | "portrait";
-export type ColorGrading = "natural" | "desaturated" | "vibrant" | "duotone";
+export type ColorGrading = "natural" | "desaturated" | "vibrant" | "duotone" | "muted_earth" | "cinematic" | "neon_pop";
 export type AnimationTrigger = "scroll_enter" | "page_load" | "hover";
 export type CounterFormat = "abbreviated" | "full" | "percentage";
 export type TrustAnimationType = "count_up" | "fade_in" | "none";
@@ -394,6 +437,35 @@ export type SocialUpdateFreq = "static" | "daily" | "realtime";
 export type HeroHeight = "full" | "large" | "medium" | "compact";
 export type HeroBgTreatment = "solid" | "image" | "video" | "mesh";
 export type HeroMobileBehavior = "stack" | "collapse_image" | "full_bleed";
+
+// ============================================================================
+// CIVILIZATION CHROMOSOME VALUE RANGES (ch30–ch32)
+// Latent in genome always; only expressed when complexity >= 0.81 (tribal+)
+// ============================================================================
+
+/** How application state is owned and shared across surfaces */
+export type StateTopology =
+    | "local"           // Component-level only (useState / useReducer)
+    | "shared_context"  // Lifted to React Context — single surface
+    | "reactive_store"  // External store (Zustand/Redux) — single app
+    | "distributed"     // Cross-tab / server-synced state — multi-surface
+    | "federated";      // Cross-app shared state (micro-frontend federation)
+
+/** How the application handles URL routing */
+export type RoutingPattern =
+    | "single_page"   // No router — single route, hash state only
+    | "multi_page"    // React Router — multiple pages, public routes only
+    | "protected"     // React Router — auth guards on restricted routes
+    | "platform"      // Shell + lazy-loaded feature remotes
+    | "federated";    // Module Federation — cross-app navigation
+
+/** How design tokens are layered and inherited */
+export type TokenInheritance =
+    | "flat"          // One global :root — all tokens at same level
+    | "semantic"      // Global + semantic layer (light/dark modes)
+    | "component"     // Global + semantic + component-scoped overrides
+    | "governed"      // Global + semantic + component + brand governance layer
+    | "cross_system"; // All layers + cross-app token contract (design system)
 
 // ============================================================================
 // MAIN DESIGN GENOME INTERFACE
@@ -730,6 +802,22 @@ export interface DesignGenome {
             sentenceStructure: "short_punchy" | "balanced" | "complex_periodic";
             emojiUsage: boolean;
             contractionUsage: boolean;
+        };
+
+        // Civilization Chromosomes (30–32)
+        // Always generated from hash; only read by CivilizationGenerator
+        // when complexity >= 0.81 (tribal tier or above).
+        ch30_state_topology: {
+            topology: StateTopology;
+            sharedSurfaces: number;  // 0–5: how many surfaces share state
+        };
+        ch31_routing_pattern: {
+            pattern: RoutingPattern;
+            guardedRoutes: number;   // 0–8: count of auth-protected routes
+        };
+        ch32_token_inheritance: {
+            inheritance: TokenInheritance;
+            themeLayers: number;     // 1–4: stacked theme depth
         };
     };
 

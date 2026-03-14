@@ -75,7 +75,7 @@ npm run build
 
 | Field | Description |
 |---|---|
-| `genome` | Full 29-chromosome JSON object. All design decisions encoded as floats (ch0-sector through ch28-iconography) |
+| `genome` | Full 32-chromosome JSON object. All design decisions encoded (ch0-sector through ch32-token_inheritance) |
 | `tailwindConfig` | Ready-to-paste `tailwind.config.js` with all chromosome values injected |
 | `cssVariableBlock` | CSS custom properties file for runtime injection |
 | `topology` | Structural sections object describing the layout skeleton |
@@ -133,6 +133,15 @@ generate_design_genome(
 
 ### Ecosystem → Civilization Flow
 
+The system uses a **14-tier biological complexity model**:
+
+| Layer | Tiers | Complexity | Generator |
+|-------|-------|------------|-----------|
+| Ecosystem | abiotic → prokaryotic → protist → bryophyte → vascular_flora → invertebrate_fauna → ectotherm_fauna → endotherm_fauna | 0.00–0.80 | `generate_ecosystem` |
+| Civilization | tribal → city_state → nation_state → empire → network → singularity | 0.81–1.00 | `generate_civilization` |
+
+Civilization is not random — it requires **intent complexity** (keywords like `dashboard`, `platform`, `3d`, `real-time` boost the score). Use `min_tier` to force a minimum civilization tier.
+
 For complex applications, generate organisms first, then add architecture:
 
 ```
@@ -142,11 +151,13 @@ const ecosystem = generate_ecosystem(
   seed: "trading-platform-v2"
 )
 
-// Step 2: Add civilization layer (architecture + state management)
+// Step 2: Add civilization layer (requires complexity >= 0.81)
+// Activates ch30 stateTopology, ch31 routingPattern, ch32 tokenInheritance
 const civilization = generate_civilization(
   intent: "real-time 3D dashboard with animation",
   seed: "trading-platform-v2",
-  ecosystem: ecosystem  // Uses ecosystem organisms
+  ecosystem: ecosystem,
+  min_tier: "city_state"  // optional: "tribal" | "city_state" | "nation_state" | "empire" | "network" | "singularity"
 )
 ```
 
@@ -273,10 +284,13 @@ generate_design_brief(
 | ch23 | content_depth | Number of sections (minimal/moderate/extensive/comprehensive) |
 | ch24 | personalization | Dynamic content approach (static/behavior_based/fully_dynamic) |
 | ch25 | copy_engine | Copywriting system (headline, CTA, tagline, testimonials, FAQ) |
-| ch26 | copy_intelligence | Linguistic patterns (terminology, register, vocabulary complexity) |
 | ch26 | color_system | Complete palette (secondary, accent, semantic, neutral scale) |
 | ch27 | motion_choreography | Entry sequences, stagger timing, scroll triggers, hover micro-interactions |
 | ch28 | iconography | Icon system (style, stroke weight, library: lucide/phosphor/heroicons) |
+| ch29 | copy_intelligence | Linguistic patterns (terminology, emotional register, vocabulary complexity, CTA aggression) |
+| ch30 | state_topology | State management architecture (local → shared_context → reactive_store → distributed → federated) |
+| ch31 | routing_pattern | Routing architecture (single_page → multi_page → protected → platform → federated) |
+| ch32 | token_inheritance | Design token governance (flat → semantic → component → governed → cross_system) |
 
 ---
 

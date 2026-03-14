@@ -345,7 +345,7 @@ export class SemanticTraitExtractor {
     }
 
     private buildPrompt(intent: string, projectContext?: string): string {
-        return `You are a Semantic Trait Extractor for a parametric design system with 26-chromosome DNA generation (ch0-sector through ch25-copy_engine).
+        return `You are a Semantic Trait Extractor for a parametric design system with 32-chromosome DNA generation (ch0-sector through ch32-token_inheritance).
 
 Analyze the design intent and map to 8 trait vectors (0.0-1.0). Your output directly generates the design genome.
 

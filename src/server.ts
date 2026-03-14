@@ -174,9 +174,9 @@ class DesignGenomeServer {
                             options: {
                                 type: "object",
                                 properties: {
-                                    microbialCount: { type: "number", description: "Number of microbial organisms (12-16, default: auto)" },
-                                    floraCount: { type: "number", description: "Number of flora organisms (8-12, default: auto)" },
-                                    faunaCount: { type: "number", description: "Number of fauna organisms (6-10, default: auto)" }
+                                    microbialCount: { type: "number", description: "Number of microbial organisms (default: auto-scaled from complexity tier)" },
+                                    floraCount: { type: "number", description: "Number of flora organisms (default: auto-scaled from complexity tier)" },
+                                    faunaCount: { type: "number", description: "Number of fauna organisms (default: auto-scaled from complexity tier)" }
                                 }
                             }
                         },
@@ -198,8 +198,8 @@ class DesignGenomeServer {
                             },
                             min_tier: {
                                 type: "string",
-                                enum: ["neural", "sentient", "civilized", "networked", "advanced"],
-                                description: "Minimum civilization tier (optional - forces complexity). neural=0.55+, sentient=0.68+, civilized=0.80+, networked=0.90+, advanced=0.95+"
+                                enum: ["tribal", "city_state", "nation_state", "empire", "network", "singularity"],
+                                description: "Minimum civilization tier (optional - forces complexity). tribal=0.81+, city_state=0.87+, nation_state=0.92+, empire=0.95+, network=0.97+, singularity=0.99+"
                             },
                             generate_code: {
                                 type: "boolean",
@@ -515,13 +515,13 @@ class DesignGenomeServer {
                         // (architecture) can emerge from it.
                         //
                         // Thresholds:
-                        //   < 0.40  microbial/flora  — HTML/CSS only, no organisms yet
-                        //   0.40–0.54 fauna          — ecosystem runs, organisms exist, no civilization
-                        //   0.55+  neural+            — civilization emerges FROM ecosystem
+                        //   < 0.11  abiotic           — HTML/CSS only, organism counts are zero
+                        //   0.11–0.80 ecosystem tiers — organisms scale from prokaryotic to endotherm_fauna
+                        //   0.81+  civilization tiers — emerges FROM ecosystem (tribal → singularity)
                         //
                         // When below civilization threshold: ecosystemOutput is populated,
                         // civilizationOutput is null, and civilizationGap tells the caller
-                        // how far complexity needs to increase to cross the threshold.
+                        // how far complexity needs to increase to cross the tribal (0.81) threshold.
 
                         // HTML always generated for every tier
                         const html = this.htmlGen.generate(genome, {
@@ -533,8 +533,8 @@ class DesignGenomeServer {
                         let ecosystemOutput: unknown | undefined;
                         let civilizationOutput: unknown | undefined;
 
-                        if (finalComplexity >= 0.40) {
-                            // Life exists — run ecosystem before any civilization step
+                        // Ecosystem always runs — organism counts scale from 0 (abiotic) to max (endotherm_fauna)
+                        {
                             const eco = ecosystemGenerator.generate(seed, traits, {
                                 primarySector: detectedSector
                             });
@@ -576,17 +576,17 @@ class DesignGenomeServer {
                                     })),
                                 evolution: eco.evolution,
                                 civilizationReady: eco.civilizationReady,
-                                // How far complexity needs to grow to reach neural threshold
+                                // How far complexity needs to grow to reach tribal (0.81) threshold
                                 civilizationGap: parseFloat(
-                                    Math.max(0, 0.55 - eco.evolution.complexity).toFixed(3)
+                                    Math.max(0, 0.81 - eco.evolution.complexity).toFixed(3)
                                 )
                             };
 
-                            // Civilization emerges from ecosystem when complexity crosses neural (0.55)
-                            if (finalComplexity >= 0.55) {
+                            // Civilization emerges from ecosystem when complexity crosses tribal (0.81)
+                            if (finalComplexity >= 0.81) {
                                 try {
                                     const civTier = this.civilizationGen.generate(
-                                        intent, finalContext ?? "", traits
+                                        intent, finalContext ?? "", traits, genome
                                     );
                                     // Pass ecosystem organisms — civilization uses topology-derived
                                     // organism specs, not the generic tier component list
@@ -615,12 +615,12 @@ class DesignGenomeServer {
                                     topology,
                                     css,
                                     html,
-                                    // ecosystem: present when complexity >= 0.40 (fauna+)
-                                    // null below that — too simple for organism model
+                                    // ecosystem: always present — organism counts scale with complexity tier
+                                    // abiotic returns empty organism arrays, not null
                                     ecosystemOutput: ecosystemOutput ?? null,
-                                    // civilization: present when complexity >= 0.55 (neural+)
+                                    // civilization: present when complexity >= 0.81 (tribal+)
                                     // emerges FROM ecosystem, never standalone
-                                    // null when complexity < 0.55 — use ecosystemOutput.civilizationGap
+                                    // null when complexity < 0.81 — use ecosystemOutput.civilizationGap
                                     civilizationOutput: civilizationOutput ?? null,
                                     webglComponents,
                                     fxAtmosphere,
@@ -876,6 +876,7 @@ class DesignGenomeServer {
                             args.intent,
                             context,
                             traits,
+                            baseGenome,
                             args.min_tier
                         );
 

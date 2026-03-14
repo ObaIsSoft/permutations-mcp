@@ -18,7 +18,7 @@ Every AI-generated website looks the same:
 
 ## The Solution
 
-Permutations treats design like **biological inheritance**. Each project gets a unique 29-chromosome DNA (ch0-sector through ch28-iconography) that:
+Permutations treats design like **biological inheritance**. Each project gets a unique 32-chromosome DNA (ch0-sector through ch32-token_inheritance) that:
 - ✅ Guarantees unique output (different seed = different design)
 - ✅ Guarantees reproducibility (same seed = same design forever)
 - ✅ Forbids generic patterns (no Inter font, no blue-purple gradients)
@@ -66,7 +66,7 @@ Ask your AI to design something:
 ```
 
 Your AI receives:
-- 29-chromosome DNA (colors, typography, motion, grid, hero, trust signals, personalization, color system, motion choreography, iconography)
+- 32-chromosome DNA (colors, typography, motion, grid, hero, trust signals, personalization, color system, motion choreography, iconography, state topology, routing pattern, token inheritance)
 - Tailwind config
 - CSS atmospheric effects
 - WebGL component specs
@@ -260,7 +260,7 @@ GROQ_API_KEY=xxx npx tsx generate-product-dna.ts
 
 ## Documentation
 
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Full technical architecture, epistasis rules, 26-chromosome reference
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Full technical architecture, epistasis rules, 32-chromosome reference
 
 ---
 

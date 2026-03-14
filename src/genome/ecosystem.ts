@@ -10,7 +10,7 @@
  * - Fauna = Complex moving components (orchestrators)
  * - Relationships = How organisms interact (composition patterns, communication)
  * 
- * Civilization emerges when ecosystem complexity crosses threshold (0.85)
+ * Civilization emerges when ecosystem complexity crosses threshold (0.81)
  * 
  * NOTE: Names are DERIVED from topology, not hardcoded. A developer might look at
  * the topology signature and say "this looks like a button" - but the system
@@ -72,9 +72,9 @@ export interface Ecosystem {
         carryingCapacity: number;  // Max complexity supported
     };
     organisms: {
-        microbial: Organism[];     // 12-16 atomic components
-        flora: Organism[];         // 8-12 growing components  
-        fauna: Organism[];         // 6-10 complex components
+        microbial: Organism[];     // atomic components — count scales with complexity tier
+        flora: Organism[];         // growing components — emerge at bryophyte (0.34+)
+        fauna: Organism[];         // complex components — emerge at invertebrate_fauna (0.57+)
         total: number;
     };
     relationships: OrganismRelationship[];
@@ -85,8 +85,8 @@ export interface Ecosystem {
         generations: number;
     };
     // Path to civilization
-    civilizationReady: boolean;    // complexity > 0.85
-    civilizationThreshold: number; // 0.85
+    civilizationReady: boolean;    // complexity >= 0.81 (tribal tier threshold)
+    civilizationThreshold: number; // 0.81
 }
 
 /**
@@ -135,11 +135,11 @@ export class EcosystemGenerator {
         seed: string,
         traits: ContentTraits,
         options?: {
-            microbialCount?: number;  // 12-16
-            floraCount?: number;      // 8-12
-            faunaCount?: number;      // 6-10
-            complexityTarget?: number; // 0-1
-            primarySector?: string;   // sector override from caller
+            microbialCount?: number;   // 0–18, overrides tier-scaled default
+            floraCount?: number;       // 0–12, overrides tier-scaled default
+            faunaCount?: number;       // 0–10, overrides tier-scaled default
+            complexityTarget?: number; // 0–1
+            primarySector?: string;    // sector override from caller
         }
     ): Ecosystem {
         // Derive sector from caller or infer from trait signature
@@ -202,8 +202,8 @@ export class EcosystemGenerator {
                 stability,
                 generations: Math.floor(complexity * 10)
             },
-            civilizationReady: complexity >= 0.85,
-            civilizationThreshold: 0.85
+            civilizationReady: complexity >= 0.81,
+            civilizationThreshold: 0.81
         };
     }
     
@@ -736,31 +736,38 @@ export class EcosystemGenerator {
     }
     
     private calculateOrganismCounts(
-        genome: DesignGenome, 
+        genome: DesignGenome,
         options?: { microbialCount?: number; floraCount?: number; faunaCount?: number }
     ): { microbial: number; flora: number; fauna: number; carryingCapacity: number } {
         const ch = genome.chromosomes;
-        
-        const entropy = ch.ch12_signature.entropy;
-        const density = ch.ch2_rhythm.density === 'maximal' ? 1 : 
-                       ch.ch2_rhythm.density === 'breathing' ? 0.7 : 0.4;
-        
-        const complexity = ch.ch15_biomarker.complexity;
-        const structureDepth = ch.ch1_structure.maxNesting > 3 ? 1 : 0.7;
-        
-        const topologyMultiplier = ch.ch1_structure.topology === 'graph' ? 1.3 :
-                                  ch.ch1_structure.topology === 'radial' ? 1.2 : 1.0;
-        
-        const baseMicrobial = Math.floor(12 + (entropy * 4));
-        const baseFlora = Math.floor(8 + (density * 4));
-        const baseFauna = Math.floor(6 + (complexity * 4));
-        
-        const carryingCapacity = Math.min(1, (baseMicrobial + baseFlora + baseFauna) / 38 * topologyMultiplier);
-        
+        const comp = ch.ch15_biomarker.complexity; // 0.0–1.0, drives tier scaling
+
+        // Organism counts scale with complexity tier — biology before civilization.
+        // Microbial first appears at prokaryotic (0.11), scales to 16 at endotherm (0.80).
+        // Flora first appears at bryophyte (0.34), scales to 12 at endotherm (0.80).
+        // Fauna first appears at invertebrate_fauna (0.57), scales to 10 at endotherm (0.80).
+        const baseMicrobial = comp < 0.11
+            ? 0
+            : Math.min(16, Math.floor(2 + ((comp - 0.11) / 0.69) * 14));
+
+        const baseFlora = comp < 0.34
+            ? 0
+            : Math.min(12, Math.floor(((comp - 0.34) / 0.46) * 12));
+
+        const baseFauna = comp < 0.57
+            ? 0
+            : Math.min(10, Math.floor(((comp - 0.57) / 0.23) * 10));
+
+        const topologyMultiplier = ch.ch1_structure.topology === 'graph'  ? 1.3 :
+                                   ch.ch1_structure.topology === 'radial' ? 1.2 : 1.0;
+
+        const total = baseMicrobial + baseFlora + baseFauna;
+        const carryingCapacity = Math.min(1, (total / 38) * topologyMultiplier);
+
         return {
-            microbial: options?.microbialCount ?? Math.min(16, baseMicrobial),
-            flora: options?.floraCount ?? Math.min(12, baseFlora),
-            fauna: options?.faunaCount ?? Math.min(10, baseFauna),
+            microbial: options?.microbialCount ?? baseMicrobial,
+            flora:     options?.floraCount     ?? baseFlora,
+            fauna:     options?.faunaCount     ?? baseFauna,
             carryingCapacity
         };
     }

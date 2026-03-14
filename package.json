@@ -1,6 +1,6 @@
 {
   "name": "permutations",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Parametric Design Genome MCP Server",
   "type": "module",
   "main": "dist/server.js",

@@ -10,7 +10,7 @@
  * - Fauna = Complex moving components (orchestrators)
  * - Relationships = How organisms interact (composition patterns, communication)
  *
- * Civilization emerges when ecosystem complexity crosses threshold (0.85)
+ * Civilization emerges when ecosystem complexity crosses threshold (0.81)
  *
  * NOTE: Names are DERIVED from topology, not hardcoded. A developer might look at
  * the topology signature and say "this looks like a button" - but the system
@@ -113,8 +113,8 @@ export class EcosystemGenerator {
                 stability,
                 generations: Math.floor(complexity * 10)
             },
-            civilizationReady: complexity >= 0.85,
-            civilizationThreshold: 0.85
+            civilizationReady: complexity >= 0.81,
+            civilizationThreshold: 0.81
         };
     }
     // === MICROBIAL COLONY ===
@@ -580,21 +580,28 @@ export class EcosystemGenerator {
     }
     calculateOrganismCounts(genome, options) {
         const ch = genome.chromosomes;
-        const entropy = ch.ch12_signature.entropy;
-        const density = ch.ch2_rhythm.density === 'maximal' ? 1 :
-            ch.ch2_rhythm.density === 'breathing' ? 0.7 : 0.4;
-        const complexity = ch.ch15_biomarker.complexity;
-        const structureDepth = ch.ch1_structure.maxNesting > 3 ? 1 : 0.7;
+        const comp = ch.ch15_biomarker.complexity; // 0.0–1.0, drives tier scaling
+        // Organism counts scale with complexity tier — biology before civilization.
+        // Microbial first appears at prokaryotic (0.11), scales to 16 at endotherm (0.80).
+        // Flora first appears at bryophyte (0.34), scales to 12 at endotherm (0.80).
+        // Fauna first appears at invertebrate_fauna (0.57), scales to 10 at endotherm (0.80).
+        const baseMicrobial = comp < 0.11
+            ? 0
+            : Math.min(16, Math.floor(2 + ((comp - 0.11) / 0.69) * 14));
+        const baseFlora = comp < 0.34
+            ? 0
+            : Math.min(12, Math.floor(((comp - 0.34) / 0.46) * 12));
+        const baseFauna = comp < 0.57
+            ? 0
+            : Math.min(10, Math.floor(((comp - 0.57) / 0.23) * 10));
         const topologyMultiplier = ch.ch1_structure.topology === 'graph' ? 1.3 :
             ch.ch1_structure.topology === 'radial' ? 1.2 : 1.0;
-        const baseMicrobial = Math.floor(12 + (entropy * 4));
-        const baseFlora = Math.floor(8 + (density * 4));
-        const baseFauna = Math.floor(6 + (complexity * 4));
-        const carryingCapacity = Math.min(1, (baseMicrobial + baseFlora + baseFauna) / 38 * topologyMultiplier);
+        const total = baseMicrobial + baseFlora + baseFauna;
+        const carryingCapacity = Math.min(1, (total / 38) * topologyMultiplier);
         return {
-            microbial: options?.microbialCount ?? Math.min(16, baseMicrobial),
-            flora: options?.floraCount ?? Math.min(12, baseFlora),
-            fauna: options?.faunaCount ?? Math.min(10, baseFauna),
+            microbial: options?.microbialCount ?? baseMicrobial,
+            flora: options?.floraCount ?? baseFlora,
+            fauna: options?.faunaCount ?? baseFauna,
             carryingCapacity
         };
     }

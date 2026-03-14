@@ -4,47 +4,107 @@ export class CivilizationGenerator {
     constructor() {
         this.complexityAnalyzer = new ComplexityAnalyzer();
     }
-    generate(intent, context, traits, minTier) {
-        const analysis = minTier
-            ? this.complexityAnalyzer.forceMinimumTier(intent, context, traits, minTier)
+    generate(intent, context, traits, genome, minTier) {
+        // minTier must be a civilization tier — reject ecosystem tiers at call site
+        const civMinTier = minTier;
+        const analysis = civMinTier
+            ? this.complexityAnalyzer.forceMinimumTier(intent, context, traits, civMinTier)
             : this.complexityAnalyzer.analyze(intent, context, traits);
-        // Civilization requires at least neural tier (0.55+)
-        if (analysis.finalComplexity < 0.55) {
-            throw new Error(`Complexity ${analysis.finalComplexity.toFixed(2)} is below civilization threshold (0.55). ` +
-                `Current tier: ${analysis.tier}. Add sophistication keywords or specify minTier.`);
+        // Civilization requires at least tribal tier (0.81+)
+        if (analysis.finalComplexity < 0.81) {
+            throw new Error(`Complexity ${analysis.finalComplexity.toFixed(2)} is below civilization threshold (0.81). ` +
+                `Current tier: ${analysis.tier}. ` +
+                `Add sophistication keywords (dashboard, platform, real-time, collaborative) ` +
+                `or specify minTier: 'tribal' to force it.`);
         }
-        return this.generateTier(analysis);
+        return this.generateTier(analysis, genome);
     }
-    generateTier(analysis) {
+    generateTier(analysis, genome) {
         switch (analysis.tier) {
-            case 'neural':
-                return this.generateNeuralTier(analysis);
-            case 'sentient':
-                return this.generateSentientTier(analysis);
-            case 'civilized':
-                return this.generateCivilizedTier(analysis);
-            case 'networked':
-                return this.generateNetworkedTier(analysis);
-            case 'advanced':
-                return this.generateAdvancedTier(analysis);
+            case 'tribal': return this.generateTribalTier(analysis, genome);
+            case 'city_state': return this.generateCityStateTier(analysis, genome);
+            case 'nation_state': return this.generateNationStateTier(analysis, genome);
+            case 'empire': return this.generateEmpireTier(analysis, genome);
+            case 'network': return this.generateNetworkTier(analysis, genome);
+            case 'singularity': return this.generateSingularityTier(analysis, genome);
             default:
-                throw new Error(`Cannot generate civilization for tier: ${analysis.tier}`);
+                throw new Error(`Cannot generate civilization for ecosystem tier: ${analysis.tier}`);
         }
     }
-    // 0.55–0.68 — Signal propagation: nervous system forms, components wire together
-    generateNeuralTier(analysis) {
+    // ── HELPER: read ch30–ch32 from genome, capped to the tier's allowed values ──────
+    resolveStateTopology(genome, allowed) {
+        const raw = genome?.chromosomes.ch30_state_topology?.topology;
+        if (raw && allowed.includes(raw))
+            return raw;
+        return allowed[allowed.length - 1]; // default to most expressive allowed
+    }
+    resolveRoutingPattern(genome, allowed) {
+        const raw = genome?.chromosomes.ch31_routing_pattern?.pattern;
+        if (raw && allowed.includes(raw))
+            return raw;
+        return allowed[allowed.length - 1];
+    }
+    resolveTokenInheritance(genome, allowed) {
+        const raw = genome?.chromosomes.ch32_token_inheritance?.inheritance;
+        if (raw && allowed.includes(raw))
+            return raw;
+        return allowed[allowed.length - 1];
+    }
+    // ── TRIBAL (0.81–0.86) ─────────────────────────────────────────────────────────
+    // First settlement — component library crystallises from ecosystem organisms.
+    // Single surface, local state, simple navigation, flat tokens.
+    generateTribalTier(analysis, genome) {
         return {
-            tier: 'neural',
+            tier: 'tribal',
             complexity: analysis.finalComplexity,
             architecture: {
                 pattern: 'component-based',
-                modules: 4,
-                stateManagement: 'context',
-                routing: 'static'
+                modules: 3,
+                stateTopology: this.resolveStateTopology(genome, ['local']),
+                routingPattern: this.resolveRoutingPattern(genome, ['single_page', 'multi_page']),
+                tokenInheritance: this.resolveTokenInheritance(genome, ['flat', 'semantic'])
+            },
+            components: {
+                count: [8, 14],
+                list: this.generateComponentLibrary('tribal')
+            },
+            animations: {
+                physics: 'simple',
+                types: ['fade', 'slide'],
+                choreography: 'sequential',
+                reducedMotion: 'reduce'
+            },
+            designSystem: {
+                count: [18, 28],
+                themes: [1, 1],
+                modes: ['light'],
+                semanticTokens: false
+            },
+            interactions: {
+                gestures: ['click', 'hover', 'focus'],
+                keyboard: 'basic',
+                focus: 'basic'
+            }
+        };
+    }
+    // ── CITY-STATE (0.87–0.91) ─────────────────────────────────────────────────────
+    // Governed settlement — shared context lifts state, routes proliferate,
+    // light/dark modes appear, semantic tokens emerge.
+    generateCityStateTier(analysis, genome) {
+        return {
+            tier: 'city_state',
+            complexity: analysis.finalComplexity,
+            architecture: {
+                pattern: 'component-based',
+                layers: ['view', 'logic'],
+                modules: 5,
+                stateTopology: this.resolveStateTopology(genome, ['local', 'shared_context']),
+                routingPattern: this.resolveRoutingPattern(genome, ['single_page', 'multi_page', 'protected']),
+                tokenInheritance: this.resolveTokenInheritance(genome, ['flat', 'semantic'])
             },
             components: {
                 count: [14, 22],
-                list: this.generateComponentLibrary('neural')
+                list: this.generateComponentLibrary('city_state')
             },
             animations: {
                 physics: 'spring',
@@ -56,7 +116,7 @@ export class CivilizationGenerator {
                 count: [28, 45],
                 themes: [1, 2],
                 modes: ['light', 'dark'],
-                semanticTokens: false
+                semanticTokens: true
             },
             interactions: {
                 gestures: ['click', 'hover', 'focus'],
@@ -65,21 +125,24 @@ export class CivilizationGenerator {
             }
         };
     }
-    // 0.68–0.80 — Consciousness: intent-aware, multi-modal, motion system active
-    generateSentientTier(analysis) {
+    // ── NATION-STATE (0.92–0.94) ───────────────────────────────────────────────────
+    // Organised society — reactive store, protected routes, component-scoped tokens,
+    // full keyboard access, staggered animation choreography.
+    generateNationStateTier(analysis, genome) {
         return {
-            tier: 'sentient',
+            tier: 'nation_state',
             complexity: analysis.finalComplexity,
             architecture: {
-                pattern: 'component-based',
-                layers: ['view', 'logic'],
-                modules: 5,
-                stateManagement: 'context',
-                routing: 'static'
+                pattern: 'layered',
+                layers: ['presentation', 'domain', 'data'],
+                modules: 8,
+                stateTopology: this.resolveStateTopology(genome, ['local', 'shared_context', 'reactive_store']),
+                routingPattern: this.resolveRoutingPattern(genome, ['multi_page', 'protected', 'platform']),
+                tokenInheritance: this.resolveTokenInheritance(genome, ['flat', 'semantic', 'component'])
             },
             components: {
-                count: [20, 35],
-                list: this.generateComponentLibrary('sentient')
+                count: [22, 35],
+                list: this.generateComponentLibrary('nation_state')
             },
             animations: {
                 physics: 'spring',
@@ -89,44 +152,49 @@ export class CivilizationGenerator {
             },
             designSystem: {
                 count: [45, 65],
-                themes: [1, 2],
-                modes: ['light', 'dark'],
+                themes: [2, 3],
+                modes: ['light', 'dark', 'high-contrast'],
                 semanticTokens: true
             },
             interactions: {
                 gestures: ['click', 'hover', 'swipe', 'focus'],
                 keyboard: 'full',
-                focus: 'basic'
+                focus: 'managed'
             }
         };
     }
-    // 0.80–0.90 — Society: organized, composable, token-driven, data-rich
-    generateCivilizedTier(analysis) {
+    // ── EMPIRE (0.95–0.96) ─────────────────────────────────────────────────────────
+    // Distributed governance — micro-frontend architecture, distributed state,
+    // platform routing (shell + remotes), governed token system.
+    generateEmpireTier(analysis, genome) {
         return {
-            tier: 'civilized',
+            tier: 'empire',
             complexity: analysis.finalComplexity,
             architecture: {
-                pattern: 'layered',
-                layers: ['presentation', 'domain', 'data'],
-                modules: 8,
-                stateManagement: 'store',
-                routing: 'dynamic'
+                pattern: 'micro-frontend',
+                layers: ['shell', 'feature', 'shared', 'platform'],
+                modules: 12,
+                stateTopology: this.resolveStateTopology(genome, ['shared_context', 'reactive_store', 'distributed']),
+                routingPattern: this.resolveRoutingPattern(genome, ['protected', 'platform', 'federated']),
+                tokenInheritance: this.resolveTokenInheritance(genome, ['semantic', 'component', 'governed']),
+                edge: true
             },
             components: {
-                count: [32, 50],
-                list: this.generateComponentLibrary('civilized')
+                count: [35, 52],
+                list: this.generateComponentLibrary('empire')
             },
             animations: {
                 physics: 'advanced',
-                types: ['spring', 'glitch', 'morph', 'particle', 'stagger'],
+                types: ['spring', 'morph', 'particle', 'stagger'],
                 choreography: 'staggered',
                 reducedMotion: 'alternative'
             },
             designSystem: {
                 count: [75, 100],
                 themes: [2, 4],
-                modes: ['light', 'dark', 'high-contrast'],
-                semanticTokens: true
+                modes: ['light', 'dark', 'high-contrast', 'print'],
+                semanticTokens: true,
+                generative: true
             },
             interactions: {
                 gestures: ['swipe', 'pinch', 'hover', 'drag', 'long-press'],
@@ -135,22 +203,25 @@ export class CivilizationGenerator {
             }
         };
     }
-    // 0.90–0.95 — Networked civilization: distributed, real-time, multi-surface
-    generateNetworkedTier(analysis) {
+    // ── NETWORK (0.97–0.98) ────────────────────────────────────────────────────────
+    // Federated civilisation — real-time, edge-first, cross-app state federation,
+    // module-federation routing, cross-system design token contract.
+    generateNetworkTier(analysis, genome) {
         return {
-            tier: 'networked',
+            tier: 'network',
             complexity: analysis.finalComplexity,
             architecture: {
                 pattern: 'micro-frontend',
-                layers: ['shell', 'feature', 'shared', 'platform'],
-                modules: 12,
-                stateManagement: 'distributed',
-                routing: 'dynamic',
+                layers: ['shell', 'feature', 'shared', 'platform', 'edge'],
+                modules: 18,
+                stateTopology: this.resolveStateTopology(genome, ['reactive_store', 'distributed', 'federated']),
+                routingPattern: this.resolveRoutingPattern(genome, ['platform', 'federated']),
+                tokenInheritance: this.resolveTokenInheritance(genome, ['component', 'governed', 'cross_system']),
                 edge: true
             },
             components: {
-                count: [48, 72],
-                list: this.generateComponentLibrary('networked')
+                count: [52, 72],
+                list: this.generateComponentLibrary('network')
             },
             animations: {
                 physics: 'advanced',
@@ -173,22 +244,25 @@ export class CivilizationGenerator {
             }
         };
     }
-    // 0.95–1.00 — Post-civilization: generative, ML-optimized, intent-based, adaptive
-    generateAdvancedTier(analysis) {
+    // ── SINGULARITY (0.99–1.00) ────────────────────────────────────────────────────
+    // Post-civilisation — generative components, federated state, intent-based
+    // routing, adaptive cross-system token graph, ML-driven personalisation.
+    generateSingularityTier(analysis, genome) {
         return {
-            tier: 'advanced',
+            tier: 'singularity',
             complexity: analysis.finalComplexity,
             architecture: {
                 pattern: 'fractal',
                 layers: ['intent', 'generation', 'surface', 'data', 'edge'],
                 modules: 'dynamic',
-                stateManagement: 'distributed',
-                routing: 'intent-based',
+                stateTopology: this.resolveStateTopology(genome, ['distributed', 'federated']),
+                routingPattern: this.resolveRoutingPattern(genome, ['platform', 'federated']),
+                tokenInheritance: this.resolveTokenInheritance(genome, ['governed', 'cross_system']),
                 edge: true
             },
             components: {
                 count: 'generative',
-                list: this.generateComponentLibrary('advanced')
+                list: this.generateComponentLibrary('singularity')
             },
             animations: {
                 physics: 'custom-engine',
@@ -219,7 +293,7 @@ export class CivilizationGenerator {
         };
     }
     generateComponentLibrary(tier) {
-        const baseComponents = [
+        const base = [
             {
                 name: 'Button',
                 category: 'input',
@@ -230,11 +304,7 @@ export class CivilizationGenerator {
                     { name: 'onClick', type: '() => void', required: false }
                 ],
                 variants: ['primary', 'secondary', 'ghost', 'danger'],
-                accessibility: {
-                    role: 'button',
-                    ariaProps: ['aria-disabled', 'aria-pressed'],
-                    keyboard: ['Enter', 'Space']
-                }
+                accessibility: { role: 'button', ariaProps: ['aria-disabled', 'aria-pressed'], keyboard: ['Enter', 'Space'] }
             },
             {
                 name: 'Card',
@@ -244,11 +314,7 @@ export class CivilizationGenerator {
                     { name: 'interactive', type: 'boolean', required: false, default: false }
                 ],
                 variants: ['default', 'elevated', 'outlined'],
-                accessibility: {
-                    role: 'article',
-                    ariaProps: ['aria-label'],
-                    keyboard: []
-                }
+                accessibility: { role: 'article', ariaProps: ['aria-label'], keyboard: [] }
             },
             {
                 name: 'Input',
@@ -260,16 +326,20 @@ export class CivilizationGenerator {
                     { name: 'error', type: 'string', required: false }
                 ],
                 variants: ['default', 'error', 'disabled'],
-                accessibility: {
-                    role: 'textbox',
-                    ariaProps: ['aria-invalid', 'aria-errormessage', 'aria-required'],
-                    keyboard: ['Tab', 'Enter']
-                }
+                accessibility: { role: 'textbox', ariaProps: ['aria-invalid', 'aria-errormessage', 'aria-required'], keyboard: ['Tab', 'Enter'] }
             }
         ];
-        if (tier === 'neural') {
+        if (tier === 'tribal') {
             return [
-                ...baseComponents,
+                ...base,
+                this.createNavComponent(),
+                this.createToastComponent(),
+                this.createTooltipComponent()
+            ];
+        }
+        if (tier === 'city_state') {
+            return [
+                ...base,
                 this.createNavComponent(),
                 this.createModalComponent(),
                 this.createDropdownComponent(),
@@ -277,9 +347,9 @@ export class CivilizationGenerator {
                 this.createTooltipComponent()
             ];
         }
-        if (tier === 'sentient') {
+        if (tier === 'nation_state') {
             return [
-                ...baseComponents,
+                ...base,
                 this.createNavComponent(),
                 this.createModalComponent(),
                 this.createDropdownComponent(),
@@ -289,9 +359,9 @@ export class CivilizationGenerator {
                 this.createTooltipComponent()
             ];
         }
-        if (tier === 'civilized') {
+        if (tier === 'empire') {
             return [
-                ...baseComponents,
+                ...base,
                 this.createNavComponent(),
                 this.createModalComponent(),
                 this.createDropdownComponent(),
@@ -304,9 +374,9 @@ export class CivilizationGenerator {
                 this.createTooltipComponent()
             ];
         }
-        if (tier === 'networked') {
+        if (tier === 'network') {
             return [
-                ...baseComponents,
+                ...base,
                 this.createNavComponent(),
                 this.createModalComponent(),
                 this.createDropdownComponent(),
@@ -322,9 +392,9 @@ export class CivilizationGenerator {
                 this.createComboboxComponent()
             ];
         }
-        // Advanced tier — components are generative/config-driven
+        // singularity — components are generative / config-driven
         return [
-            ...baseComponents,
+            ...base,
             {
                 name: 'GenerativeLayout',
                 category: 'layout',
@@ -334,11 +404,7 @@ export class CivilizationGenerator {
                     { name: 'adaptive', type: 'boolean', required: false, default: true }
                 ],
                 variants: ['adaptive', 'fixed', 'ml-optimized'],
-                accessibility: {
-                    role: 'region',
-                    ariaProps: ['aria-label', 'aria-live'],
-                    keyboard: ['Tab', 'ArrowKeys']
-                }
+                accessibility: { role: 'region', ariaProps: ['aria-label', 'aria-live'], keyboard: ['Tab', 'ArrowKeys'] }
             },
             {
                 name: 'SmartComponent',
@@ -349,11 +415,7 @@ export class CivilizationGenerator {
                     { name: 'personalize', type: 'boolean', required: false, default: true }
                 ],
                 variants: ['adaptive'],
-                accessibility: {
-                    role: 'region',
-                    ariaProps: ['aria-busy', 'aria-live'],
-                    keyboard: ['Tab', 'ArrowKeys', 'Enter']
-                }
+                accessibility: { role: 'region', ariaProps: ['aria-busy', 'aria-live'], keyboard: ['Tab', 'ArrowKeys', 'Enter'] }
             }
         ];
     }
@@ -366,11 +428,7 @@ export class CivilizationGenerator {
                 { name: 'orientation', type: '"horizontal" | "vertical"', required: false, default: '"horizontal"' }
             ],
             variants: ['horizontal', 'vertical', 'mobile'],
-            accessibility: {
-                role: 'navigation',
-                ariaProps: ['aria-label'],
-                keyboard: ['Tab', 'ArrowKeys', 'Enter']
-            }
+            accessibility: { role: 'navigation', ariaProps: ['aria-label'], keyboard: ['Tab', 'ArrowKeys', 'Enter'] }
         };
     }
     createModalComponent() {
@@ -384,11 +442,7 @@ export class CivilizationGenerator {
                 { name: 'size', type: '"sm" | "md" | "lg" | "fullscreen"', required: false, default: '"md"' }
             ],
             variants: ['default', 'fullscreen', 'side-panel'],
-            accessibility: {
-                role: 'dialog',
-                ariaProps: ['aria-modal', 'aria-labelledby'],
-                keyboard: ['Escape', 'Tab']
-            }
+            accessibility: { role: 'dialog', ariaProps: ['aria-modal', 'aria-labelledby'], keyboard: ['Escape', 'Tab'] }
         };
     }
     createDropdownComponent() {
@@ -402,11 +456,7 @@ export class CivilizationGenerator {
                 { name: 'multi', type: 'boolean', required: false, default: false }
             ],
             variants: ['single', 'multi', 'searchable'],
-            accessibility: {
-                role: 'combobox',
-                ariaProps: ['aria-expanded', 'aria-haspopup', 'aria-activedescendant'],
-                keyboard: ['Enter', 'Space', 'ArrowKeys', 'Escape']
-            }
+            accessibility: { role: 'combobox', ariaProps: ['aria-expanded', 'aria-haspopup', 'aria-activedescendant'], keyboard: ['Enter', 'Space', 'ArrowKeys', 'Escape'] }
         };
     }
     createDataTableComponent() {
@@ -422,11 +472,7 @@ export class CivilizationGenerator {
             ],
             variants: ['default', 'compact', 'expanded'],
             composition: true,
-            accessibility: {
-                role: 'table',
-                ariaProps: ['aria-sort', 'aria-selected'],
-                keyboard: ['Tab', 'ArrowKeys', 'Enter', 'Space']
-            }
+            accessibility: { role: 'table', ariaProps: ['aria-sort', 'aria-selected'], keyboard: ['Tab', 'ArrowKeys', 'Enter', 'Space'] }
         };
     }
     createChartComponent() {
@@ -439,11 +485,7 @@ export class CivilizationGenerator {
                 { name: 'animated', type: 'boolean', required: false, default: true }
             ],
             variants: ['line', 'bar', 'pie', 'area', 'composed'],
-            accessibility: {
-                role: 'img',
-                ariaProps: ['aria-label'],
-                keyboard: ['Tab', 'ArrowKeys']
-            }
+            accessibility: { role: 'img', ariaProps: ['aria-label'], keyboard: ['Tab', 'ArrowKeys'] }
         };
     }
     createFormComponent() {
@@ -457,11 +499,7 @@ export class CivilizationGenerator {
             ],
             variants: ['default', 'inline', 'wizard'],
             compound: ['Form.Field', 'Form.Error', 'Form.Submit'],
-            accessibility: {
-                role: 'form',
-                ariaProps: ['aria-label', 'aria-describedby'],
-                keyboard: ['Tab', 'Enter', 'Escape']
-            }
+            accessibility: { role: 'form', ariaProps: ['aria-label', 'aria-describedby'], keyboard: ['Tab', 'Enter', 'Escape'] }
         };
     }
     createTabsComponent() {
@@ -475,11 +513,7 @@ export class CivilizationGenerator {
             ],
             variants: ['default', 'pills', 'underlined'],
             composition: true,
-            accessibility: {
-                role: 'tablist',
-                ariaProps: ['aria-selected', 'aria-controls'],
-                keyboard: ['Tab', 'ArrowKeys', 'Enter']
-            }
+            accessibility: { role: 'tablist', ariaProps: ['aria-selected', 'aria-controls'], keyboard: ['Tab', 'ArrowKeys', 'Enter'] }
         };
     }
     createAccordionComponent() {
@@ -491,11 +525,7 @@ export class CivilizationGenerator {
                 { name: 'multiple', type: 'boolean', required: false, default: false }
             ],
             variants: ['default', 'bordered', 'separated'],
-            accessibility: {
-                role: 'region',
-                ariaProps: ['aria-expanded', 'aria-controls'],
-                keyboard: ['Tab', 'Enter', 'Space', 'ArrowKeys']
-            }
+            accessibility: { role: 'region', ariaProps: ['aria-expanded', 'aria-controls'], keyboard: ['Tab', 'Enter', 'Space', 'ArrowKeys'] }
         };
     }
     createToastComponent() {
@@ -508,11 +538,7 @@ export class CivilizationGenerator {
                 { name: 'duration', type: 'number', required: false, default: 5000 }
             ],
             variants: ['info', 'success', 'warning', 'error'],
-            accessibility: {
-                role: 'alert',
-                ariaProps: ['aria-live', 'aria-atomic'],
-                keyboard: ['Escape']
-            }
+            accessibility: { role: 'alert', ariaProps: ['aria-live', 'aria-atomic'], keyboard: ['Escape'] }
         };
     }
     createTooltipComponent() {
@@ -525,11 +551,7 @@ export class CivilizationGenerator {
                 { name: 'delay', type: 'number', required: false, default: 200 }
             ],
             variants: ['default', 'rich'],
-            accessibility: {
-                role: 'tooltip',
-                ariaProps: ['aria-describedby'],
-                keyboard: []
-            }
+            accessibility: { role: 'tooltip', ariaProps: ['aria-describedby'], keyboard: [] }
         };
     }
     createCommandPaletteComponent() {
@@ -543,11 +565,7 @@ export class CivilizationGenerator {
                 { name: 'placeholder', type: 'string', required: false, default: '"Search commands…"' }
             ],
             variants: ['default', 'compact'],
-            accessibility: {
-                role: 'dialog',
-                ariaProps: ['aria-modal', 'aria-label', 'aria-activedescendant'],
-                keyboard: ['Escape', 'ArrowKeys', 'Enter', 'Cmd+K']
-            }
+            accessibility: { role: 'dialog', ariaProps: ['aria-modal', 'aria-label', 'aria-activedescendant'], keyboard: ['Escape', 'ArrowKeys', 'Enter', 'Cmd+K'] }
         };
     }
     createVirtualListComponent() {
@@ -561,11 +579,7 @@ export class CivilizationGenerator {
                 { name: 'overscan', type: 'number', required: false, default: 5 }
             ],
             variants: ['default', 'infinite'],
-            accessibility: {
-                role: 'list',
-                ariaProps: ['aria-rowcount', 'aria-rowindex'],
-                keyboard: ['Tab', 'ArrowKeys', 'PageUp', 'PageDown']
-            }
+            accessibility: { role: 'list', ariaProps: ['aria-rowcount', 'aria-rowindex'], keyboard: ['Tab', 'ArrowKeys', 'PageUp', 'PageDown'] }
         };
     }
     createComboboxComponent() {
@@ -580,11 +594,7 @@ export class CivilizationGenerator {
                 { name: 'async', type: 'boolean', required: false, default: false }
             ],
             variants: ['single', 'multi', 'creatable', 'async'],
-            accessibility: {
-                role: 'combobox',
-                ariaProps: ['aria-expanded', 'aria-haspopup', 'aria-activedescendant', 'aria-autocomplete'],
-                keyboard: ['Enter', 'Space', 'ArrowKeys', 'Escape', 'Tab']
-            }
+            accessibility: { role: 'combobox', ariaProps: ['aria-expanded', 'aria-haspopup', 'aria-activedescendant', 'aria-autocomplete'], keyboard: ['Enter', 'Space', 'ArrowKeys', 'Escape', 'Tab'] }
         };
     }
 }

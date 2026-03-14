@@ -79,7 +79,7 @@ The design genome must correlate to:
 ├─────────────────────────────────────────────────────────────────────┤
 │  Seed + Sector Profile + Brand Constraints + Content Markers         │
 │                                                                      │
-│  Generates 20 chromosomes with:                                     │
+│  Generates 32 chromosomes with:                                     │
 │    - Constrained randomness (sector-weighted probabilities)          │
 │    - Epistasis rules (chromosome interactions)                       │
 │    - User-eliminable chromosomes (opt-out flexibility)               │
@@ -97,13 +97,13 @@ The design genome must correlate to:
 
 ---
 
-## New Chromosomes (20 Total)
+## Chromosomes (32 Total)
 
 ### Sector & Context Chromosomes
 
 | Chromosome | Code | Purpose | Range |
 |------------|------|---------|-------|
-| ch0_sector_primary | `sec_p` | Primary sector classification | healthcare, fintech, automotive, education, commerce, entertainment, manufacturing, legal, real_estate, travel, food, sports |
+| ch0_sector_primary | `sec_p` | Primary sector classification | healthcare, fintech, automotive, education, commerce, entertainment, manufacturing, legal, real_estate, travel, food, sports, technology, nonprofit, government, media, crypto_web3, gaming, hospitality, beauty_fashion, insurance, agency, energy |
 | ch0_sector_secondary | `sec_s` | Secondary sector influence (blended) | same as above + null |
 | ch0_sub_sector | `sub_sec` | Content-derived sub-classification | e.g., "healthcare_surgical", "healthcare_wellness", "fintech_consumer", "fintech_enterprise" |
 | ch0_brand_weight | `brand_w` | Brand vs sector influence ratio | 0.0 (sector dominant) to 1.0 (brand dominant), default 0.7 |
@@ -133,6 +133,21 @@ The design genome must correlate to:
 | ch23_content_depth | `depth` | Number of sections appropriate | minimal (2-3), moderate (4-6), extensive (7-10), comprehensive (10+) |
 | ch23_information_architecture | `ia` | How content is organized | funnel_linear, hub_spoke, modular_sections, narrative_scroll, data_dashboard |
 | ch24_personalization | `personal` | Dynamic content approach | static, location_based, behavior_based, segment_based, fully_dynamic |
+| ch25_copy_engine | `copy_e` | Generated page copy (headlines, CTAs, FAQ, features, footer) | seeded LLM output |
+| ch26_color_system | `col_sys` | Complete palette (secondary, accent, semantic, neutral scale) | derived from ch5/ch6 + sector bias |
+| ch27_motion_choreography | `motion_c` | Entry sequences, stagger timing, scroll triggers, hover micro-interactions | spring/tween/physics derived |
+| ch28_iconography | `icon` | Icon system style, stroke weight, library | lucide / phosphor / heroicons |
+| ch29_copy_intelligence | `copy_i` | Linguistic patterns, emotional register, vocabulary complexity, CTA aggression | sector + trait driven |
+
+### Architecture Chromosomes (ch30–ch32)
+
+Active only at complexity ≥ 0.81 (civilization tier). Values are always generated from the hash; `CivilizationGenerator` reads them at the appropriate tier.
+
+| Chromosome | Code | Purpose | Range |
+|------------|------|---------|-------|
+| ch30_state_topology | `state_t` | State management architecture | local, shared_context, reactive_store, distributed, federated |
+| ch31_routing_pattern | `route_p` | Routing architecture | single_page, multi_page, protected, platform, federated |
+| ch32_token_inheritance | `token_i` | Design token governance model | flat, semantic, component, governed, cross_system |
 
 ---
 
@@ -593,39 +608,21 @@ function mutateGenome(parent: Genome, mutationRate: number): Genome {
 
 ---
 
-## Implementation Roadmap
+## Implementation Status (v0.0.8)
 
-### Phase 1: Core Infrastructure
-1. Add sector chromosomes (ch0_sector_primary, ch0_sector_secondary)
-2. Implement sector color probability profiles
-3. Add hero type chromosome with variants
-4. Content analysis for sub-sector classification
+All phases complete as of v0.0.8.
 
-### Phase 2: Trust & Social Signals
-1. Add trust signal chromosomes
-2. Build trust signal layout variants
-3. Content integration (user-provided stats/testimonials)
-4. Social proof pattern library
-
-### Phase 3: Content Awareness
-1. Text analysis for sub-sector keywords
-2. Image analysis for visual treatment
-3. Content depth chromosome
-4. Information architecture patterns
-
-### Phase 4: Brand Integration
-1. Brand color extraction from assets
-2. Brand vs sector resolution logic
-3. Compensatory signal generation
-4. Brand weight configuration
-
-### Phase 5: Elimination & Control
-1. Chromosome opt-out system
-2. Forced chromosome values
-3. Creativity level tuning
-4. User preference persistence
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Core Infrastructure | ✅ | Sector chromosomes, color probability profiles, hero type with variants, sub-sector classification |
+| Trust & Social Signals | ✅ | Trust signal chromosomes, layout variants, social proof patterns |
+| Content Awareness | ✅ | Text analysis for 23-sector keyword classification, visual treatment, content depth, information architecture |
+| Brand Integration | ✅ | Brand color extraction from assets, sector resolution logic, compensatory signals |
+| Chromosome Range Expansion | ✅ | 32 chromosomes (ch0–ch32), 23 primary sectors, new types: bento/editorial topology, brutalist edge, aurora/holographic atmosphere, muted_earth/cinematic/neon_pop grading |
+| 14-Tier Biological Model | ✅ | 8 ecosystem tiers (abiotic→endotherm_fauna, 0.00–0.80) + 6 civilization tiers (tribal→singularity, 0.81–1.00) |
+| Architecture Chromosomes | ✅ | ch30 stateTopology, ch31 routingPattern, ch32 tokenInheritance — all driven by CivilizationGenerator at complexity ≥ 0.81 |
 
 ---
 
 *Architecture: Context-aware, sector-mapped, anti-slop design generation*
-*Date: March 2026*
+*v0.0.8 — March 2026*

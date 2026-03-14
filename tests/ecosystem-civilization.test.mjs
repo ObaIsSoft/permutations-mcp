@@ -67,7 +67,7 @@ console.log(`  ✅ All ${ids.size} organisms have unique IDs`);
 
 // Test 4: Civilization generates tier
 console.log(`\nTest 4: Civilization generates tier`);
-const tier = civilizationGenerator.generate('test-civ-eco-bridge', 'real-time 3D dashboard with animation', baseTraits, 'sentient');
+const tier = civilizationGenerator.generate('test-civ-eco-bridge', 'real-time 3D dashboard with animation', baseTraits, genome, 'city_state');
 console.log(`  ✅ Civilization tier: ${tier.tier}`);
 console.log(`  ✅ Components generated: ${tier.components.list.length > 0}`);
 
