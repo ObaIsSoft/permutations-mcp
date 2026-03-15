@@ -94,14 +94,14 @@ export class ComplexityAnalyzer {
 
         // 1. Base complexity — structural props (vocabulary-invariant) take priority over traits.
         // When structural is available, use deterministic computation from product behavior.
-        // Fall back to trait-based scoring only in offline mode (no LLM structural analysis).
+        // Falls back to trait-based scoring when structural analysis is not present.
         const baseComplexity = structural
             ? ComplexityAnalyzer.computeComplexityFromStructure(structural)
             : this.calculateBaseComplexity(traits);
 
-        // 2. Keywords are a small additive nudge — useful for offline mode (hash-based
-        // traits) or when intent is ambiguous. They are NOT the primary pathway to
-        // higher tiers. Cap at 0.12 so they can break a tie but not override traits.
+        // 2. Keywords are a small additive nudge when intent is ambiguous.
+        // They are NOT the primary pathway to higher tiers.
+        // Cap at 0.12 so they can break a tie but not override traits.
         const detectedKeywords: string[] = [];
         let keywordBoost = 0;
 

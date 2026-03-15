@@ -43,6 +43,7 @@ import { formatGenerator } from "./generators/format-generators.js";
 import { fontCatalog } from "./font-catalog.js";
 import { designBriefGenerator } from "./generators/design-brief-generator.js";
 import { urlGenomeExtractor } from "./genome/extractor-url.js";
+import { selectIconLibrary, formatIconLibraryNote } from "./icon-catalog.js";
 
 // ── Ecosystem biomes: hash-selectable structural character per tier ─────────
 // Different seeds at same tier get different biome characters.
@@ -228,11 +229,6 @@ class DesignGenomeServer {
                                 type: "string",
                                 enum: ["bunny", "google", "fontshare", "none"],
                                 description: "Typography CDN (default: bunny). bunny/google pull from their full live catalogs. fontshare pulls from Fontshare's full catalog with richer semantic tags (geometric, grotesque, humanist, slab…). none emits the font family name only — use when fonts are self-hosted or loaded via npm."
-                            },
-                            offline: {
-                                type: "boolean",
-                                description: "Skip LLM semantic extraction — use hash-based trait inference instead. Faster, no API cost, deterministic. Use when you have a clear seed and don't need sector detection.",
-                                default: false
                             }
                         },
                         required: ["intent", "seed"]
@@ -354,13 +350,21 @@ class DesignGenomeServer {
                 },
                 {
                     name: "generate_design_brief",
-                    description: "STEP 2 — Call after generate_design_genome before writing any code. Converts the genome into a human/agent-readable design brief: visual direction, strategic decisions, copy intelligence, and implementation guidance. This is what a designer hands to a developer or an agent reads before making implementation choices.",
+                    description: "STEP 2 — Call after generate_design_genome before writing any code. Synthesizes all genome layers into a design philosophy thesis — what organism this design is, what it mandates, what it forbids. Also generates a DESIGN_SYSTEM.md (usage_md field) to save in the project. Pass all available genome layers for the fullest synthesis.",
                     inputSchema: {
                         type: "object",
                         properties: {
                             genome: {
                                 type: "object",
-                                description: "The design genome from generate_design_genome or generate_civilization"
+                                description: "L1 — The design genome from generate_design_genome (required)"
+                            },
+                            ecosystem_genome: {
+                                type: "object",
+                                description: "L2 — The ecosystem genome from generate_ecosystem (optional, enriches component philosophy)"
+                            },
+                            civilization_genome: {
+                                type: "object",
+                                description: "L3 — The civilization genome from generate_civilization (optional, enriches architecture philosophy)"
                             },
                             format: {
                                 type: "string",
@@ -435,23 +439,13 @@ class DesignGenomeServer {
                         }
 
                         // 2. Semantic Extraction (single LLM call: traits + sector + archetype + copy intelligence)
-                        // When offline: true, skip LLM and use hash-based trait inference
                         const finalContext = epigeneticData?.brandContext || context;
-                        let traits: any, detectedSector: any, copyIntelligence: any, copy: any, structural: any;
-                        if (args.offline) {
-                            traits = await this.extractor.extractTraits(intent, finalContext ?? "");
-                            detectedSector = "technology";
-                            copyIntelligence = undefined;
-                            copy = undefined;
-                            structural = undefined;
-                        } else {
-                            const analysis = await this.extractor.analyze(intent, finalContext);
-                            traits = analysis.traits;
-                            detectedSector = analysis.sector.primary as any;
-                            copyIntelligence = analysis.copyIntelligence;
-                            copy = analysis.copy;
-                            structural = analysis.structural;
-                        }
+                        const analysis = await this.extractor.analyze(intent, finalContext);
+                        const traits = analysis.traits;
+                        const detectedSector = analysis.sector.primary as any;
+                        const copyIntelligence = analysis.copyIntelligence;
+                        const copy = analysis.copy;
+                        const structural = analysis.structural;
 
                         // 4. DNA Sequencing (pass copy intelligence + LLM copy to sequencer)
                         const genome = this.sequencer.generate(seed, traits, {
@@ -465,7 +459,6 @@ class DesignGenomeServer {
 
                         // 5. Complexity Analysis — structural props take priority over traits.
                         // structural is vocabulary-invariant (computed from what the product DOES).
-                        // Falls back to trait-based scoring in offline mode.
                         const complexityResult = this.complexityAnalyzer.analyze(intent, finalContext ?? "", traits, structural);
                         const { finalComplexity, tier } = complexityResult;
 
@@ -474,7 +467,20 @@ class DesignGenomeServer {
                         const topology = this.htmlGen.generateTopology(genome);
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
-                        const svgBiomarker = this.svgGen.generateBiomarker(genome);
+
+                        // LLM-driven biomarker — unique mark synthesized from chromosome combination
+                        const svgBiomarker = await this.svgGen.generateBiomarker(
+                            genome,
+                            this.extractor.callText.bind(this.extractor)
+                        );
+
+                        // Chromosome-driven icon library selection
+                        const iconLibrary = selectIconLibrary({
+                            edgeStyle: genome.chromosomes.ch7_edge?.style ?? "sharp",
+                            typeCharge: genome.chromosomes.ch3_type_display?.charge ?? "geometric",
+                            sector: detectedSector,
+                            dnaHashByte: parseInt(genome.dnaHash.slice(0, 2), 16),
+                        });
 
                         // 7. Ecosystem-first civilization pipeline
                         //
@@ -596,15 +602,37 @@ class DesignGenomeServer {
                             sector: detectedSector,
                             complexity: finalComplexity,
                             tier: String(tier),
-                            offline: args.offline ?? false,
                             traits
                         });
 
                         const suggested_next = [
+                            // ── Files to write immediately ───────────────────────────
+                            {
+                                action: "write_file",
+                                file: "design-tokens.css",
+                                field: "css",
+                                instruction: "Write the `css` field to your project's stylesheet — e.g. src/styles/design-tokens.css or public/design-tokens.css. Import it at the root of your app.",
+                                always: true
+                            },
+                            {
+                                action: "write_file",
+                                file: "genome.json",
+                                field: "genome",
+                                instruction: "Write the `genome` field as JSON to genome.json in the project root. Used for reproducibility — pass this seed + intent to regenerate the same genome.",
+                                always: true
+                            },
+                            {
+                                action: "write_file",
+                                file: "public/biomarker.svg",
+                                field: "svgBiomarker",
+                                instruction: "Write the `svgBiomarker` field to public/biomarker.svg (or src/assets/biomarker.svg). This is the unique visual identity mark for this genome.",
+                                always: true
+                            },
+                            // ── Tools to call next ────────────────────────────────────
                             {
                                 tool: "generate_design_brief",
-                                pass: "genome (L1 — this response's `genome` field)",
-                                reason: "Human/agent-readable design direction — call before writing any code",
+                                pass: "genome + ecosystemOutput.ecosystemGenome (if present) + civilizationOutput.civilizationGenome (if present)",
+                                reason: "LLM synthesizes all genome layers into a design philosophy thesis + DESIGN_SYSTEM.md. Call this before writing any component code.",
                                 always: true
                             },
                             {
@@ -673,6 +701,18 @@ class DesignGenomeServer {
                                     webglComponents,
                                     fxAtmosphere,
                                     svgBiomarker,
+                                    icon_library: {
+                                        name: iconLibrary.name,
+                                        package: iconLibrary.reactPackage,
+                                        style: iconLibrary.style,
+                                        count: iconLibrary.count,
+                                        license: iconLibrary.license,
+                                        description: iconLibrary.description,
+                                        import_example: iconLibrary.importExample,
+                                        cdn: iconLibrary.cdn,
+                                        weight_variants: iconLibrary.weightVariants,
+                                        note: formatIconLibraryNote(iconLibrary),
+                                    },
                                     patternReport,
                                     patternViolations: patternViolations.filter(v => v.severity === "error"),
                                     suggested_next,
@@ -1258,20 +1298,48 @@ class DesignGenomeServer {
                             throw new McpError(ErrorCode.InvalidParams, "Missing genome");
                         }
 
-                        const brief = designBriefGenerator.generate(args.genome);
-                        const format = args.format || "prose";
+                        const brief = await designBriefGenerator.generate(
+                            args.genome,
+                            this.extractor.callText.bind(this.extractor),
+                            args.ecosystem_genome,
+                            args.civilization_genome
+                        );
 
-                        let output: string;
-                        if (format === "prose" || format === "markdown") {
-                            output = brief.prose;
-                        } else {
-                            output = JSON.stringify(brief, null, 2);
-                        }
+                        const layerCount = 1 + (args.ecosystem_genome ? 1 : 0) + (args.civilization_genome ? 1 : 0);
 
                         return {
                             content: [{
                                 type: "text",
-                                text: output
+                                text: JSON.stringify({
+                                    thesis:        brief.thesis,
+                                    mandates:      brief.mandates,
+                                    anti_patterns: brief.antiPatterns,
+                                    layer_guide:   brief.layerGuide,
+                                    usage_md:      brief.usage_md,
+                                    layers_synthesized: layerCount,
+                                    note: layerCount < 3
+                                        ? `Synthesized from ${layerCount} layer(s). Pass ecosystem_genome and civilization_genome for full 3-layer philosophy.`
+                                        : "Full 3-layer synthesis complete.",
+                                    suggested_next: [
+                                        {
+                                            action: "write_file",
+                                            file: "DESIGN_SYSTEM.md",
+                                            field: "usage_md",
+                                            instruction: "Write the `usage_md` field to DESIGN_SYSTEM.md in the project root. This is the design constitution the entire build must follow.",
+                                            always: true,
+                                        },
+                                        {
+                                            tool: "generate_ecosystem",
+                                            reason: "Build a component library architecture — biome, energy, symbiosis patterns. Call when building a full design system.",
+                                            when: "building multiple components or a full UI library",
+                                        },
+                                        {
+                                            tool: "validate_design",
+                                            reason: "Run before shipping any CSS or HTML. Validates genome against accessibility, contrast, and motion constraints.",
+                                            always: true,
+                                        },
+                                    ],
+                                }, null, 2)
                             }]
                         };
                     }
@@ -1387,7 +1455,6 @@ class DesignGenomeServer {
         sector: string;
         complexity: number;
         tier: string;
-        offline?: boolean;
         traits?: any;
     }): string {
         const ch = genome?.chromosomes ?? {};
@@ -1417,7 +1484,7 @@ class DesignGenomeServer {
             `| Intent | ${opts.intent} |`,
             `| Seed | \`${opts.seed}\` |`,
             `| DNA Hash | \`${genome?.dnaHash ?? "–"}\` |`,
-            `| Sector detected | **${opts.sector}**${opts.offline ? " *(offline — hash-inferred, not LLM)*" : ""} |`,
+            `| Sector detected | **${opts.sector}** |`,
             `| Complexity | ${opts.complexity.toFixed(3)} → **${opts.tier}** tier |`,
             ``,
             `## Chromosomes Sequenced`,

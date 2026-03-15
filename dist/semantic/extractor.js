@@ -47,10 +47,7 @@ export class SemanticTraitExtractor {
         }
         const key = apiKey || groqKey || openaiKey || anthropicKey || geminiKey || openrouterKey || huggingfaceKey;
         if (!key) {
-            // M-16: Don't crash at boot. Set a flag so analyze() throws gracefully at call time.
-            // This allows offline: true mode (generate_design_genome with offline: true) to work without an LLM key.
-            this.apiKeyMissing = true;
-            return;
+            throw new Error("No LLM API key configured. Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY.");
         }
         switch (this.provider) {
             case "groq":
@@ -93,10 +90,6 @@ export class SemanticTraitExtractor {
      * Single-call extraction: traits + sector + subSector + archetype
      */
     async analyze(intent, projectContext) {
-        // M-16: Graceful error if no API key — deferred from constructor so offline tools still work
-        if (this.apiKeyMissing) {
-            throw new Error("No LLM API key configured. Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY. Pass offline: true to generate_design_genome to skip LLM extraction.");
-        }
         const prompt = this.buildPrompt(intent, projectContext);
         let lastError = null;
         for (let attempt = 1; attempt <= LLM_MAX_RETRIES; attempt++) {
@@ -409,6 +402,99 @@ Rules:
             default:
                 // HuggingFace: skip — JSON reliability too low for structured output
                 return { components: [] };
+        }
+    }
+    /**
+     * Free-form text LLM call — used by design brief synthesis and other philosophy generators.
+     * Returns raw text (not JSON). Retries with backoff.
+     */
+    async callText(prompt) {
+        let lastError = null;
+        for (let attempt = 1; attempt <= LLM_MAX_RETRIES; attempt++) {
+            try {
+                return await this.withTimeout(this.callTextProvider(prompt), LLM_TIMEOUT_MS);
+            }
+            catch (e) {
+                lastError = e;
+                if (attempt < LLM_MAX_RETRIES) {
+                    const hash = crypto.createHash("sha256").update(`retry_${attempt}_${Date.now()}`).digest("hex");
+                    const jitter = (parseInt(hash.slice(0, 2), 16) / 255) * 500;
+                    await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt - 1) + jitter));
+                }
+            }
+        }
+        throw new Error(`LLM text call failed after ${LLM_MAX_RETRIES} attempts. Last error: ${lastError?.message}`);
+    }
+    async callTextProvider(prompt) {
+        switch (this.provider) {
+            case "groq": {
+                if (!this.groq)
+                    throw new Error("Groq not initialized");
+                const r = await this.groq.chat.completions.create({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 4096,
+                });
+                return r.choices[0].message.content || "";
+            }
+            case "openai": {
+                if (!this.openai)
+                    throw new Error("OpenAI not initialized");
+                const r = await this.openai.chat.completions.create({
+                    model: "gpt-4.1",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 4096,
+                });
+                return r.choices[0].message.content || "";
+            }
+            case "anthropic": {
+                if (!this.anthropic)
+                    throw new Error("Anthropic not initialized");
+                const r = await this.anthropic.messages.create({
+                    model: "claude-3-7-sonnet-latest",
+                    max_tokens: 4096,
+                    messages: [{ role: "user", content: prompt }],
+                });
+                const c = r.content[0];
+                if (c.type !== "text")
+                    throw new Error("Unexpected Anthropic response type");
+                return c.text;
+            }
+            case "gemini": {
+                if (!this.gemini)
+                    throw new Error("Gemini not initialized");
+                const r = await this.gemini.generateContent({
+                    contents: [{ role: "user", parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.7 },
+                });
+                return r.response.text();
+            }
+            case "openrouter": {
+                if (!this.openrouter)
+                    throw new Error("OpenRouter not initialized");
+                const r = await this.openrouter.chat.completions.create({
+                    model: "meta-llama/llama-3.3-70b-versatile",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 4096,
+                });
+                return r.choices[0].message.content || "";
+            }
+            default: {
+                // HuggingFace
+                const key = process.env.HUGGINGFACE_API_KEY;
+                if (!key)
+                    throw new Error("HuggingFace key not found");
+                const response = await fetch("https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 2000 } }),
+                });
+                const data = await response.json();
+                return (data[0]?.generated_text || "").replace(prompt, "").trim();
+            }
         }
     }
     /**

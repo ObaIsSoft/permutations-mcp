@@ -32,7 +32,7 @@ export interface OrganismDefinition {
 // Organism = Component that lives in the ecosystem
 export interface Organism {
     id: string;
-    name: string;    // Product-specific name when LLM-supplied, topology-derived when offline
+    name: string;    // Product-specific name supplied by LLM semantic analysis
     purpose: string; // What this component does — populated by LLM, empty string in fallback
     category: 'microbial' | 'flora' | 'fauna';
     // Component specification (props, variants, accessibility)
