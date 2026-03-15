@@ -233,12 +233,12 @@ class DesignGenomeServer {
                 },
                 {
                     name: "generate_ecosystem",
-                    description: "STEP 3 (optional) — Call after generate_design_genome when building a component library or design system. Returns a biological component hierarchy: microbial (atomic), flora (composite), fauna (complex). Provides component specs, prop contracts, containment relationships, and civilization readiness — NOT generated code.",
+                    description: "STEP 3 (optional) — Call after generate_design_genome when building a component library or design system. Pass genome.dnaHash (from generate_design_genome) as seed to maintain SHA-256 hash chain continuity from L1. Returns ecosystemGenome (L2): microbial (atomic), flora (composite), fauna (complex) component hierarchy. Provides component specs, prop contracts, containment relationships — NOT generated code. Pass the full ecosystemOutput to generate_civilization as the `ecosystem` param to wire L2 into L3.",
                     inputSchema: {
                         type: "object",
                         properties: {
                             intent: { type: "string", description: "Natural language design intent" },
-                            seed: { type: "string", description: "Unique ecosystem seed" },
+                            seed: { type: "string", description: "Pass genome.dnaHash from generate_design_genome to maintain SHA-256 hash chain (L1→L2). Using a different seed creates an unlinked genome." },
                             project_context: { type: "string", description: "Environment context" },
                             options: {
                                 type: "object",
@@ -453,20 +453,9 @@ class DesignGenomeServer {
                         // When below civilization threshold: ecosystemOutput is populated,
                         // civilizationOutput is null, and civilizationGap tells the caller
                         // how far complexity needs to increase to cross the tribal (0.81) threshold.
-                        // HTML always generated for every tier
-                        const html = this.htmlGen.generate(genome, {
-                            includeHeader: true,
-                            includeFooter: true,
-                            includeSections: true
-                        });
-                        // For civilization tiers: label the HTML as design token reference only.
-                        // Agents must implement from civilizationOutput.architecture — not from this HTML.
-                        const html_context = finalComplexity >= 0.81
-                            ? `CIVILIZATION TIER (${tier}): This HTML is a DESIGN TOKEN REFERENCE LAYOUT only. ` +
-                                `Do NOT implement your application from this HTML. ` +
-                                `Use civilizationOutput.architecture for state topology, routing patterns, and component structure. ` +
-                                `The HTML renders genome color/spacing tokens visually — it is not the application architecture.`
-                            : undefined;
+                        // layout_contract replaces html scaffold — spec not markup.
+                        // Agents implement structure from this contract; no HTML template to anchor on.
+                        const layout_contract = this.buildLayoutContract(genome, finalComplexity, tier);
                         let ecosystemOutput;
                         let civilizationOutput;
                         // SHA-256 hash chain — each layer derived from the previous layer's output
@@ -543,7 +532,7 @@ class DesignGenomeServer {
                             }
                         }
                         // 8. Auto pattern detection on generated output
-                        const patternViolations = this.patternDetector.detectInGenome(genome, css, html ?? "");
+                        const patternViolations = this.patternDetector.detectInGenome(genome, css, "");
                         const patternReport = this.patternDetector.generateReport(patternViolations);
                         const genome_report = this.buildGenomeReport(genome, {
                             intent,
@@ -557,22 +546,28 @@ class DesignGenomeServer {
                         const suggested_next = [
                             {
                                 tool: "generate_design_brief",
-                                reason: "Human/agent-readable design direction — call this before writing any code",
+                                pass: "genome (L1 — this response's `genome` field)",
+                                reason: "Human/agent-readable design direction — call before writing any code",
                                 always: true
                             },
                             {
                                 tool: "generate_ecosystem",
-                                reason: "Component library architecture — call when building a design system or multiple components",
-                                when: "building multiple components or a full UI library"
+                                pass: "intent + seed: genome.dnaHash (maintains SHA-256 hash chain from L1)",
+                                reason: "Component organism hierarchy — microbial (atoms), flora (composites), fauna (complex). Returns ecosystemGenome (L2).",
+                                genome_produced: "ecosystemOutput.ecosystemGenome — L2, controls component hierarchy and containment depth",
+                                when: "building a design system, component library, or any multi-component UI"
                             },
                             ...(finalComplexity >= 0.68 ? [{
                                     tool: "generate_civilization",
-                                    reason: `Application architecture direction — complexity ${finalComplexity.toFixed(2)} qualifies`,
+                                    pass: "intent + seed + ecosystem: ecosystemOutput (entire object from generate_ecosystem)",
+                                    reason: `Application architecture direction — state topology, routing, token inheritance. Complexity ${finalComplexity.toFixed(2)} qualifies.`,
+                                    genome_produced: "civilizationOutput.civilizationGenome — L3, controls state/routing architecture",
                                     when: `complexity >= 0.68 — this genome qualifies (${finalComplexity.toFixed(2)})`
                                 }] : []),
                             {
                                 tool: "validate_design",
-                                reason: "Run before shipping any CSS or HTML to catch slop patterns",
+                                pass: "genome (L1) + your implemented css string",
+                                reason: "Run before shipping — catches slop patterns and genome drift",
                                 always: true
                             }
                         ];
@@ -585,8 +580,31 @@ class DesignGenomeServer {
                                         finalComplexity,
                                         topology,
                                         css,
-                                        html,
-                                        html_context: html_context ?? null,
+                                        layout_contract,
+                                        // Three-layer genome guide — which field drives which implementation concern
+                                        genome_layer_guide: {
+                                            L1_design_genome: {
+                                                field: "genome",
+                                                controls: ["CSS custom properties", "color system", "typography scale", "spacing rhythm", "motion physics", "edge treatment", "visual character"],
+                                                pass_to: ["validate_design (required — pass as genome param)", "generate_design_brief (required — pass as genome param)"],
+                                                do_not_use_for: "state management, routing, component hierarchy — those come from L2/L3"
+                                            },
+                                            L2_ecosystem_genome: {
+                                                field: "ecosystemOutput.ecosystemGenome",
+                                                controls: ["component organism type (microbial/flora/fauna)", "containment hierarchy (predator→prey)", "organism count scaling", "biome character"],
+                                                pass_to: ["generate_civilization as the `ecosystem` parameter — this wires L2 into L3"],
+                                                chain_note: "To call generate_ecosystem as a standalone tool: pass genome.dnaHash as `seed` to maintain SHA-256 chain continuity"
+                                            },
+                                            L3_civilization_genome: {
+                                                field: "civilizationOutput.civilizationGenome",
+                                                controls: ["state topology (civ_ch2_governance.model → useState/context/zustand/federated)", "routing pattern (civ_ch7_knowledge.model → single-page/multi-page/platform/federated)", "token inheritance model", "application tier"],
+                                                implement_as: finalComplexity >= 0.97 ? "Module Federation — distributed state + event bus"
+                                                    : finalComplexity >= 0.92 ? "Zustand store + platform shell routing"
+                                                        : finalComplexity >= 0.87 ? "shared context + protected routing"
+                                                            : finalComplexity >= 0.81 ? "useState/useReducer + single/multi-page routing"
+                                                                : "ecosystem tier — no civilization layer (complexity below tribal threshold)"
+                                            }
+                                        },
                                         // ecosystem: always present — organism counts scale with complexity tier
                                         // abiotic returns empty organism arrays, not null
                                         ecosystemOutput: ecosystemOutput ?? null,
@@ -1158,6 +1176,67 @@ class DesignGenomeServer {
                 };
             }
         });
+    }
+    buildLayoutContract(genome, complexity, tier) {
+        const ch = genome.chromosomes;
+        const cd = ch.ch23_content_depth ?? {};
+        const ia = ch.ch23_information_architecture ?? {};
+        const ts = ch.ch21_trust_signals ?? {};
+        const sp = ch.ch22_social_proof ?? {};
+        const hero = ch.ch19_hero_type ?? {};
+        const sections = [];
+        if (cd.hasHero !== false)
+            sections.push("hero");
+        if (ts.approach)
+            sections.push("trust_grid");
+        if (sp.type)
+            sections.push("social_proof");
+        if (cd.hasFeatures !== false)
+            sections.push("features");
+        if (cd.hasFAQ)
+            sections.push("faq");
+        if (cd.hasTestimonials)
+            sections.push("testimonials");
+        if (cd.hasCTA !== false)
+            sections.push("cta");
+        sections.push("footer");
+        return {
+            _note: "Implement each section from scratch using design brief constraints. Do not treat this as HTML boilerplate to fill in — it is a structural spec that your implementation must interpret.",
+            hero: {
+                type: hero.type ?? "default",
+                layout: hero.variant ?? "centered",
+            },
+            navigation: {
+                type: ia.navigationType ?? "header",
+                footer: ia.footerType ?? "minimal",
+            },
+            sections,
+            trust: {
+                approach: ts.approach ?? null,
+                prominence: ts.prominence ?? null,
+                layout: ts.layoutVariant ?? null,
+            },
+            social_proof: {
+                type: sp.type ?? null,
+                layout: sp.layout ?? null,
+            },
+            content: {
+                depth: cd.level ?? null,
+                estimated_sections: cd.estimatedSections ?? sections.length,
+                information_architecture: ia.pattern ?? null,
+            },
+            implementation_tier: complexity >= 0.81
+                ? {
+                    tier,
+                    mandate: "Build as a framework application (React/Vue/Svelte). civilizationOutput.architecture defines state and routing. Do NOT flatten to a static HTML page.",
+                    state: "See civilizationOutput.civilizationGenome.chromosomes.civ_ch2_governance.model",
+                    routing: "See civilizationOutput.civilizationGenome.chromosomes.civ_ch7_knowledge.model"
+                }
+                : {
+                    tier,
+                    mandate: "Progressive enhancement — HTML structure first, CSS tokens second, interaction third. ecosystemOutput defines component organism counts and hierarchy.",
+                }
+        };
     }
     buildGenomeReport(genome, opts) {
         const ch = genome?.chromosomes ?? {};
