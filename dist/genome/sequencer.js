@@ -245,7 +245,7 @@ export class GenomeSequencer {
             segmentCount: (traits.informationDensity > 0.7 ? 4 : traits.informationDensity > 0.4 ? 3 : 2)
         };
         const ch25_copy_engine = isForced('ch25_copy_engine') || this.generateCopyEngine(primaryProfile, b, options?.copyIntelligence, options?.copy);
-        const ch26_copy_intelligence = options?.copyIntelligence || this.generateDefaultCopyIntelligence(primaryProfile);
+        const ch29_copy_intelligence = options?.copyIntelligence || this.generateDefaultCopyIntelligence(primaryProfile);
         // Ensure ch25 uses the same intelligence for consistency
         if (options?.copyIntelligence && !isForced('ch25_copy_engine')) {
             // Regenerate copy engine with the provided intelligence
@@ -310,7 +310,7 @@ export class GenomeSequencer {
             ch23_information_architecture,
             ch24_personalization,
             ch25_copy_engine,
-            ch29_copy_intelligence: ch26_copy_intelligence,
+            ch29_copy_intelligence: ch29_copy_intelligence,
             ch26_color_system: this.generateColorSystem(ch5_color_primary, primaryProfile, b),
             ch30_state_topology,
             ch31_routing_pattern,
@@ -980,6 +980,7 @@ export class GenomeSequencer {
      * Generate display typography
      */
     generateDisplayType(traits, b, profile, options) {
+        // Trait overrides (dominant signals)
         let charge = profile.defaultTypography;
         if (traits.temporalUrgency > 0.7 && traits.informationDensity > 0.6) {
             charge = "monospace";
@@ -999,8 +1000,26 @@ export class GenomeSequencer {
         else if (traits.emotionalTemperature < 0.4) {
             charge = "geometric";
         }
+        else {
+            // Hash-driven variance when traits are moderate — full charge pool available
+            // Prevents every "balanced" product from getting the same sector default
+            const allCharges = ["geometric", "humanist", "monospace", "transitional", "grotesque", "slab_serif", "expressive"];
+            if (b(5) > 0.55) {
+                charge = allCharges[Math.floor(b(5) * allCharges.length) % allCharges.length];
+            }
+        }
         const provider = options?.fontProvider || "bunny";
         const fontData = this.selectDisplayFont(b(5), charge, provider);
+        // Tracking — hash-driven across full range when traits don't dominate
+        const tracking = traits.informationDensity > 0.7
+            ? "tight"
+            : traits.emotionalTemperature > 0.7
+                ? "wide"
+                : this.selectFromHash(b(25), ["normal", "tight", "wide", "ultra", "tight", "normal", "wide"]);
+        // Casing — uppercase more frequently for low-emotion (cold/clinical look)
+        const casing = traits.emotionalTemperature < 0.3
+            ? "uppercase"
+            : this.selectFromHash(b(26), ["normal", "normal", "uppercase", "small_caps"]);
         return {
             family: fontData.family,
             displayName: fontData.displayName,
@@ -1009,14 +1028,8 @@ export class GenomeSequencer {
             charge,
             weight: [400, 700, 900][Math.floor(b(6) * 3) % 3],
             fallback: fontData.fallback,
-            tracking: traits.informationDensity > 0.7
-                ? "tight"
-                : traits.emotionalTemperature > 0.7
-                    ? "wide"
-                    : this.selectFromHash(b(25), ["normal", "tight", "wide", "ultra"]),
-            casing: traits.emotionalTemperature < 0.3
-                ? "uppercase"
-                : this.selectFromHash(b(26), ["normal", "normal", "uppercase", "small_caps"])
+            tracking,
+            casing
         };
     }
     /**
@@ -1179,8 +1192,6 @@ export class GenomeSequencer {
      */
     generateEdge(traits, b, profile) {
         const maxRadius = 32;
-        // Use a floor of 0.3 so low-playfulness sectors still get hash-driven edge diversity.
-        // Without the floor, playfulness=0.2 caps radius at 6.4, making every seed "soft".
         const effectivePlayfulness = Math.max(0.3, traits.playfulness);
         const baseRadius = Math.round(b(1) * maxRadius * effectivePlayfulness);
         // Apply sector preference
@@ -1191,20 +1202,52 @@ export class GenomeSequencer {
         else if (profile.edgePreference === "organic") {
             radius = Math.max(radius, 8);
         }
-        // Style thresholds proportional to the effective range so hash bytes can reach
-        // all three styles even at low playfulness.
+        // Style — hash byte 27 can reach extended styles when traits allow
+        let style;
         const organicThreshold = Math.round(maxRadius * effectivePlayfulness * 0.5);
-        // For sharp-preference sectors: radius is capped at 4, so "sharp" threshold must
-        // expand beyond radius===0 — otherwise radius 1–4 silently becomes "soft".
         const sharpCeiling = profile.edgePreference === "sharp"
             ? Math.max(1, Math.round(maxRadius * effectivePlayfulness * 0.3))
             : 0;
+        // Extended styles unlocked by hash — not gated behind traits
+        // b(27) distributes across the full EdgeStyle vocabulary
+        const styleByte = b(27);
+        if (profile.edgePreference === "sharp" && radius <= sharpCeiling) {
+            // Sharp preference at low radius: sharp or chiseled
+            style = styleByte > 0.7 ? "chiseled" : "sharp";
+        }
+        else if (radius > organicThreshold) {
+            // High radius range: organic, hand_drawn, or serrated
+            if (styleByte > 0.8)
+                style = "hand_drawn";
+            else if (styleByte > 0.6)
+                style = "serrated";
+            else
+                style = "organic";
+        }
+        else if (radius <= sharpCeiling) {
+            // Low radius: sharp, brutalist, or techno
+            if (styleByte > 0.75)
+                style = "brutalist";
+            else if (styleByte > 0.5)
+                style = "techno";
+            else
+                style = "sharp";
+        }
+        else {
+            // Mid radius: soft, techno, or chiseled
+            if (styleByte > 0.8)
+                style = "techno";
+            else if (styleByte > 0.65)
+                style = "chiseled";
+            else
+                style = "soft";
+        }
         return {
             radius,
-            style: (radius <= sharpCeiling ? "sharp" : radius > organicThreshold ? "organic" : "soft"),
+            style,
             variableRadius: traits.playfulness > 0.6,
-            componentRadius: Math.round(radius * 0.6), // smaller for buttons/inputs
-            imageRadius: Math.round(radius * 0.4), // even smaller for image crops
+            componentRadius: Math.round(radius * 0.6),
+            imageRadius: Math.round(radius * 0.4),
             asymmetric: traits.playfulness > 0.8 && b(27) > 0.6
         };
     }
@@ -1213,44 +1256,65 @@ export class GenomeSequencer {
      */
     generateMotion(traits, b, profile) {
         let physics = profile.motionPreference;
-        // Trait overrides (high-signal, dominant)
-        if (traits.temporalUrgency > 0.8)
+        // Trait overrides (dominant)
+        if (traits.temporalUrgency > 0.8) {
             physics = "none";
-        else if (traits.playfulness > 0.7)
-            physics = "spring";
-        else if (traits.emotionalTemperature < 0.3)
-            physics = "step";
-        else {
-            // Hash-driven variance: top 25% of b(30) deviates to an adjacent physics.
-            // Ensures two products in the same sector with similar traits can differ.
-            const varianceByte = b(30);
-            if (varianceByte > 0.75) {
-                const adjacent = {
-                    spring: 'step',
-                    step: 'spring',
-                    none: 'step',
-                    ease: 'spring',
-                    glitch: 'spring',
-                };
-                physics = adjacent[physics] ?? physics;
-            }
         }
-        // Enter direction from physics + traits
+        else if (traits.playfulness > 0.7) {
+            physics = "spring";
+        }
+        else if (traits.emotionalTemperature < 0.3) {
+            physics = "step";
+        }
+        else {
+            // Hash byte 30 selects from full physics vocabulary when traits are moderate.
+            // All 8 MotionPhysics values are reachable — not just the sector default.
+            const v = b(30);
+            if (v > 0.875)
+                physics = "particle";
+            else if (v > 0.75)
+                physics = "glitch";
+            else if (v > 0.625)
+                physics = "elastic";
+            else if (v > 0.5)
+                physics = "inertia";
+            else if (v > 0.375)
+                physics = "magnetic";
+            else if (v > 0.25)
+                physics = "step";
+            else if (v > 0.125)
+                physics = "spring";
+            // else: keep sector default
+        }
+        // Enter direction — reaches the full EnterDirection vocabulary
         let enterDirection = "up";
-        if (physics === "none")
+        if (physics === "none") {
             enterDirection = "fade";
-        else if (physics === "spring" && traits.playfulness > 0.6)
-            enterDirection = "scale";
-        else if (traits.informationDensity > 0.7)
-            enterDirection = "fade"; // dashboards fade, don't slide
-        else
-            enterDirection = this.selectFromHash(b(28), ["up", "up", "left", "right", "scale"]);
+        }
+        else if (physics === "particle" || physics === "glitch") {
+            enterDirection = this.selectFromHash(b(28), ["radial_in", "flip_x", "spiral", "bounce", "scale"]);
+        }
+        else if (physics === "elastic" || physics === "magnetic") {
+            enterDirection = this.selectFromHash(b(28), ["scale", "bounce", "spiral", "radial_in"]);
+        }
+        else if (traits.informationDensity > 0.7) {
+            enterDirection = "fade";
+        }
+        else {
+            enterDirection = this.selectFromHash(b(28), ["up", "up", "left", "right", "scale", "flip_y"]);
+        }
+        // Exit behavior — full vocabulary
+        const exitBehavior = physics === "none" ? "none"
+            : physics === "glitch" ? this.selectFromHash(b(29), ["explode", "rotate_out", "morph_out"])
+                : physics === "particle" ? "shrink"
+                    : traits.temporalUrgency > 0.6 ? "fade"
+                        : this.selectFromHash(b(29), ["slide", "fade", "shrink"]);
         return {
             physics,
             durationScale: 0.2 + b(14) * 1.8,
             staggerDelay: b(15) * 0.1,
             enterDirection,
-            exitBehavior: physics === "none" ? "none" : (traits.temporalUrgency > 0.6 ? "fade" : "slide"),
+            exitBehavior,
             hoverIntensity: traits.playfulness > 0.6 ? 0.6 + b(29) * 0.4 : traits.playfulness * 0.5,
             reducedMotionFallback: traits.playfulness > 0.5 ? "fade" : "none"
         };
@@ -1396,12 +1460,10 @@ export class GenomeSequencer {
             animation
         };
     }
-    /**
-     * Generate atmosphere FX
-     */
     generateAtmosphere(traits, b, disabled) {
         if (disabled) {
-            return { fx: "none", intensity: 0, enabled: false };
+            return { fx: "none", intensity: 0, enabled: false,
+                coverage: "element", performanceBudget: "low" };
         }
         let fx = "none";
         if (traits.spatialDependency > 0.4) {

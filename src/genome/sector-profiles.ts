@@ -1023,7 +1023,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "prominent",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     fintech: {
         typography: "geometric",
@@ -1031,7 +1031,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "prominent",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     automotive: {
         typography: "transitional",
@@ -1039,7 +1039,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "integrated",
         contentDepth: "moderate",
-        generate3D: true
+        generate3D: true,
     },
     education: {
         typography: "humanist",
@@ -1047,7 +1047,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "integrated",
         contentDepth: "comprehensive",
-        generate3D: false
+        generate3D: false,
     },
     commerce: {
         typography: "geometric",
@@ -1055,7 +1055,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "integrated",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     entertainment: {
         typography: "transitional",
@@ -1063,7 +1063,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "organic",
         trustProminence: "subtle",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     manufacturing: {
         typography: "geometric",
@@ -1071,7 +1071,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "prominent",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     legal: {
         typography: "transitional",
@@ -1079,7 +1079,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "hero_feature",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     real_estate: {
         typography: "humanist",
@@ -1087,7 +1087,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "integrated",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     travel: {
         typography: "humanist",
@@ -1095,7 +1095,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "organic",
         trustProminence: "integrated",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     food: {
         typography: "humanist",
@@ -1103,7 +1103,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "organic",
         trustProminence: "prominent",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     sports: {
         typography: "geometric",
@@ -1111,7 +1111,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "subtle",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     technology: {
         typography: "geometric",
@@ -1119,7 +1119,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "integrated",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     nonprofit: {
         typography: "humanist",
@@ -1127,7 +1127,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "organic",
         trustProminence: "prominent",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     government: {
         typography: "transitional",
@@ -1135,7 +1135,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "hero_feature",
         contentDepth: "comprehensive",
-        generate3D: false
+        generate3D: false,
     },
     media: {
         typography: "slab_serif",
@@ -1143,7 +1143,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "subtle",
         contentDepth: "comprehensive",
-        generate3D: false
+        generate3D: false,
     },
     crypto_web3: {
         typography: "geometric",
@@ -1151,7 +1151,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "techno",
         trustProminence: "integrated",
         contentDepth: "moderate",
-        generate3D: true
+        generate3D: true,
     },
     gaming: {
         typography: "expressive",
@@ -1159,7 +1159,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "subtle",
         contentDepth: "moderate",
-        generate3D: true
+        generate3D: true,
     },
     hospitality: {
         typography: "humanist",
@@ -1167,7 +1167,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "organic",
         trustProminence: "integrated",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     beauty_fashion: {
         typography: "expressive",
@@ -1175,7 +1175,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "subtle",
         contentDepth: "moderate",
-        generate3D: false
+        generate3D: false,
     },
     insurance: {
         typography: "humanist",
@@ -1183,7 +1183,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "soft",
         trustProminence: "hero_feature",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     },
     agency: {
         typography: "grotesque",
@@ -1191,7 +1191,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "organic",
         trustProminence: "integrated",
         contentDepth: "moderate",
-        generate3D: true
+        generate3D: true,
     },
     energy: {
         typography: "geometric",
@@ -1199,7 +1199,7 @@ const SECTOR_DEFAULTS: Record<PrimarySector, SectorDefaults> = {
         edge: "sharp",
         trustProminence: "prominent",
         contentDepth: "extensive",
-        generate3D: false
+        generate3D: false,
     }
 };
 

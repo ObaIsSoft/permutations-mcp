@@ -407,28 +407,127 @@ export type FontProvider = "bunny" | "google" | "fontshare" | "none";
 export type TypeTracking = "tight" | "normal" | "wide" | "ultra";
 export type TypeCasing = "normal" | "uppercase" | "small_caps";
 export type ColorTemp = "warm" | "cool" | "neutral";
-export type EdgeStyle = "sharp" | "soft" | "organic" | "techno" | "brutalist";
-export type MotionPhysics = "none" | "spring" | "step" | "glitch";
-export type EnterDirection = "up" | "down" | "left" | "right" | "scale" | "fade";
-export type ExitBehavior = "fade" | "slide" | "none";
+export type EdgeStyle =
+    | "sharp"        // precise corners, no rounding
+    | "soft"         // gentle rounded corners
+    | "organic"      // freely curved, no geometric rigidity
+    | "techno"       // modular, grid-aligned, digital-mechanical
+    | "brutalist"    // raw, heavy, unrefined
+    | "serrated"     // jagged / notched edges
+    | "hand_drawn"   // irregular, imperfect, sketch-like
+    | "chiseled";    // faceted, angular cuts — jewellery/luxury
+
+export type MotionPhysics =
+    | "none"         // static — no animation
+    | "spring"       // mass-spring-damper system — natural bounce
+    | "step"         // discrete state jumps — mechanical precision
+    | "glitch"       // corrupted signal — digital artefact
+    | "magnetic"     // attraction/repulsion — elements pull toward cursor
+    | "inertia"      // momentum-based — elements coast after release
+    | "elastic"      // overshoot and snap back — rubber-band feel
+    | "particle";    // stochastic — probabilistic swarm behaviour
+
+export type EnterDirection =
+    | "up" | "down" | "left" | "right"
+    | "scale"        // grow from zero
+    | "fade"         // opacity only
+    | "radial_in"    // expand from center point
+    | "flip_x"       // rotate on X axis (card flip)
+    | "flip_y"       // rotate on Y axis
+    | "spiral"       // arc + scale combined
+    | "bounce";      // enter with elastic overshoot
+
+export type ExitBehavior =
+    | "fade"
+    | "slide"
+    | "none"
+    | "shrink"       // collapse to zero scale
+    | "explode"      // burst outward + fade
+    | "rotate_out"   // spin out
+    | "morph_out";   // shape-morph into next element
+
 export type GridLogic = "column" | "masonry" | "radial" | "broken" | "bento" | "editorial";
 export type GridAlignment = "stretch" | "center" | "start";
 export type HierarchyDepth = "flat" | "overlapping" | "3d-stack";
-export type ElevationSystem = "flat" | "material" | "neumorphic";
+
+export type ElevationSystem =
+    | "flat"         // no shadows — pure colour separation
+    | "material"     // layered drop-shadows, elevation Z
+    | "neumorphic"   // extruded from surface, soft inset/outset
+    | "claymorphic"  // rounded inflated 3D — thick coloured shadows
+    | "brutalist"    // hard offset box-shadows, no blur
+    | "glow"         // emissive halo — backlit / neon
+    | "embossed"     // pressed-in relief — paper / stamped
+    | "frosted";     // backdrop-filter blur depth cue
+
 export type DepthCue = "blur" | "scale" | "opacity" | "none";
-export type TextureSurface = "flat" | "grain" | "glass" | "chrome" | "matte_paper" | "brushed_metal";
-export type OverlayBlend = "multiply" | "screen" | "overlay" | "none";
-export type AtmosphereFX = "glassmorphism" | "crt_noise" | "fluid_mesh" | "aurora" | "noise_gradient" | "holographic" | "none";
+
+export type TextureSurface =
+    | "flat"
+    | "grain"        // film grain / noise overlay
+    | "glass"        // frosted glass — backdrop-filter
+    | "chrome"       // reflective metallic sheen
+    | "matte_paper"  // uncoated paper — subtle tooth
+    | "brushed_metal"// directional grain — aluminium
+    | "velvet"       // soft nap — deep shadows, rich colour
+    | "concrete"     // coarse aggregate — industrial
+    | "canvas"       // woven textile — structured grain
+    | "linen"        // tight weave — editorial/luxury
+    | "wax"          // semi-transparent waxy sheen
+    | "oxidized";    // patina / aged metal — verdigris / rust
+
+export type OverlayBlend = "multiply" | "screen" | "overlay" | "color_dodge" | "color_burn" | "hard_light" | "soft_light" | "difference" | "none";
+
+export type AtmosphereFX =
+    | "glassmorphism"         // frosted glass backdrop-filter
+    | "crt_noise"             // scanlines + fractal noise
+    | "fluid_mesh"            // animated conic gradient mesh
+    | "aurora"                // borealis-style animated gradient
+    | "noise_gradient"        // static perlin noise gradient
+    | "holographic"           // iridescent rainbow sheen
+    | "scanlines"             // horizontal rule overlay — retro
+    | "pixel_dither"          // ordered dithering pattern
+    | "ink_wash"              // watercolour bleed at edges
+    | "chromatic_aberration"  // RGB channel split / fringe
+    | "depth_of_field"        // foreground blur — lens feel
+    | "banding"               // posterised colour steps — lo-fi
+    | "none";
+
 export type AtmosphereCoverage = "full" | "section" | "element";
 export type PerformanceBudget = "high" | "medium" | "low";
 export type PhysicsMaterial = "neumorphism" | "metallic" | "glass" | "matte";
 export type BiomarkerGeometry = "monolithic" | "organic" | "fractal";
 export type BiomarkerShapeFamily = "geometric" | "biological" | "crystalline" | "fluid" | "architectural";
-export type BiomarkerAnimStyle = "rotate" | "breathe" | "morph" | "static";
+
+export type BiomarkerAnimStyle =
+    | "rotate"       // continuous rotation
+    | "breathe"      // scale pulse — in/out
+    | "morph"        // path morphing between states
+    | "static"       // no animation
+    | "orbit"        // child elements orbit a centre
+    | "pulse_ring"   // expanding ring echo
+    | "liquid"       // fluid bezier deformation
+    | "glitch_flicker" // random clip-path corruption
+    | "unfold"       // sequential path draw-on reveal
+    | "draw_on";     // SVG stroke-dashoffset trace
+
 export type PolyCount = "low" | "medium" | "high";
 export type ColorTreatment = "primary" | "complementary" | "monochrome" | "analogous" | "split_complementary";
 export type ImageAspectRatio = "16:9" | "4:3" | "1:1" | "portrait";
-export type ColorGrading = "natural" | "desaturated" | "vibrant" | "duotone" | "muted_earth" | "cinematic" | "neon_pop";
+
+export type ColorGrading =
+    | "natural"        // true-to-life, no grading
+    | "desaturated"    // muted, editorial grey pull
+    | "vibrant"        // boosted saturation + contrast
+    | "duotone"        // two-colour tint map
+    | "muted_earth"    // warm terracotta / sage palette
+    | "cinematic"      // teal shadows + orange skin tones
+    | "neon_pop"       // electric saturation — dark bg
+    | "bleach_bypass"  // high contrast silver bleach look
+    | "teal_orange"    // blockbuster grade — cool+warm split
+    | "infrared"       // false-colour foliage red / sky dark
+    | "cyanotype"      // prussian blue monochrome
+    | "kodachrome";    // warm reds, rich greens, punchy shadows
 export type AnimationTrigger = "scroll_enter" | "page_load" | "hover";
 export type CounterFormat = "abbreviated" | "full" | "percentage";
 export type TrustAnimationType = "count_up" | "fade_in" | "none";
@@ -437,6 +536,31 @@ export type SocialUpdateFreq = "static" | "daily" | "realtime";
 export type HeroHeight = "full" | "large" | "medium" | "compact";
 export type HeroBgTreatment = "solid" | "image" | "video" | "mesh";
 export type HeroMobileBehavior = "stack" | "collapse_image" | "full_bleed";
+
+// ============================================================================
+// DESIGN PERSONALITY — flair axis independent of content traits
+// ============================================================================
+
+/**
+ * DesignPersonality is a hash-derived chromosome (ch_expressiveness) that
+ * controls how bold/expressive the design is, independent of ContentTraits.
+ *
+ * clinical    → ultra-restrained, no ornamentation, all defaults
+ * corporate   → conservative, trustworthy, sector convention
+ * balanced    → sector default personality — medium flair
+ * bold        → confident statements, strong contrast, punchy motion
+ * expressive  → opinionated, unconventional, high flair
+ * disruptive  → breaks conventions, brutalist, glitch, maximum flair
+ *
+ * Each sector defines which personalities are permitted via sector-profiles.ts.
+ */
+export type DesignPersonality =
+    | "clinical"     // 0.00–0.15 expressiveness
+    | "corporate"    // 0.15–0.35
+    | "balanced"     // 0.35–0.55
+    | "bold"         // 0.55–0.75
+    | "expressive"   // 0.75–0.90
+    | "disruptive";  // 0.90–1.00
 
 // ============================================================================
 // CIVILIZATION CHROMOSOME VALUE RANGES (ch30–ch32)

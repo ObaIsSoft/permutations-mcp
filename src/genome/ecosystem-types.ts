@@ -4,11 +4,13 @@
  * Layer 2 of the SHA-256 hash chain.
  *   hash = sha256(designGenome.dnaHash)
  *   Each chromosome pair: [class byte] + [intensity byte]
- *   22 of 32 hash bytes consumed → ~75% entropy used
+ *   24 of 32 hash bytes consumed → ~75% entropy used
  *
  * Every chromosome must change something real in the output.
  * No decorative chromosomes.
  */
+
+import type { DesignPersonality } from "./types.js";
 
 // ── Chromosome value types ─────────────────────────────────────────────────
 
@@ -134,6 +136,23 @@ export interface EcosystemChromosomes {
     eco_ch10_capacity:  { class: CapacityClass;      pressure: number };
     /** bytes[20,21] — mutation rate (0–1) + variance (0–1) */
     eco_ch11_mutation:  { rate: number;              variance: number };
+    /**
+     * bytes[22,23] — design personality + expressiveness score.
+     *
+     * Sector does NOT gate this. Any personality is valid in any sector.
+     * Oscar Health (healthcare) is expressive. Vercel (technology) is disruptive.
+     * The hash alone determines which personality emerges.
+     *
+     * Expressiveness score drives bold choices in L1 generators:
+     *   ≥0.55 → expressive_type   ≥0.75 → asymmetric_layout
+     *   ≥0.65 → bold_fx           ≥0.85 → brutalist_edge
+     *                              ≥0.90 → glitch_motion
+     */
+    eco_ch12_expressiveness: {
+        personality: DesignPersonality;
+        score: number;   // 0.0–1.0, monotonically mapped from personality bucket
+        unlocks: Array<"expressive_type" | "brutalist_edge" | "glitch_motion" | "bold_fx" | "asymmetric_layout">;
+    };
 }
 
 // ── Genome ──────────────────────────────────────────────────────────────────

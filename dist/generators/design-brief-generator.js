@@ -52,7 +52,7 @@ Color & Surface:
 
 Motion & Interaction:
   ch8 physics: ${c.ch8_motion?.physics} — ${c.ch8_motion?.durationScale}s duration
-  ch14 animation character: ${c.ch14_animation_character?.style ?? "–"}
+  ch14 physics material: ${c.ch14_physics?.material ?? "–"} (roughness: ${c.ch14_physics?.roughness?.toFixed(2) ?? "–"}, metalness: ${c.ch14_physics?.metalness?.toFixed(2) ?? "–"})
   ch17 accessibility: WCAG ${c.ch17_accessibility?.minContrastRatio}:1, motion-safe: ${c.ch17_accessibility?.respectMotionPreference}
 
 Content & Trust:

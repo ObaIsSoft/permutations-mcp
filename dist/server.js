@@ -37,6 +37,12 @@ import { fontCatalog } from "./font-catalog.js";
 import { designBriefGenerator } from "./generators/design-brief-generator.js";
 import { urlGenomeExtractor } from "./genome/extractor-url.js";
 import { selectIconLibrary, formatIconLibraryNote } from "./icon-catalog.js";
+import { selectAnimationLibrary, formatAnimationLibraryNote } from "./animation-catalog.js";
+import { selectStateLibrary } from "./state-catalog.js";
+import { selectStylingLibrary } from "./styling-catalog.js";
+import { selectOrganismLibrary } from "./organism-catalog.js";
+import { selectInteractionLibraries } from "./interaction-catalog.js";
+import { selectChartLibrary } from "./chart-catalog.js";
 // ── Ecosystem biomes: hash-selectable structural character per tier ─────────
 // Different seeds at same tier get different biome characters.
 // Intent + sector constrain which branches are valid; the hash picks the branch.
@@ -229,12 +235,16 @@ class DesignGenomeServer {
                 },
                 {
                     name: "generate_ecosystem",
-                    description: "STEP 3 (optional) — Call after generate_design_genome when building a component library or design system. Pass genome.dnaHash (from generate_design_genome) as seed to maintain SHA-256 hash chain continuity from L1. Returns ecosystemGenome (L2): microbial (atomic), flora (composite), fauna (complex) component hierarchy. Provides component specs, prop contracts, containment relationships — NOT generated code. Pass the full ecosystemOutput to generate_civilization as the `ecosystem` param to wire L2 into L3.",
+                    description: "STEP 3 (optional) — Call after generate_design_genome when building a component library or design system. Pass genome.dnaHash as seed AND the full genome object as `genome` to wire L1 chromosomes directly into L2 gravity — this ensures the ecosystem inherits the exact same edge, motion, color, and density values the design genome produced. Without `genome`, L2 gravity runs on a re-derived child genome (one SHA-256 level deeper) which is coherent but not the same L1 the agent is building from. Returns ecosystemGenome (L2): microbial (atomic), flora (composite), fauna (complex) component hierarchy, organism library + interaction + chart recommendations. NOT generated code.",
                     inputSchema: {
                         type: "object",
                         properties: {
                             intent: { type: "string", description: "Natural language design intent" },
-                            seed: { type: "string", description: "Pass genome.dnaHash from generate_design_genome to maintain SHA-256 hash chain (L1→L2). Using a different seed creates an unlinked genome." },
+                            seed: { type: "string", description: "Pass genome.dnaHash from generate_design_genome to maintain SHA-256 hash chain (L1→L2)." },
+                            genome: {
+                                type: "object",
+                                description: "RECOMMENDED — Pass the full genome object returned by generate_design_genome. Wires L1 chromosomes directly into L2 gravity so the ecosystem inherits the exact same design character (edge style, motion physics, color, spacing) the agent is working from. Without this, L2 gravity uses a re-derived genome one hash level deeper."
+                            },
                             project_context: { type: "string", description: "Environment context" },
                             options: {
                                 type: "object",
@@ -427,7 +437,6 @@ class DesignGenomeServer {
                         const { finalComplexity, tier } = complexityResult;
                         // 6. CSS (always generated)
                         const css = this.cssGen.generate(genome, { format: "expanded" });
-                        const topology = this.htmlGen.generateTopology(genome);
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
                         // LLM-driven biomarker — unique mark synthesized from chromosome combination
@@ -439,6 +448,27 @@ class DesignGenomeServer {
                             sector: detectedSector,
                             dnaHashByte: parseInt(genome.dnaHash.slice(0, 2), 16),
                         });
+                        // Chromosome-driven animation library selection
+                        const animationLibrary = selectAnimationLibrary({
+                            physics: genome.chromosomes.ch8_motion?.physics ?? "none",
+                            choreographyStyle: genome.chromosomes.ch27_motion_choreography?.choreographyStyle ?? "smooth",
+                            sector: detectedSector,
+                            complexity: complexityResult.finalComplexity,
+                            dnaHashByte: parseInt(genome.dnaHash.slice(2, 4), 16),
+                        });
+                        // Chromosome-driven state management selection
+                        // Uses ch30_state topology + complexity score
+                        const stateTopology = genome.chromosomes.ch30_state?.topology ?? "local";
+                        const stateLibrarySelection = selectStateLibrary(stateTopology, complexityResult.finalComplexity);
+                        // Chromosome-driven styling system selection
+                        // Uses eco_ch12_expressiveness personality (if ecosystem ran) + edge style
+                        const edgeStyle = genome.chromosomes.ch7_edge?.style ?? "soft";
+                        // Personality resolved later when ecosystem data is available; use complexity proxy for now
+                        const personalityProxy = complexityResult.finalComplexity > 0.75 ? "expressive"
+                            : complexityResult.finalComplexity > 0.50 ? "bold"
+                                : complexityResult.finalComplexity > 0.30 ? "balanced"
+                                    : "corporate";
+                        const stylingLibrarySelection = selectStylingLibrary(personalityProxy, edgeStyle, complexityResult.finalComplexity);
                         // 7. Ecosystem-first civilization pipeline
                         //
                         // Biology rule: civilization cannot precede ecosystem.
@@ -600,7 +630,6 @@ class DesignGenomeServer {
                                         genome,
                                         tier,
                                         finalComplexity,
-                                        topology,
                                         css,
                                         layout_contract,
                                         // Three-layer genome guide — which field drives which implementation concern
@@ -648,6 +677,59 @@ class DesignGenomeServer {
                                             cdn: iconLibrary.cdn,
                                             weight_variants: iconLibrary.weightVariants,
                                             note: formatIconLibraryNote(iconLibrary),
+                                        },
+                                        animation_library: {
+                                            name: animationLibrary.name,
+                                            package: animationLibrary.reactPackage ?? animationLibrary.package,
+                                            style: animationLibrary.style,
+                                            bundle_size: animationLibrary.bundleSize,
+                                            license: animationLibrary.license,
+                                            description: animationLibrary.description,
+                                            choreography: animationLibrary.choreography,
+                                            import_example: animationLibrary.importExample,
+                                            usage_example: animationLibrary.usageExample,
+                                            cdn: animationLibrary.cdn,
+                                            note: formatAnimationLibraryNote(animationLibrary),
+                                        },
+                                        state_library: {
+                                            primary: {
+                                                name: stateLibrarySelection.primary.name,
+                                                package: stateLibrarySelection.primary.package,
+                                                paradigm: stateLibrarySelection.primary.paradigm,
+                                                bundle_size: stateLibrarySelection.primary.bundleSize,
+                                                description: stateLibrarySelection.primary.description,
+                                                install: stateLibrarySelection.primary.installCmd,
+                                                import_example: stateLibrarySelection.primary.importExample,
+                                                minimal_example: stateLibrarySelection.primary.minimalExample,
+                                            },
+                                            alternative: {
+                                                name: stateLibrarySelection.alternative.name,
+                                                package: stateLibrarySelection.alternative.package,
+                                                paradigm: stateLibrarySelection.alternative.paradigm,
+                                                description: stateLibrarySelection.alternative.description,
+                                            },
+                                            topology: stateTopology,
+                                        },
+                                        styling_system: {
+                                            primary: {
+                                                name: stylingLibrarySelection.primary.name,
+                                                package: stylingLibrarySelection.primary.package,
+                                                paradigm: stylingLibrarySelection.primary.paradigm,
+                                                bundle_size: stylingLibrarySelection.primary.bundleSize,
+                                                description: stylingLibrarySelection.primary.description,
+                                                install: stylingLibrarySelection.primary.installCmd,
+                                                import_example: stylingLibrarySelection.primary.importExample,
+                                                minimal_example: stylingLibrarySelection.primary.minimalExample,
+                                                ssr_safe: stylingLibrarySelection.primary.ssrSafe,
+                                            },
+                                            alternative: {
+                                                name: stylingLibrarySelection.alternative.name,
+                                                package: stylingLibrarySelection.alternative.package,
+                                                paradigm: stylingLibrarySelection.alternative.paradigm,
+                                                description: stylingLibrarySelection.alternative.description,
+                                            },
+                                            personality: personalityProxy,
+                                            edge_style: edgeStyle,
                                         },
                                         patternReport,
                                         patternViolations: patternViolations.filter(v => v.severity === "error"),
@@ -721,15 +803,18 @@ class DesignGenomeServer {
                         // LLM names the organisms — product-specific, not abstract topology names.
                         // Non-fatal: ecosystemGenerator falls back to topology-derived names if this fails.
                         const organismsDefinition = await this.extractor.analyzeOrganisms(args.intent, ecoSector, estimatedCounts, ecoBiomeContext);
-                        // Generate ecosystem - pass inferred sector so organisms reflect correct domain
+                        // Generate ecosystem.
+                        // If the caller passes the full L1 genome (from generate_design_genome),
+                        // use it directly so L2 gravity reads L1_original chromosomes — not a
+                        // re-derived child genome one SHA-256 level deeper.
                         const ecosystem = ecosystemGenerator.generate(args.seed, ecoTraits, {
                             ...(args.options || {}),
                             primarySector: ecoSector,
                             organismsDefinition,
+                            existingGenome: args.genome ?? undefined,
                         });
                         // Generate CSS from the shared genome
                         const css = this.cssGen.generate(ecosystem.environment.genome, { format: "compressed" });
-                        const topology = this.htmlGen.generateTopology(ecosystem.environment.genome);
                         // Organize organisms by category
                         const organisms = {
                             microbial: ecosystem.organisms.microbial.map(o => ({
@@ -767,6 +852,47 @@ class DesignGenomeServer {
                             contained: r.organisms[1],
                             pattern: r.pattern
                         }));
+                        // ── L2 library catalog selections ─────────────────────────────────
+                        const ecoChromosomes = ecosystem.environment.ecosystemGenome.chromosomes;
+                        const genomeChromosomes = ecosystem.environment.genome.chromosomes;
+                        const hasFauna = ecosystem.organisms.fauna.length > 0;
+                        const hasDataHeavyFauna = hasFauna && ecosystem.organisms.fauna.length >= 3;
+                        const organismSelection = selectOrganismLibrary({
+                            edgeStyle: genomeChromosomes.ch7_edge.style,
+                            motionPhysics: genomeChromosomes.ch8_motion.physics,
+                            succession: ecoChromosomes.eco_ch5_succession.stage,
+                            symbiosis: ecoChromosomes.eco_ch3_symbiosis.pattern,
+                            trophic: ecoChromosomes.eco_ch4_trophic.structure,
+                            population: ecoChromosomes.eco_ch7_population.pattern,
+                            biome: ecoChromosomes.eco_ch1_biome.class,
+                            adaptation: ecoChromosomes.eco_ch6_adaptation.axis,
+                            personality: ecoChromosomes.eco_ch12_expressiveness.personality,
+                            hasFauna,
+                        });
+                        const interactionSelection = selectInteractionLibraries({
+                            motionPhysics: genomeChromosomes.ch8_motion.physics,
+                            trophic: ecoChromosomes.eco_ch4_trophic.structure,
+                            population: ecoChromosomes.eco_ch7_population.pattern,
+                            succession: ecoChromosomes.eco_ch5_succession.stage,
+                            adaptation: ecoChromosomes.eco_ch6_adaptation.axis,
+                            energy: ecoChromosomes.eco_ch2_energy.source,
+                            symbiosis: ecoChromosomes.eco_ch3_symbiosis.pattern,
+                            personality: ecoChromosomes.eco_ch12_expressiveness.personality,
+                            hasFauna,
+                            hasDataHeavyFauna,
+                        });
+                        const chartSelection = selectChartLibrary({
+                            edgeStyle: genomeChromosomes.ch7_edge.style,
+                            motionPhysics: genomeChromosomes.ch8_motion.physics,
+                            complexityScore: ecosystem.evolution.complexity,
+                            adaptation: ecoChromosomes.eco_ch6_adaptation.axis,
+                            trophic: ecoChromosomes.eco_ch4_trophic.structure,
+                            succession: ecoChromosomes.eco_ch5_succession.stage,
+                            energy: ecoChromosomes.eco_ch2_energy.source,
+                            biome: ecoChromosomes.eco_ch1_biome.class,
+                            personality: ecoChromosomes.eco_ch12_expressiveness.personality,
+                            hasFauna,
+                        });
                         const ecosystemReportLines = [
                             `# Ecosystem Report`,
                             ``,
@@ -844,7 +970,24 @@ class DesignGenomeServer {
                                         biome: ecoBiome,
                                         biomeDescription: ecoBiomeDesc,
                                         css,
-                                        topology,
+                                        libraries: {
+                                            organism: {
+                                                primary: { name: organismSelection.primary.name, package: organismSelection.primary.package, philosophy: organismSelection.primary.philosophy, installCmd: organismSelection.primary.installCmd, importExample: organismSelection.primary.importExample, combinableWith: organismSelection.primary.combinableWith },
+                                                alternative: { name: organismSelection.alternative.name, package: organismSelection.alternative.package, philosophy: organismSelection.alternative.philosophy, installCmd: organismSelection.alternative.installCmd, importExample: organismSelection.alternative.importExample, combinableWith: organismSelection.alternative.combinableWith },
+                                                also_consider: organismSelection.also_consider.map(l => ({ name: l.name, package: l.package, philosophy: l.philosophy })),
+                                            },
+                                            interaction: {
+                                                primary: { name: interactionSelection.primary.name, package: interactionSelection.primary.package, domain: interactionSelection.primary.domain, installCmd: interactionSelection.primary.installCmd, importExample: interactionSelection.primary.importExample, combinableWith: interactionSelection.primary.combinableWith },
+                                                alternative: { name: interactionSelection.alternative.name, package: interactionSelection.alternative.package, domain: interactionSelection.alternative.domain, installCmd: interactionSelection.alternative.installCmd, importExample: interactionSelection.alternative.importExample, combinableWith: interactionSelection.alternative.combinableWith },
+                                                coverage: interactionSelection.coverage,
+                                                all_ranked: interactionSelection.ranked.map(l => ({ name: l.name, package: l.package, domain: l.domain })),
+                                            },
+                                            charts: chartSelection.chartsRecommended ? {
+                                                primary: { name: chartSelection.primary.name, package: chartSelection.primary.package, approach: chartSelection.primary.approach, families: chartSelection.primary.families, installCmd: chartSelection.primary.installCmd, importExample: chartSelection.primary.importExample },
+                                                alternative: { name: chartSelection.alternative.name, package: chartSelection.alternative.package, approach: chartSelection.alternative.approach, families: chartSelection.alternative.families, installCmd: chartSelection.alternative.installCmd, importExample: chartSelection.alternative.importExample },
+                                                also_consider: chartSelection.also_consider.map(l => ({ name: l.name, package: l.package, approach: l.approach, families: l.families })),
+                                            } : null,
+                                        },
                                         usage: {
                                             whenCivilizationReady: ecosystem.civilizationReady
                                                 ? "Call generate_civilization with the same seed to get architecture, state management, and advanced patterns"

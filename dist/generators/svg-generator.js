@@ -55,6 +55,9 @@ export class SVGGenerator {
             organic: "freely curved, no geometric rigidity",
             techno: "crisp, layered, digital-mechanical — modular precision",
             brutalist: "raw, heavy, unrefined — brutalist character",
+            serrated: "jagged, notched edges — aggressive, mechanical",
+            hand_drawn: "irregular, imperfect — sketch-like warmth",
+            chiseled: "faceted angular cuts — jewellery precision",
         }[edge.style] ?? "neutral";
         const densityChar = rhythm.density === "empty" ? "sparse elements, generous negative space"
             : rhythm.density === "breathing" ? "open composition, breathing room"

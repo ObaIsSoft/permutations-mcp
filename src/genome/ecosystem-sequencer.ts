@@ -15,7 +15,7 @@
  */
 
 import * as crypto from "crypto";
-import { DesignGenome } from "./types.js";
+import { DesignGenome, DesignPersonality } from "./types.js";
 import {
     EcosystemGenome, EcosystemChromosomes,
     BiomeClass, EnergySource, SymbiosisPattern, TrophicStructure,
@@ -298,7 +298,42 @@ export function sequenceEcosystemGenome(
             rate:     norm(b[20]),
             variance: norm(b[21]),
         },
+        // bytes[22,23] — design personality / expressiveness
+        // No sector gate — any personality is valid in any sector.
+        // The hash alone determines what personality emerges.
+        eco_ch12_expressiveness: sequenceExpressiveness(b[22], b[23]),
     };
 
     return { hash, parentHash: designGenome.dnaHash, chromosomes };
+}
+
+// ── Expressiveness sequencer ─────────────────────────────────────────────────
+
+const PERSONALITIES: DesignPersonality[] = [
+    'clinical', 'corporate', 'balanced', 'bold', 'expressive', 'disruptive',
+];
+
+const PERSONALITY_RANGES: Record<DesignPersonality, [number, number]> = {
+    clinical:   [0.00, 0.15],
+    corporate:  [0.15, 0.35],
+    balanced:   [0.35, 0.55],
+    bold:       [0.55, 0.75],
+    expressive: [0.75, 0.90],
+    disruptive: [0.90, 1.00],
+};
+
+function sequenceExpressiveness(classByte: number, scoreByte: number) {
+    // byte[22] → personality (uniform across 6 options — no sector gate)
+    const personality = PERSONALITIES[Math.floor((classByte / 256) * PERSONALITIES.length)];
+    const [lo, hi] = PERSONALITY_RANGES[personality];
+    const score = lo + norm(scoreByte) * (hi - lo);
+
+    const unlocks: Array<"expressive_type" | "brutalist_edge" | "glitch_motion" | "bold_fx" | "asymmetric_layout"> = [];
+    if (score >= 0.55) unlocks.push("expressive_type");
+    if (score >= 0.65) unlocks.push("bold_fx");
+    if (score >= 0.75) unlocks.push("asymmetric_layout");
+    if (score >= 0.85) unlocks.push("brutalist_edge");
+    if (score >= 0.90) unlocks.push("glitch_motion");
+
+    return { personality, score, unlocks };
 }

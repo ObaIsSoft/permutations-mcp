@@ -77,11 +77,14 @@ export class EcosystemGenerator {
         else if (traits.informationDensity > 0.7 && traits.emotionalTemperature < 0.3) {
             inferredSector = "manufacturing";
         }
-        // Generate the shared environment (ONE genome for entire ecosystem)
-        // enable3D: true so ch15_biomarker.complexity reflects trait-driven values,
-        // which determines organism counts (microbial/flora/fauna tier thresholds)
-        const genome = this.sequencer.generate(seed, traits, { primarySector: inferredSector, options: { enable3D: true } });
-        // Layer 2: sequence ecosystem genome from design genome
+        // L1 genome — use existing if provided (correct chain), otherwise generate fresh.
+        // Passing the genome from generate_design_genome ensures L2 gravity reads
+        // L1_original chromosomes, not a newly-derived L1_internal child.
+        const genome = options?.existingGenome
+            ?? this.sequencer.generate(seed, traits, { primarySector: inferredSector, options: { enable3D: true } });
+        // Layer 2: sequence ecosystem genome from design genome.
+        // Hash = sha256(genome.dnaHash) — chain integrity holds whether genome
+        // is L1_original or L1_internal. Gravity reads genome.chromosomes directly.
         const ecosystemGenome = sequenceEcosystemGenome(genome, genome.chromosomes.ch15_biomarker.complexity);
         // Calculate how well this environment supports life
         const habitabilityScore = this.calculateHabitability(traits);
