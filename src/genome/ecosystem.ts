@@ -219,7 +219,11 @@ export class EcosystemGenerator {
         // Layer 2: sequence ecosystem genome from design genome.
         // Hash = sha256(genome.dnaHash) — chain integrity holds whether genome
         // is L1_original or L1_internal. Gravity reads genome.chromosomes directly.
-        const ecosystemGenome = sequenceEcosystemGenome(genome, genome.chromosomes.ch15_biomarker.complexity);
+        // Defensive: ensure chromosomes exist
+        if (!genome.chromosomes) {
+            throw new Error("Genome missing chromosomes. Ensure you pass the full genome object from generate_design_genome, not just dnaHash/traits.");
+        }
+        const ecosystemGenome = sequenceEcosystemGenome(genome, genome.chromosomes.ch15_biomarker?.complexity ?? 0.5);
 
         // Calculate how well this environment supports life
         const habitabilityScore = this.calculateHabitability(traits);

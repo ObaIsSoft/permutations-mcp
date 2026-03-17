@@ -466,13 +466,22 @@ export class DesignBriefGenerator {
         return this.parseResponse(raw, designGenome, ecosystemGenome, civilizationGenome);
     }
     buildSynthesisPrompt(dg, eg, cg) {
+        // Defensive checks for incomplete genome objects
+        if (!dg.chromosomes) {
+            throw new Error("DesignGenome missing chromosomes. Ensure you pass the full genome object from generate_design_genome, not just dnaHash/traits.");
+        }
+        if (!dg.sectorContext) {
+            throw new Error("DesignGenome missing sectorContext. Ensure you pass the full genome object from generate_design_genome.");
+        }
         const c = dg.chromosomes;
-        const totalChromosomes = eg && cg ? 53 : eg ? 43 : 32;
+        const totalChromosomes = eg && cg ? 64 : eg ? 48 : 32; // Updated: L1=32, L2=16, L3=16
         const primary = c.ch5_color_primary;
         const pHue = primary?.hue ?? 0;
         const pSat = Math.round((primary?.saturation ?? 0) * 100);
         const pLight = Math.round((primary?.lightness ?? 0) * 100);
         const pDarkLight = Math.round((primary?.darkModeLightness ?? 0) * 100);
+        const sectorPrimary = dg.sectorContext?.primary ?? 'unknown';
+        const sectorSub = dg.sectorContext?.subSector ?? 'general';
         let prompt = `You are synthesizing a design philosophy from a ${totalChromosomes}-chromosome genome chain.
 
 Your task is NOT to describe tokens. Your task is to describe the ORGANISM — what kind of design does this chromosome combination produce, what creative philosophy emerges from their interaction, and what it mandates and forbids.
@@ -482,8 +491,8 @@ Think epistatically: each chromosome's meaning changes in context of the others.
 ═══════════════════════════════════════
 LAYER 1 — DESIGN GENOME (32 chromosomes)
 ═══════════════════════════════════════
-Sector: ${dg.sectorContext.primary} / ${dg.sectorContext.subSector}
-DNA Hash: ${dg.dnaHash.slice(0, 16)}...
+Sector: ${sectorPrimary} / ${sectorSub}
+DNA Hash: ${dg.dnaHash?.slice(0, 16) ?? 'unknown'}...
 
 Structure & Space:
   ch1 topology: ${c.ch1_structure?.topology} — ${c.ch1_structure?.sectionCount} sections
