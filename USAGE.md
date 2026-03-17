@@ -60,6 +60,80 @@ npm run build
 
 ---
 
+## ⚠️ MANDATORY Workflow Enforcement
+
+The Permutations MCP server **enforces** a strict workflow. AI agents CANNOT skip steps.
+
+### Required Sequence
+
+```
+STEP 1 → generate_design_genome
+    ↓ [MUST write genome.json]
+STEP 2 → generate_design_brief  
+    ↓ [MUST read before any code]
+STEP 3 → generate_ecosystem (if building components)
+    ↓ [MUST compose: microbial → flora → fauna]
+STEP 4 → generate_civilization (if complexity ≥ 0.68)
+    ↓
+IMPLEMENTATION → Use ALL 32 chromosomes
+    ↓
+FINAL → validate_design [MUST pass before shipping]
+```
+
+### Critical Enforcement Rules
+
+| Rule | Violation Consequence |
+|------|----------------------|
+| **Write genome.json first** | All subsequent tools will fail validation |
+| **Use complete genome object** | Passing only `dnaHash` or `traits` throws error |
+| **Apply ALL 32 chromosomes** | < 50% utilization = validation failure |
+| **Follow organism hierarchy** | fauna → contains → flora → contains → microbial |
+| **Call validate_design before ship** | Cannot mark task complete without validation |
+
+### Chromosome Utilization Check
+
+Every `generate_design_genome` response includes:
+
+```json
+{
+  "chromosome_utilization": {
+    "utilizationRate": 85,
+    "used": ["ch5_color_primary", "ch7_edge", "ch8_motion", ...],
+    "unused": ["ch11_texture", "ch13_z_index"],
+    "warning": null,
+    "critical_note": "You MUST use ALL 32 chromosomes...",
+    "checklist": {
+      "ch5_color_primary": "✓ USED",
+      "ch11_texture": "⚠ NOT YET ACCESSED",
+      ...
+    }
+  }
+}
+```
+
+**AI must check every chromosome marked "⚠ NOT YET ACCESSED" and apply it.**
+
+### The Genome Object Contract
+
+When calling subsequent tools, you MUST pass the **complete** genome:
+
+```typescript
+// ✅ CORRECT — Full genome object
+validate_design({
+  genome: genome_result.genome,  // Complete object with chromosomes, sectorContext, dnaHash
+  css: myCss
+})
+
+// ❌ WRONG — Partial genome
+validate_design({
+  genome: { dnaHash: "abc123", traits: [...] },  // Missing chromosomes!
+  css: myCss
+})
+// → Error: "Genome missing 'chromosomes' field"
+```
+
+---
+
 ## The `generate_design_genome` Tool
 
 ### Parameters
@@ -230,19 +304,42 @@ const civilization = generate_civilization(
 
 ## All 8 Tools
 
-### Tool Workflow
+### Tool Workflow (Enforced)
 
 ```
-STEP 1  generate_design_genome    ← always start here
-STEP 2  generate_design_brief     ← read before writing any code
-STEP 3  generate_ecosystem        ← (optional) component library
-STEP 4  generate_civilization     ← (optional) complexity ≥ 0.68
-FINAL   validate_design           ← before shipping CSS
+STEP 1  generate_design_genome    ← ALWAYS START HERE
+        [OUTPUT: Write genome.json — BLOCKING]
+        [VERIFY: Check chromosome_utilization.checklist]
+        
+STEP 2  generate_design_brief     ← MANDATORY before any code
+        [INPUT: Full genome object]
+        [OUTPUT: DESIGN_SYSTEM.md constitution]
+        
+STEP 3  generate_ecosystem        ← REQUIRED for components
+        [RULE: Compose microbial → flora → fauna]
+        [RULE: Use containment relationships]
+        
+STEP 4  generate_civilization     ← REQUIRED if complexity ≥ 0.68
+        [INPUT: Ecosystem from Step 3]
+        [OUTPUT: State/routing architecture]
+        
+IMPLEMENT  Build from genome specs
+        [RULE: Apply ALL 32 chromosomes]
+        [RULE: Follow organism hierarchy]
+        
+FINAL   validate_design           ← MANDATORY GATE
+        [BLOCKING: Cannot ship without passing]
+        [CHECK: Pattern violations, chromosome drift, utilization rate]
 
-ALTERNATIVE  extract_genome_from_url  ← when you have a reference site
-EXPORT       generate_formats         ← export to Figma/Style Dictionary
-ITERATE      update_design_genome     ← adjust specific chromosomes
+ALTERNATIVE  extract_genome_from_url  ← Reference site analysis
+EXPORT       generate_formats         ← External tool export
+ITERATE      update_design_genome     ← Chromosome adjustments
 ```
+
+**Enforcement Notes:**
+- `generate_design_brief` is now **mandatory** — the AI cannot write code before calling it
+- `validate_design` is a **shipping gate** — it blocks completion until all checks pass
+- Chromosome utilization must be ≥ 80% for validation to pass
 
 ### Iterate: Update Genome
 

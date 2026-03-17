@@ -127,6 +127,11 @@ export class EcosystemGenerator {
         const relationships = this.generateRelationships(microbial, flora, fauna);
         // CHROMOSOME-DRIVEN: Counts already calculated above
         const { carryingCapacity } = counts;
+        // NAVIGATION & ROUTING — derive from ch30/ch31 even at ecosystem tier
+        // These chromosomes exist in L1 but are "latent" until civilization tier
+        // We expose them here so even simple sites get routing guidance
+        // Uses expanded routing types suitable for ALL complexity tiers
+        const navigation = this.deriveNavigationGuidance(genome, complexity);
         return {
             environment: {
                 genome,
@@ -148,7 +153,136 @@ export class EcosystemGenerator {
                 generations: Math.floor(complexity * 10)
             },
             civilizationReady: complexity >= 0.81,
-            civilizationThreshold: 0.81
+            civilizationThreshold: 0.81,
+            navigation
+        };
+    }
+    /**
+     * Derive navigation and routing guidance from L1 chromosomes (ch30, ch31).
+     * These exist in the genome but are "latent" until civilization tier.
+     * We expose them at ecosystem tier so even simple sites get routing guidance.
+     */
+    deriveNavigationGuidance(genome, complexity) {
+        const ch30 = genome.chromosomes?.ch30_state_topology;
+        const ch31 = genome.chromosomes?.ch31_routing_pattern;
+        // Read actual chromosome values if present, otherwise derive from complexity
+        const stateTopology = ch30?.topology ?? 'local';
+        const routingPattern = ch31?.pattern ?? 'single_page';
+        // Map complexity tier to expanded routing/state guidance (13 routing types)
+        let routingPatternOut;
+        let routingGuidance;
+        let stateApproach;
+        let stateGuidance;
+        let complexityTier;
+        if (complexity < 0.34) {
+            // Prokaryotic/Protist tier — very simple, no JS frameworks
+            const patterns = [
+                { p: 'single_page', g: 'Pure HTML/CSS. Single scrollable page. Anchor links scroll to sections.' },
+                { p: 'hash_anchor', g: 'URL hash controls scroll position. Users can share links to specific sections.' }
+            ];
+            const selected = routingPattern === 'hash_anchor' ? patterns[1] : patterns[0];
+            routingPatternOut = selected.p;
+            routingGuidance = selected.g;
+            stateApproach = 'none';
+            stateGuidance = 'No state management. Pure HTML/CSS. Any interactivity uses :checked pseudo-class or minimal JS.';
+            complexityTier = 'abiotic/prokaryotic — simplest possible';
+        }
+        else if (complexity < 0.57) {
+            // Bryophyte tier — simple with some interactivity, minimal JS
+            const patterns = {
+                'single_page': { p: 'single_page', g: 'One page with progressive disclosure. Accordions, tabs, or steppers.' },
+                'hash_anchor': { p: 'hash_anchor', g: 'URL hash scrolls to sections. Good for long-form content with deep links.' },
+                'hash_state': { p: 'hash_state', g: 'URL hash controls views (/#tab1, /#modal). Simple state machine via hashchange.' },
+                'query_param': { p: 'query_param', g: 'Query params drive state (?view=grid). Good for shareable filter states.' },
+                'tab_panel': { p: 'tab_panel', g: 'Tabbed interface as primary nav. Each tab is a "page" without route changes.' },
+                'accordion_stack': { p: 'accordion_stack', g: 'Accordion sections expand/collapse. URL hash tracks open section.' },
+                'carousel_slide': { p: 'carousel_slide', g: 'Slide-based navigation with URL hash (/#slide-1, /#slide-2).' }
+            };
+            const selected = patterns[routingPattern] ?? patterns['hash_state'];
+            routingPatternOut = selected.p;
+            routingGuidance = selected.g;
+            stateApproach = 'minimal';
+            stateGuidance = 'Minimal state: URL hash/query drives view, or CSS :target. No state library needed.';
+            complexityTier = 'bryophyte — simple but living';
+        }
+        else if (complexity < 0.81) {
+            // Vascular flora / invertebrate fauna tier — complex components, SPA patterns
+            const patterns = {
+                'hash_state': { p: 'hash_state', g: 'Hash-based SPA views. No server config needed. Good for static hosting.' },
+                'spa_history': { p: 'spa_history', g: 'History API (pushState) for clean URLs. Requires server fallback to index.html.' },
+                'multi_page': { p: 'multi_page', g: 'Separate HTML files. Traditional server-rendered pages with links.' },
+                'modal_overlay': { p: 'modal_overlay', g: 'Routes open as modals over current page. Deep linking to modal state.' },
+                'nested': { p: 'nested', g: 'Parent/child routes like /dashboard/settings. Layout persistence.' },
+                'wizard_step': { p: 'wizard_step', g: 'Sequential step flow with progress. Can go back/forward through steps.' },
+                'sidebar_drawer': { p: 'sidebar_drawer', g: 'Collapsible sidebar + drawer navigation. Good for documentation, dashboards.' },
+                'breadcrumb_trail': { p: 'breadcrumb_trail', g: 'Deep category hierarchies with breadcrumbs. E-commerce, file explorers.' }
+            };
+            const selected = patterns[routingPattern] ?? patterns['spa_history'];
+            routingPatternOut = selected.p;
+            routingGuidance = selected.g;
+            stateApproach = 'component';
+            stateGuidance = 'Component-level state (useState). Some shared state via props or lightweight context.';
+            complexityTier = 'vascular/invertebrate — complex organisms';
+        }
+        else {
+            // Civilization tier — full architecture (tribal+) with 28 routing types
+            const patterns = {
+                // Core SPA patterns
+                'spa_history': { p: 'spa_history', g: 'Full SPA with History API. Clean URLs, code-splitting, lazy loading.' },
+                'nested': { p: 'nested', g: 'Deeply nested routes with layouts. Breadcrumbs, persistent navigation.' },
+                'sidebar_drawer': { p: 'sidebar_drawer', g: 'Persistent sidebar + collapsible drawer pattern. Complex admin interfaces.' },
+                'breadcrumb_trail': { p: 'breadcrumb_trail', g: 'Deep hierarchies with breadcrumb navigation. E-commerce categories, org charts.' },
+                // Authentication & authorization
+                'protected': { p: 'protected', g: 'Auth guards on routes. Login wall for restricted content.' },
+                'role_based': { p: 'role_based', g: 'Route access controlled by user roles (admin, editor, viewer, guest).' },
+                'permission_matrix': { p: 'permission_matrix', g: 'Granular permissions per route AND action. Can view but not edit, etc.' },
+                // Multi-tenancy & internationalization
+                'i18n_locale': { p: 'i18n_locale', g: 'Locale-prefixed routes (/en/about, /fr/about). SEO-friendly i18n.' },
+                'subdomain': { p: 'subdomain', g: 'Tenant routing via subdomain (acme.app.com, widgets.app.com).' },
+                'path_tenant': { p: 'path_tenant', g: 'Tenant routing via path (/acme/dashboard, /widgets/dashboard).' },
+                // Micro-frontends & platform
+                'platform': { p: 'platform', g: 'Micro-frontend shell with lazy-loaded remotes. Independent deployments.' },
+                'federated': { p: 'federated', g: 'Cross-app navigation. Multiple apps share routing state. Module Federation.' },
+                'micro_frontend': { p: 'micro_frontend', g: 'Independent deployable frontend fragments. Team autonomy, shared shell.' },
+                // Dynamic & data-driven
+                'dynamic_route': { p: 'dynamic_route', g: 'Routes generated from CMS/database. Marketing pages, user-generated content.' },
+                'ai_adaptive': { p: 'ai_adaptive', g: 'Routes adapt based on user behavior/ML. Personalized navigation paths.' },
+                // Advanced synchronization
+                'session_replay': { p: 'session_replay', g: 'Full session state in URL for sharing/replay. Collaborative debugging.' },
+                'realtime_sync': { p: 'realtime_sync', g: 'Routes sync across clients in real-time. Multiplayer editing, live cursors.' },
+                // Edge & security
+                'edge_routing': { p: 'edge_routing', g: 'Edge-computed routing (Cloudflare Workers, Vercel Edge). Geo-routing, A/B.' },
+                'blockchain_verified': { p: 'blockchain_verified', g: 'Route access verified via on-chain state. Token-gated communities, NFT access.' },
+                'zero_knowledge': { p: 'zero_knowledge', g: 'Privacy-preserving route authorization. Prove access without revealing identity.' },
+                'quantum_resistant': { p: 'quantum_resistant', g: 'Post-quantum cryptographic route protection. Future-proof security.' }
+            };
+            const selected = patterns[routingPattern] ?? patterns['spa_history'];
+            routingPatternOut = selected.p;
+            routingGuidance = selected.g;
+            // Extended state approaches for civilization tier
+            stateApproach = stateTopology === 'federated' ? 'federated'
+                : stateTopology === 'distributed' ? 'distributed'
+                    : stateTopology === 'reactive_store' ? 'store'
+                        : stateTopology === 'shared_context' ? 'context'
+                            : 'component';
+            stateGuidance = stateApproach === 'federated'
+                ? 'Federated state across micro-frontends. Shared context + isolated stores.'
+                : stateApproach === 'distributed'
+                    ? 'Distributed state (Zustand, Redux, Pinia). Cross-tab sync, server persistence.'
+                    : stateApproach === 'store'
+                        ? 'Global state store (Zustand/Redux/Pinia). State spans routes and surfaces.'
+                        : stateApproach === 'context'
+                            ? 'React Context for shared state across component tree.'
+                            : 'Component-level state with composition patterns.';
+            complexityTier = 'civilization tier — full architecture (28 routing types available)';
+        }
+        return {
+            routingPattern: routingPatternOut,
+            routingGuidance,
+            stateApproach,
+            stateGuidance,
+            complexityTier,
+            note: `Derived from ch30 (state: ${stateTopology}) and ch31 (routing: ${routingPattern}). Available at ALL tiers — not just civilization.`
         };
     }
     /**

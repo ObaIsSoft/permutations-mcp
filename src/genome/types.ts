@@ -1080,11 +1080,44 @@ export type StateTopology =
 
 /** How the application handles URL routing */
 export type RoutingPattern =
-    | "single_page"   // No router — single route, hash state only
-    | "multi_page"    // React Router — multiple pages, public routes only
-    | "protected"     // React Router — auth guards on restricted routes
-    | "platform"      // Shell + lazy-loaded feature remotes
-    | "federated";    // Module Federation — cross-app navigation
+    // Tier 1: Simple/Static (< 0.34)
+    | "single_page"           // One HTML file, scroll navigation
+    | "hash_anchor"           // URL hash controls scroll position
+    | "hash_state"            // URL hash controls view state
+    | "query_param"           // Query params control state
+    
+    // Tier 2: Component-Level (0.34–0.56)
+    | "tab_panel"             // Tabbed interface as primary navigation
+    | "accordion_stack"       // Accordion sections as "pages"
+    | "carousel_slide"        // Slide-based navigation (/#slide-1)
+    
+    // Tier 3: SPA Patterns (0.57–0.80)
+    | "multi_page"            // Separate HTML files
+    | "spa_history"           // History API, clean URLs
+    | "modal_overlay"         // Routes as modals over current view
+    | "wizard_step"           // Sequential step flow
+    | "nested"                // Parent/child routes
+    | "sidebar_drawer"        // Persistent sidebar + drawer navigation
+    | "breadcrumb_trail"      // Deep hierarchies with breadcrumbs
+    
+    // Tier 4: Civilization/Enterprise (≥ 0.81)
+    | "protected"             // Auth guards on routes
+    | "role_based"            // Route access by user roles (admin, editor, viewer)
+    | "permission_matrix"     // Granular permissions per route/action
+    | "dynamic_route"         // Routes generated from CMS/data
+    | "i18n_locale"           // Locale-prefixed routes (/en/about, /fr/about)
+    | "subdomain"             // Tenant routing via subdomain (tenant.app.com)
+    | "path_tenant"           // Tenant routing via path (/tenant/dashboard)
+    | "platform"              // Shell + lazy-loaded remotes
+    | "federated"             // Module Federation cross-app
+    | "micro_frontend"        // Independent deployable frontend fragments
+    | "edge_routing"          // Edge-computed routing (Cloudflare Workers, etc)
+    | "ai_adaptive"           // Routes adapt based on user behavior/ML
+    | "session_replay"        // Full session state in URL for sharing/replay
+    | "realtime_sync"         // Routes sync across clients in real-time
+    | "blockchain_verified"   // Route access verified via on-chain state
+    | "zero_knowledge"        // Privacy-preserving route authorization
+    | "quantum_resistant";    // Post-quantum cryptographic route protection
 
 /** How design tokens are layered and inherited */
 export type TokenInheritance =

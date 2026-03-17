@@ -75,6 +75,163 @@ function validateGenome(genome: any, context: string): asserts genome is { chrom
     }
 }
 
+// ── Chromosome Access Tracker ───────────────────────────────────────────────
+// Tracks which chromosomes are accessed during genome usage to ensure full utilization
+
+// L1 Design Genome: 32 chromosomes
+const CHROMOSOME_REGISTRY = [
+    'ch0_sector_primary', 'ch0_sector_secondary',
+    'ch1_structure', 'ch2_density', 'ch3_type_display', 'ch4_type_body',
+    'ch5_color_primary', 'ch6_color_temp', 'ch7_edge', 'ch8_motion',
+    'ch9_grid', 'ch10_hierarchy', 'ch11_texture', 'ch12_depth',
+    'ch13_z_index', 'ch14_responsive', 'ch15_spacing', 'ch16_shadow',
+    'ch17_material', 'ch18_accessibility', 'ch19_hero_type', 'ch20_hero_variant_detail',
+    'ch21_trust_signals', 'ch22_social_proof', 'ch23_content_depth', 'ch23_information_architecture',
+    'ch24_breakpoint_strategy', 'ch25_typographic_scale', 'ch26_color_system', 'ch27_motion_choreography',
+    'ch28_type_casing', 'ch29_physics_material', 'ch30_state', 'ch31_biomarker_geometry'
+];
+
+// L2 Ecosystem Genome: 12 chromosomes
+const ECOSYSTEM_CHROMOSOME_REGISTRY = [
+    'eco_ch1_biome', 'eco_ch2_energy', 'eco_ch3_symbiosis', 'eco_ch4_trophic',
+    'eco_ch5_succession', 'eco_ch6_adaptation', 'eco_ch7_population', 'eco_ch8_temporal',
+    'eco_ch9_spatial', 'eco_ch10_capacity', 'eco_ch11_mutation', 'eco_ch12_expressiveness'
+];
+
+// L3 Civilization Genome: 16 chromosomes  
+const CIVILIZATION_CHROMOSOME_REGISTRY = [
+    'civ_ch1_archetype', 'civ_ch2_governance', 'civ_ch3_economics', 'civ_ch4_technology',
+    'civ_ch5_culture', 'civ_ch6_resilience', 'civ_ch7_knowledge', 'civ_ch8_expansion',
+    'civ_ch9_age', 'civ_ch10_fragility', 'civ_ch11_topology', 'civ_ch12_cosmos',
+    'civ_ch13_memory', 'civ_ch14_interface', 'civ_ch15_evolution', 'civ_ch16_communication'
+];
+
+// Total: 60 chromosomes across 3 layers
+const TOTAL_CHROMOSOMES = CHROMOSOME_REGISTRY.length + ECOSYSTEM_CHROMOSOME_REGISTRY.length + CIVILIZATION_CHROMOSOME_REGISTRY.length;
+
+function createChromosomeAccessTracker(genome: any): {
+    track: (chromosome: string) => void;
+    getReport: () => { used: string[]; unused: string[]; utilizationRate: number; warning: string | null };
+} {
+    const accessed = new Set<string>();
+    
+    return {
+        track: (chromosome: string) => {
+            accessed.add(chromosome);
+        },
+        getReport: () => {
+            const used = Array.from(accessed);
+            const unused = CHROMOSOME_REGISTRY.filter(ch => !accessed.has(ch));
+            const utilizationRate = Math.round((used.length / CHROMOSOME_REGISTRY.length) * 100);
+            
+            let warning: string | null = null;
+            if (utilizationRate < 50) {
+                warning = `CRITICAL: Only ${utilizationRate}% of L1 chromosomes used. You MUST read and apply all 32 chromosomes.`;
+            } else if (utilizationRate < 80) {
+                warning = `WARNING: ${utilizationRate}% L1 chromosome utilization. Aim for 90%+ by checking: ${unused.slice(0, 5).join(', ')}${unused.length > 5 ? '...' : ''}`;
+            }
+            
+            return { used, unused, utilizationRate, warning };
+        }
+    };
+}
+
+function createEcosystemChromosomeTracker(): {
+    track: (chromosome: string) => void;
+    getReport: () => { used: string[]; unused: string[]; utilizationRate: number; warning: string | null };
+} {
+    const accessed = new Set<string>();
+    
+    return {
+        track: (chromosome: string) => {
+            accessed.add(chromosome);
+        },
+        getReport: () => {
+            const used = Array.from(accessed);
+            const unused = ECOSYSTEM_CHROMOSOME_REGISTRY.filter(ch => !accessed.has(ch));
+            const utilizationRate = Math.round((used.length / ECOSYSTEM_CHROMOSOME_REGISTRY.length) * 100);
+            
+            let warning: string | null = null;
+            if (utilizationRate < 50) {
+                warning = `CRITICAL: Only ${utilizationRate}% of L2 ecosystem chromosomes used. You MUST compose organisms following microbial→flora→fauna hierarchy using all 12 chromosomes.`;
+            } else if (utilizationRate < 80) {
+                warning = `WARNING: ${utilizationRate}% L2 chromosome utilization. Check unused: ${unused.slice(0, 3).join(', ')}${unused.length > 3 ? '...' : ''}`;
+            }
+            
+            return { used, unused, utilizationRate, warning };
+        }
+    };
+}
+
+function createCivilizationChromosomeTracker(): {
+    track: (chromosome: string) => void;
+    getReport: () => { used: string[]; unused: string[]; utilizationRate: number; warning: string | null };
+} {
+    const accessed = new Set<string>();
+    
+    return {
+        track: (chromosome: string) => {
+            accessed.add(chromosome);
+        },
+        getReport: () => {
+            const used = Array.from(accessed);
+            const unused = CIVILIZATION_CHROMOSOME_REGISTRY.filter(ch => !accessed.has(ch));
+            const utilizationRate = Math.round((used.length / CIVILIZATION_CHROMOSOME_REGISTRY.length) * 100);
+            
+            let warning: string | null = null;
+            if (utilizationRate < 50) {
+                warning = `CRITICAL: Only ${utilizationRate}% of L3 civilization chromosomes used. Architecture implementation requires all 16 chromosomes (governance, knowledge, expansion, etc.).`;
+            } else if (utilizationRate < 80) {
+                warning = `WARNING: ${utilizationRate}% L3 chromosome utilization. Check unused: ${unused.slice(0, 3).join(', ')}${unused.length > 3 ? '...' : ''}`;
+            }
+            
+            return { used, unused, utilizationRate, warning };
+        }
+    };
+}
+
+// Combined tracker for all 3 layers
+function createFullGenomeTracker(genome: any, ecosystemGenome?: any, civilizationGenome?: any): {
+    trackL1: (chromosome: string) => void;
+    trackL2: (chromosome: string) => void;
+    trackL3: (chromosome: string) => void;
+    getFullReport: () => { 
+        L1: any; L2: any; L3: any; 
+        totalUsed: number; 
+        totalAvailable: number;
+        overallRate: number;
+        layerWarning: string | null;
+    };
+} {
+    const l1 = createChromosomeAccessTracker(genome);
+    const l2 = ecosystemGenome ? createEcosystemChromosomeTracker() : null;
+    const l3 = civilizationGenome ? createCivilizationChromosomeTracker() : null;
+    
+    return {
+        trackL1: (ch: string) => l1.track(ch),
+        trackL2: (ch: string) => l2?.track(ch),
+        trackL3: (ch: string) => l3?.track(ch),
+        getFullReport: () => {
+            const r1 = l1.getReport();
+            const r2 = l2?.getReport() ?? { used: [], unused: [], utilizationRate: 0, warning: null };
+            const r3 = l3?.getReport() ?? { used: [], unused: [], utilizationRate: 0, warning: null };
+            
+            const totalUsed = r1.used.length + r2.used.length + r3.used.length;
+            const totalAvailable = CHROMOSOME_REGISTRY.length + 
+                (ecosystemGenome ? ECOSYSTEM_CHROMOSOME_REGISTRY.length : 0) + 
+                (civilizationGenome ? CIVILIZATION_CHROMOSOME_REGISTRY.length : 0);
+            const overallRate = Math.round((totalUsed / totalAvailable) * 100);
+            
+            let layerWarning: string | null = null;
+            if (r1.warning || r2.warning || r3.warning) {
+                layerWarning = [r1.warning, r2.warning, r3.warning].filter(Boolean).join(' | ');
+            }
+            
+            return { L1: r1, L2: r2, L3: r3, totalUsed, totalAvailable, overallRate, layerWarning };
+        }
+    };
+}
+
 // ── Security Configuration (environment-overrideable) ───────────────────────
 const SECURITY_CONFIG = {
     // Maximum file size for brand assets (default: 50MB, env overrideable)
@@ -350,7 +507,7 @@ class DesignGenomeServer {
             tools: [
                 {
                     name: "generate_design_genome",
-                    description: "STEP 1 — Start here for every design task. Sequences a 32-chromosome design genome from a natural language intent. Returns CSS tokens, color system, typography, spacing, motion constraints, and a suggested_next workflow guide. All other tools require the genome this produces.",
+                    description: "STEP 1 — MANDATORY ENTRY POINT for every design task. Sequences a 32-chromosome design genome from natural language intent. CRITICAL: The complete genome object returned MUST be passed to ALL subsequent tools (generate_design_brief, validate_design, etc). Do NOT extract only dnaHash or traits. After calling this, you MUST write genome.json to disk before proceeding to any implementation. Returns CSS tokens, color system, typography, spacing, motion constraints, organism hierarchy (microbial/flora/fauna), and suggested_next workflow guide.",
                     inputSchema: {
                         type: "object",
                         properties: {
@@ -373,7 +530,7 @@ class DesignGenomeServer {
                 },
                 {
                     name: "validate_design",
-                    description: "FINAL STEP — Call before shipping any CSS. Validates code against genome DNA constraints and checks for forbidden slop patterns (gradients on text, bootstrap shadows, AI tells). Returns violation list and slop score.",
+                    description: "FINAL STEP — MANDATORY before shipping. Validates your implementation against the genome constraints. ENFORCEMENT: You MUST run this before claiming any task complete. Pass the COMPLETE genome object from generate_design_genome. Checks for: (1) slop patterns (gradients on text, bootstrap shadows, AI tells), (2) chromosome drift, (3) incomplete utilization. Returns violation list, slop score, and chromosome utilization rate.",
                     inputSchema: {
                         type: "object",
                         properties: {
@@ -385,7 +542,7 @@ class DesignGenomeServer {
                 },
                 {
                     name: "generate_ecosystem",
-                    description: "STEP 3 (optional) — Call after generate_design_genome when building a component library or design system. Pass genome.dnaHash as seed AND the full genome object as `genome` to wire L1 chromosomes directly into L2 gravity — this ensures the ecosystem inherits the exact same edge, motion, color, and density values the design genome produced. Without `genome`, L2 gravity runs on a re-derived child genome (one SHA-256 level deeper) which is coherent but not the same L1 the agent is building from. Returns ecosystemGenome (L2): microbial (atomic), flora (composite), fauna (complex) component hierarchy, organism library + interaction + chart recommendations. NOT generated code.",
+                    description: "STEP 3 — REQUIRED for component libraries. Generates the organism hierarchy: microbial (atoms) → flora (composites) → fauna (complex). MANDATORY COMPOSITION RULE: You MUST build UI following this hierarchy — fauna contain flora, flora contain microbial. Pass genome.dnaHash as seed AND the full genome object as `genome`. Returns ecosystemGenome (L2) with organism counts, containment relationships, and library recommendations. NOT generated code — you implement from these specs.",
                     inputSchema: {
                         type: "object",
                         properties: {
@@ -490,7 +647,7 @@ class DesignGenomeServer {
                 },
                 {
                     name: "generate_design_brief",
-                    description: "STEP 2 — Call after generate_design_genome before writing any code. Synthesizes all genome layers into a design philosophy thesis — what organism this design is, what it mandates, what it forbids. Also generates a DESIGN_SYSTEM.md (usage_md field) to save in the project. Pass all available genome layers for the fullest synthesis.",
+                    description: "STEP 2 — MANDATORY before writing ANY code. Synthesizes all genome layers into a design philosophy thesis. ENFORCEMENT: You MUST call this after generate_design_genome and BEFORE writing any HTML/CSS/JS. This produces the DESIGN_SYSTEM.md content that is your constitution for the entire build. Pass the COMPLETE genome object from generate_design_genome (not just dnaHash).",
                     inputSchema: {
                         type: "object",
                         properties: {
@@ -779,20 +936,44 @@ class DesignGenomeServer {
                             traits
                         });
 
+                        // Initialize chromosome access tracker for this genome
+                        const chromosomeTracker = createChromosomeAccessTracker(genome);
+                        // Track essential chromosomes that are directly used in this function
+                        chromosomeTracker.track('ch5_color_primary');
+                        chromosomeTracker.track('ch6_color_temp');
+                        chromosomeTracker.track('ch7_edge');
+                        chromosomeTracker.track('ch8_motion');
+                        chromosomeTracker.track('ch19_hero_type');
+                        chromosomeTracker.track('ch3_type_display');
+                        chromosomeTracker.track('ch4_type_body');
+                        const initialUtilization = chromosomeTracker.getReport();
+
                         const suggested_next = [
+                            // ── CRITICAL CHECKPOINTS — DO NOT SKIP ─────────────────────
+                            {
+                                action: "CHECKPOINT",
+                                type: "mandatory_prerequisite",
+                                name: "genome.json",
+                                instruction: "WRITE THIS FILE BEFORE ANYTHING ELSE. Save the `genome` field as JSON to genome.json in the project root. ALL subsequent tools require this exact genome object.",
+                                enforcement: "You CANNOT proceed to generate_design_brief, validate_design, or any implementation without writing genome.json first.",
+                                always: true,
+                                blocking: true
+                            },
+                            {
+                                action: "CHECKPOINT",
+                                type: "mandatory_prerequisite",
+                                name: "chromosome_verification",
+                                instruction: "Verify you have accessed ALL 32 chromosomes. Check `chromosome_utilization.checklist` — every chromosome marked 'NOT YET ACCESSED' must be read and applied in your implementation.",
+                                enforcement: "Implementation with < 80% chromosome utilization will fail validation.",
+                                always: true,
+                                blocking: true
+                            },
                             // ── Files to write immediately ───────────────────────────
                             {
                                 action: "write_file",
                                 file: "design-tokens.css",
                                 field: "css",
                                 instruction: "Write the `css` field to your project's stylesheet — e.g. src/styles/design-tokens.css or public/design-tokens.css. Import it at the root of your app.",
-                                always: true
-                            },
-                            {
-                                action: "write_file",
-                                file: "genome.json",
-                                field: "genome",
-                                instruction: "Write the `genome` field as JSON to genome.json in the project root. Used for reproducibility — pass this seed + intent to regenerate the same genome.",
                                 always: true
                             },
                             {
@@ -805,8 +986,9 @@ class DesignGenomeServer {
                             // ── Tools to call next ────────────────────────────────────
                             {
                                 tool: "generate_design_brief",
-                                pass: "genome + ecosystemOutput.ecosystemGenome (if present) + civilizationOutput.civilizationGenome (if present)",
-                                reason: "LLM synthesizes all genome layers into a design philosophy thesis + DESIGN_SYSTEM.md. Call this before writing any component code.",
+                                pass: "genome (COMPLETE object, not just dnaHash) + ecosystemOutput.ecosystemGenome (if present) + civilizationOutput.civilizationGenome (if present)",
+                                reason: "LLM synthesizes all genome layers into a design philosophy thesis + DESIGN_SYSTEM.md. Call this BEFORE writing ANY code.",
+                                enforcement: "MANDATORY — You cannot implement without understanding the design philosophy.",
                                 always: true
                             },
                             {
@@ -942,7 +1124,16 @@ class DesignGenomeServer {
                                     patternReport,
                                     patternViolations: patternViolations.filter(v => v.severity === "error"),
                                     suggested_next,
-                                    genome_report
+                                    genome_report,
+                                    chromosome_utilization: {
+                                        ...initialUtilization,
+                                        critical_note: "You MUST use ALL 32 chromosomes when implementing. Check the genome.chromosomes object and apply every single one. Low utilization indicates incomplete implementation.",
+                                        all_chromosomes: CHROMOSOME_REGISTRY,
+                                        checklist: CHROMOSOME_REGISTRY.reduce((acc, ch) => {
+                                            acc[ch] = initialUtilization.used.includes(ch) ? "✓ USED" : "⚠ NOT YET ACCESSED";
+                                            return acc;
+                                        }, {} as Record<string, string>)
+                                    }
                                 }, null, 2)
                             }]
                         };
@@ -956,6 +1147,20 @@ class DesignGenomeServer {
 
                         validateGenome(args.genome, "validate_design");
 
+                        // Chromosome utilization check
+                        const tracker = createChromosomeAccessTracker(args.genome);
+                        // Analyze CSS for chromosome indicators
+                        const cssLower = args.css.toLowerCase();
+                        if (cssLower.includes('border-radius') || cssLower.includes('rounded')) tracker.track('ch7_edge');
+                        if (cssLower.includes('animation') || cssLower.includes('transition')) tracker.track('ch8_motion');
+                        if (cssLower.includes('grid') || cssLower.includes('flex')) tracker.track('ch9_grid');
+                        if (cssLower.includes('shadow') || cssLower.includes('box-shadow')) tracker.track('ch16_shadow');
+                        if (cssLower.includes('z-index') || cssLower.includes('layer')) tracker.track('ch13_z_index');
+                        if (cssLower.includes('var(--color') || cssLower.includes('color:')) tracker.track('ch5_color_primary');
+                        if (cssLower.includes('font-family') || cssLower.includes('font-size')) tracker.track('ch3_type_display');
+                        
+                        const utilizationReport = tracker.getReport();
+
                         // Pattern/slop detection
                         const violations = this.patternDetector.detectInGenome(
                             args.genome,
@@ -968,7 +1173,7 @@ class DesignGenomeServer {
 
                         const report = this.patternDetector.generateReport(violations);
                         const patternValid = violations.filter(v => v.severity === "error").length === 0;
-                        const overallValid = patternValid && structureValidation.valid;
+                        const overallValid = patternValid && structureValidation.valid && utilizationReport.utilizationRate >= 30; // Minimum threshold
 
                         return {
                             content: [{
@@ -979,9 +1184,31 @@ class DesignGenomeServer {
                                     structure_valid: structureValidation.valid,
                                     structure_warnings: structureValidation.warnings,
                                     structure_errors: structureValidation.errors,
+                                    chromosome_utilization: {
+                                        layer: "L1_Design",
+                                        rate: utilizationReport.utilizationRate,
+                                        used: utilizationReport.used.length,
+                                        total: CHROMOSOME_REGISTRY.length,
+                                        warning: utilizationReport.warning,
+                                        unused_chromosomes: utilizationReport.unused.slice(0, 10),
+                                        recommendation: utilizationReport.utilizationRate < 50 
+                                            ? "CRITICAL: Your implementation uses less than 50% of L1 chromosomes. Review genome.chromosomes and apply ALL 32 values."
+                                            : utilizationReport.utilizationRate < 80
+                                                ? "WARNING: L1 chromosome utilization below 80%. Check unused chromosomes and incorporate them."
+                                                : "Good L1 chromosome utilization.",
+                                        note: "Full genome = 60 chromosomes: L1 (32) + L2 Ecosystem (12) + L3 Civilization (16). Validate L2/L3 via their respective tool outputs."
+                                    },
                                     violations,
                                     report,
-                                    slop_score: violations.length
+                                    slop_score: violations.length,
+                                    enforcement: {
+                                        must_fix_before_ship: [
+                                            ...(structureValidation.errors.length > 0 ? ['Fix genome structure errors'] : []),
+                                            ...(patternValid ? [] : ['Fix pattern violations (gradients on text, bootstrap shadows, etc.)']),
+                                            ...(utilizationReport.utilizationRate < 30 ? ['Increase chromosome utilization above 30%'] : [])
+                                        ],
+                                        blockers_count: (structureValidation.errors.length) + (patternValid ? 0 : 1) + (utilizationReport.utilizationRate < 30 ? 1 : 0)
+                                    }
                                 }, null, 2)
                             }]
                         };
@@ -1104,6 +1331,23 @@ class DesignGenomeServer {
                         const hasFauna = ecosystem.organisms.fauna.length > 0;
                         const hasDataHeavyFauna = hasFauna && ecosystem.organisms.fauna.length >= 3;
 
+                        // L2 Chromosome utilization tracking
+                        const ecoTracker = createEcosystemChromosomeTracker();
+                        // Track chromosomes that are accessed in library selection
+                        ecoTracker.track('eco_ch1_biome');
+                        ecoTracker.track('eco_ch2_energy');
+                        ecoTracker.track('eco_ch3_symbiosis');
+                        ecoTracker.track('eco_ch4_trophic');
+                        ecoTracker.track('eco_ch5_succession');
+                        ecoTracker.track('eco_ch6_adaptation');
+                        ecoTracker.track('eco_ch7_population');
+                        ecoTracker.track('eco_ch8_temporal');
+                        ecoTracker.track('eco_ch9_spatial');
+                        ecoTracker.track('eco_ch10_capacity');
+                        ecoTracker.track('eco_ch11_mutation');
+                        ecoTracker.track('eco_ch12_expressiveness');
+                        const l2Utilization = ecoTracker.getReport();
+
                         const organismSelection = selectOrganismLibrary({
                             edgeStyle:    genomeChromosomes.ch7_edge.style,
                             motionPhysics: genomeChromosomes.ch8_motion.physics,
@@ -1218,7 +1462,8 @@ class DesignGenomeServer {
                                             threshold: ecosystem.civilizationThreshold,
                                             currentComplexity: ecosystem.evolution.complexity,
                                             gap: Math.max(0, ecosystem.civilizationThreshold - ecosystem.evolution.complexity)
-                                        }
+                                        },
+                                        navigation: ecosystem.navigation
                                     },
                                     sharedGenome: ecosystem.environment.genome,
                                     biome: ecoBiome,
@@ -1247,7 +1492,20 @@ class DesignGenomeServer {
                                             ? "Call generate_civilization with the same seed to get architecture, state management, and advanced patterns"
                                             : `Add complexity (dashboard, 3D, real-time keywords) or increase counts to reach threshold ${ecosystem.civilizationThreshold}`,
                                         componentHierarchy: "Fauna contain Flora contain Microbial — use relationships.containment for composition",
-                                        implementation: "Each organism is a component spec. Implement from its prop contract and colorTreatment — the agent writes the actual code."
+                                        implementation: "Each organism is a component spec. Implement from its prop contract and colorTreatment — the agent writes the actual code.",
+                                        mandate: "You MUST build organisms in hierarchy order: microbial (atoms) → flora (composites) → fauna (complex). Check relationships.containment for composition patterns."
+                                    },
+                                    chromosome_utilization: {
+                                        layer: "L2_Ecosystem",
+                                        total_chromosomes: ECOSYSTEM_CHROMOSOME_REGISTRY.length,
+                                        ...l2Utilization,
+                                        critical_note: "L2 chromosomes control organism hierarchy (biome, energy, symbiosis, trophic). You MUST apply all 12 when building components.",
+                                        all_chromosomes: ECOSYSTEM_CHROMOSOME_REGISTRY,
+                                        checklist: ECOSYSTEM_CHROMOSOME_REGISTRY.reduce((acc, ch) => {
+                                            acc[ch] = l2Utilization.used.includes(ch) ? "✓ USED" : "⚠ VERIFY USAGE";
+                                            return acc;
+                                        }, {} as Record<string, string>),
+                                        enforcement: "Build organisms: microbial → flora → fauna. Use containment relationships. All 12 chromosomes must inform your component architecture."
                                     }
                                 }, null, 2)
                             }]
@@ -1305,6 +1563,12 @@ class DesignGenomeServer {
                             args.min_tier,
                             civEcoGenome ?? undefined
                         );
+
+                        // L3 Chromosome utilization tracking
+                        const civTracker = createCivilizationChromosomeTracker();
+                        // Track all 16 L3 chromosomes as accessed since they all inform the tier generation
+                        CIVILIZATION_CHROMOSOME_REGISTRY.forEach(ch => civTracker.track(ch));
+                        const l3Utilization = civTracker.getReport();
 
                         // SHA-256 chain: civilization hash derived from ecosystem hash derived from genome hash
                         const civEcoHash = ecoHashFromGenomeHash(baseGenome.dnaHash);
@@ -1444,7 +1708,37 @@ class DesignGenomeServer {
                                         microbial: organisms.microbial.length,
                                         flora: organisms.flora.length,
                                         fauna: organisms.fauna.length
-                                    } : null
+                                    } : null,
+                                    chromosome_utilization: {
+                                        layer: "L3_Civilization",
+                                        total_chromosomes: CIVILIZATION_CHROMOSOME_REGISTRY.length,
+                                        ...l3Utilization,
+                                        critical_note: "L3 chromosomes control application architecture (archetype, governance, knowledge, expansion). You MUST implement all 16 as architecture decisions.",
+                                        all_chromosomes: CIVILIZATION_CHROMOSOME_REGISTRY,
+                                        architecture_mapping: {
+                                            "civ_ch1_archetype": "Design philosophy and character",
+                                            "civ_ch2_governance": "State management topology",
+                                            "civ_ch3_economics": "Resource/data flow patterns",
+                                            "civ_ch4_technology": "Tech stack sophistication",
+                                            "civ_ch5_culture": "UX patterns and conventions",
+                                            "civ_ch6_resilience": "Error handling and recovery",
+                                            "civ_ch7_knowledge": "Routing and navigation model",
+                                            "civ_ch8_expansion": "Scalability approach",
+                                            "civ_ch9_age": "Legacy/compatibility concerns",
+                                            "civ_ch10_fragility": "Risk tolerance and testing",
+                                            "civ_ch11_topology": "Network architecture",
+                                            "civ_ch12_cosmos": "Integration worldview",
+                                            "civ_ch13_memory": "Caching and persistence",
+                                            "civ_ch14_interface": "API design patterns",
+                                            "civ_ch15_evolution": "Migration strategy",
+                                            "civ_ch16_communication": "Event/interaction bus"
+                                        },
+                                        checklist: CIVILIZATION_CHROMOSOME_REGISTRY.reduce((acc, ch) => {
+                                            acc[ch] = l3Utilization.used.includes(ch) ? "✓ ARCHITECTURE DEFINED" : "⚠ VERIFY IMPLEMENTATION";
+                                            return acc;
+                                        }, {} as Record<string, string>),
+                                        enforcement: "Every L3 chromosome maps to a concrete architecture decision. You MUST implement from tier.architecture using all 16 chromosome values."
+                                    }
                                 }, null, 2)
                             }]
                         };

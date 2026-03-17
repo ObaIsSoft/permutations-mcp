@@ -90,14 +90,25 @@ Your agent builds from the genome tokens and brief. Call `validate_design` befor
 
 ---
 
-## Tool Workflow (8 tools)
+## Tool Workflow (8 tools) — ENFORCED
 
 ```
-STEP 1  generate_design_genome    ← always start here
-STEP 2  generate_design_brief     ← read before writing any code
-STEP 3  generate_ecosystem        ← (optional) when building a component library
-STEP 4  generate_civilization     ← (optional) when complexity ≥ 0.68
-FINAL   validate_design           ← run before shipping any CSS/HTML
+STEP 1  generate_design_genome    ← ALWAYS START HERE
+        [BLOCKING: Write genome.json checkpoint]
+        [VERIFY: 32 chromosomes accessible]
+        
+STEP 2  generate_design_brief     ← MANDATORY before any code
+        [OUTPUT: DESIGN_SYSTEM.md constitution]
+        
+STEP 3  generate_ecosystem        ← REQUIRED for components
+        [RULE: microbial → flora → fauna hierarchy]
+        [RULE: Use containment relationships]
+        
+STEP 4  generate_civilization     ← REQUIRED if complexity ≥ 0.68
+        [INPUT: ecosystem from Step 3]
+        
+FINAL   validate_design           ← SHIPPING GATE (blocking)
+        [CHECK: slop patterns, chromosome drift, utilization ≥ 80%]
 
 ALTERNATIVE  extract_genome_from_url  ← use instead of STEP 1 when you have a reference site
 EXPORT       generate_formats         ← export tokens to Figma/Style Dictionary after STEP 1
