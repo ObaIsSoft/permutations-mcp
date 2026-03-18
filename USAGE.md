@@ -64,7 +64,7 @@ npm run build
 
 The Permutations MCP server **enforces** a strict workflow. AI agents CANNOT skip steps.
 
-### Required Sequence
+### Required Sequence (Standard L1 Entry)
 
 ```
 STEP 1 → generate_design_genome
@@ -78,6 +78,43 @@ STEP 4 → generate_civilization (if complexity ≥ 0.68)
 IMPLEMENTATION → Use ALL 32 chromosomes
     ↓
 FINAL → validate_design [MUST pass before shipping]
+```
+
+### Alternative: L0 Creator DNA Entry (Simulated Designer Personas)
+
+For truly unique creative directions, start with a **simulated designer persona**:
+
+```
+STEP 1 → generate_creator_genome    ← 16-chromosome creator DNA
+    ↓
+STEP 2 → generate_persona           ← LLM decodes into unique designer
+    ↓
+STEP 3 → generate_design_through_persona  ← Persona interprets intent → L1
+    ↓
+STEP 4 → generate_design_brief      ← Read before writing code
+    ↓
+... continue with standard workflow
+```
+
+**Why use L0?** Each creator persona has a unique voice (e.g., "whispered forest diaries", "Forged industrial poetry"), worldview, and creative instincts. The same intent interpreted by different personas produces meaningfully different design genomes.
+
+**Example:**
+```typescript
+// Generate creator
+const creator = await generate_creator_genome({ seed: "wilderness-architect" });
+
+// Decode into persona  
+const persona = await generate_persona({ genome: creator.creatorGenome });
+// → Voice: "rough-hewn wilderness blueprints"
+// → Philosophy: "Technology should feel like it grew from the earth"
+
+// Persona interprets your intent
+const design = await generate_design_through_persona({
+  genome: creator.creatorGenome,  // optional - will generate new one if omitted
+  intent: "A portfolio site for a photographer",
+  sector: "commerce"
+});
+// → L1 genome influenced by persona's chaos tolerance, aesthetic sensibility, etc.
 ```
 
 ### Critical Enforcement Rules

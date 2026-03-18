@@ -1,6 +1,6 @@
 # Permutations MCP Engine
 
-A Model Context Protocol (MCP) server that generates **unique, reproducible design systems** from a three-layer SHA-256 genome chain. Prevents AI-generated "slop" (identical Tailwind UI) by enforcing mathematical constraints at every layer.
+A Model Context Protocol (MCP) server that generates **unique, reproducible design systems** from a four-layer SHA-256 genome chain. Prevents AI-generated "slop" (identical Tailwind UI) by enforcing mathematical constraints at every layer — now with **simulated designer personas** for truly unique creative directions.
 
 **No Templates. No Slop. Only Math.**
 
@@ -18,10 +18,13 @@ Every AI-generated website looks the same:
 
 ## What This Tool Does
 
-Permutations generates three interlocking genomes from a single seed:
+Permutations generates four interlocking genomes from a single seed:
+
+**Layer 0 — CreatorGenome:** *Who is designing this?* (NEW)
+16-chromosome latent-space DNA encoding a simulated designer persona: cultural vector, temporal nostalgia, obsession traversal, formative era, authorial voice, technical spectrum, aesthetic sensibility, cognitive style, social positioning, material affinity, narrative instinct, chaos tolerance, cross-pollination, temporal perception, sensory priority, and coherence style. Decoded via LLM into unique personas with voices like "whispered forest diaries" or "Forged industrial poetry" — each interpreting the same intent through different creative lenses.
 
 **Layer 1 — DesignGenome:** *What does it look like?*
-32-chromosome DNA: color system (with dark-mode-safe variants), typography, motion physics, grid logic, edge style, hero strategy, trust signals, copy intelligence, state topology, routing pattern, token inheritance.
+32-chromosome DNA: color system (with dark-mode-safe variants), typography, motion physics, grid logic, edge style, hero strategy, trust signals, copy intelligence, state topology, routing pattern, token inheritance. Generated directly or influenced by L0 Creator Persona (chaos → physics, aesthetic → hue, etc.).
 
 **Layer 2 — EcosystemGenome:** *What kind of components are these?*
 12-chromosome ecology derived from the design genome. Biome (32 classes), energy source (16 types), symbiosis pattern (16 types), trophic structure (16 types), succession stage (12 stages), adaptation axis (16 axes), population pattern (16 patterns), temporal rhythm (16 rhythms), spatial axis (16 dimensions), capacity class (16 levels), mutation rate, and expressiveness — each a functional metaphor that answers: how many components, how tightly coupled, how data flows between them.
@@ -35,7 +38,7 @@ Permutations generates three interlocking genomes from a single seed:
 
 ## The Solution
 
-**Three-layer SHA-256 hash chain:** `seed → DesignGenome → EcosystemGenome → CivilizationGenome`
+**Four-layer SHA-256 hash chain:** `seed → CreatorGenome → DesignGenome → EcosystemGenome → CivilizationGenome`
 
 Each layer is deterministic (same seed = same result forever) and derived from the previous layer's hash. Predecessor chromosome values bias successor selections via a weighted gravity system — this is not just hash ancestry, the actual design values flow downstream.
 

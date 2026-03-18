@@ -87,29 +87,44 @@ Already configured in `.vscode/mcp.json` in this repo — no action needed if yo
 
 ---
 
-These rules govern how AI coding agents must interact with this codebase. The Permutations MCP server generates a **three-layer SHA-256 genome chain** — DesignGenome (32 chromosomes) → EcosystemGenome (11 chromosomes) → CivilizationGenome (10 chromosomes) — across a **14-tier biological complexity model** (abiotic → prokaryotic → protist → bryophyte → vascular_flora → invertebrate_fauna → ectotherm_fauna → endotherm_fauna → tribal → city_state → nation_state → empire → network → singularity). **No aesthetic values may be invented manually.**
+These rules govern how AI coding agents must interact with this codebase. The Permutations MCP server generates a **four-layer SHA-256 genome chain** — CreatorGenome (L0, 16 chromosomes) → DesignGenome (L1, 32 chromosomes) → EcosystemGenome (L2, 11 chromosomes) → CivilizationGenome (L3, 10 chromosomes) — across a **14-tier biological complexity model** (abiotic → prokaryotic → protist → bryophyte → vascular_flora → invertebrate_fauna → ectotherm_fauna → endotherm_fauna → tribal → city_state → nation_state → empire → network → singularity). **No aesthetic values may be invented manually.**
 
 This tool is a **design constitution generator**, not a code generator. It produces genome constraints, CSS tokens, component relationships, and architecture direction. **You — the agent — write the actual code** from those constraints.
 
-**Key v1.0.0 changes:**
+**Key v2.0.0 changes:**
+- **L0 Creator DNA**: New generative layer for simulated designer personas — each with unique voice, biography, and creative instincts
+- **L0→L1 Bridge**: Creator Personas influence Design Genome generation (chaos → physics, aesthetic → hue, etc.)
 - Complexity tier is now vocabulary-invariant — computed from what the product DOES, not from keywords in the description
 - EcosystemGenome (L2) and CivilizationGenome (L3) are fully wired — generate_ecosystem and generate_civilization return genome data that feeds the next layer
 - Governance model (L3) overrides state topology; knowledge model (L3) overrides routing pattern
 
 ---
 
-## Tool Workflow (8 tools, in order)
+## Tool Workflow (11 tools, in order)
 
+### Standard Flow (L1 Entry)
 ```
-STEP 1  generate_design_genome    ← always start here
-STEP 2  generate_design_brief     ← read before writing any code
-STEP 3  generate_ecosystem        ← (optional) when building a component library
-STEP 4  generate_civilization     ← (optional) when complexity ≥ 0.68
-FINAL   validate_design           ← run before shipping any CSS/HTML
+STEP 1  generate_design_genome         ← always start here
+STEP 2  generate_design_brief          ← read before writing any code
+STEP 3  generate_ecosystem             ← (optional) when building a component library
+STEP 4  generate_civilization          ← (optional) when complexity ≥ 0.68
+FINAL   validate_design                ← run before shipping any CSS/HTML
+```
 
-ALTERNATIVE  extract_genome_from_url  ← use instead of STEP 1 when you have a reference site
-EXPORT       generate_formats         ← export tokens to Figma/Style Dictionary after STEP 1
-ITERATE      update_design_genome     ← adjust chromosomes after STEP 1 ("make it warmer")
+### Creator Flow (L0 Entry — Simulated Designer Personas)
+```
+STEP 1  generate_creator_genome        ← create 16-chromosome creator DNA
+STEP 2  generate_persona               ← decode into designer persona (LLM)
+STEP 3  generate_design_through_persona ← persona interprets intent → L1 genome
+STEP 4  generate_design_brief          ← read before writing any code
+...
+```
+
+### Utility Tools
+```
+ALTERNATIVE  extract_genome_from_url     ← use instead of STEP 1 when you have a reference site
+EXPORT       generate_formats            ← export tokens to Figma/Style Dictionary after STEP 1
+ITERATE      update_design_genome        ← adjust chromosomes after STEP 1 ("make it warmer")
 ```
 
 The response from `generate_design_genome` includes `suggested_next` — read it. It tells you exactly which tools to call next based on the genome's complexity.
