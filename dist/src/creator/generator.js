@@ -194,6 +194,73 @@ export function mutateGenome(genome, mutationSeed, intensity = 0.3) {
     };
 }
 /**
+ * Generate Creator Genome from extracted URL style snapshot
+ * Inherits visual traits while maintaining unique persona DNA
+ */
+export function generateCreatorGenomeFromSnapshot(seed, snapshot) {
+    const rng = new SeededRandom(seed);
+    // Base genome from seed
+    const base = generateCreatorGenome(seed);
+    // Override with epigenetic influence from extracted snapshot
+    return {
+        ...base,
+        // c6: Aesthetic sensibility - influenced by color palette
+        c6_aesthetic_sensibility: [
+            // High saturation in extracted colors → maximal preference
+            snapshot.colors?.primary && isVibrant(snapshot.colors.primary) ? 0.4 : rng.signed(),
+            // Clean layout → precise preference  
+            snapshot.layout?.density === 'low' ? 0.5 : rng.signed(),
+            // Rounded edges → clean preference
+            snapshot.layout?.edgeStyle === 'rounded' ? 0.4 :
+                snapshot.layout?.edgeStyle === 'sharp' ? -0.3 : rng.signed(),
+        ],
+        // c9: Material affinity - influenced by edge style and density
+        c9_material_affinity: [
+            snapshot.layout?.edgeStyle === 'sharp' ? -0.4 :
+                snapshot.layout?.edgeStyle === 'rounded' ? 0.4 : rng.signed(),
+            snapshot.layout?.density === 'high' ? 0.5 :
+                snapshot.layout?.density === 'low' ? -0.3 : rng.signed(),
+            rng.signed(),
+        ],
+        // c11: Chaos tolerance - influenced by animation style
+        c11_chaos_tolerance: snapshot.animation?.style === 'heavy' ? 0.7 :
+            snapshot.animation?.style === 'moderate' ? 0.5 :
+                snapshot.animation?.hasAnimations === false ? 0.2 :
+                    rng.range(0.1, 0.9),
+        // c15: Coherence style - influenced by layout density
+        c15_coherence_style: snapshot.layout?.density === 'high' ? 0.3 :
+            snapshot.layout?.density === 'low' ? 0.8 :
+                rng.range(0, 1),
+        // Metadata reflects hybrid origin
+        seed: `${seed}:EPIGENETIC:${JSON.stringify(snapshot).slice(0, 50)}`,
+        dna_hash: `URL_${base.dna_hash}`,
+        generation_timestamp: Date.now(),
+    };
+}
+/**
+ * Check if a hex color is vibrant (high saturation)
+ */
+function isVibrant(hex) {
+    // Simple check - if not grayscale-ish
+    const rgb = hexToRgb(hex);
+    if (!rgb)
+        return false;
+    const max = Math.max(rgb.r, rgb.g, rgb.b);
+    const min = Math.min(rgb.r, rgb.g, rgb.b);
+    return (max - min) > 30; // Not grayscale
+}
+/**
+ * Convert hex to RGB
+ */
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+/**
  * Cross two genomes to create offspring
  */
 export function crossoverGenomes(parentA, parentB, offspringSeed) {

@@ -77,7 +77,7 @@ export class PersonaDesignBridge {
   /**
    * Calculate how persona traits influence design parameters
    */
-  private calculateInfluence(
+  calculateInfluence(
     persona: CreatorPersona,
     brief: CreativeBrief
   ): PersonaInfluence {
@@ -166,7 +166,7 @@ export class PersonaDesignBridge {
     return this.sequencer.generate(seed, influencedTraits, config);
   }
 
-  private clamp(val: number): number {
+  clamp(val: number): number {
     return Math.max(0, Math.min(1, val));
   }
 

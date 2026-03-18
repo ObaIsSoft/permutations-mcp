@@ -758,10 +758,44 @@ class DesignGenomeServer {
                             { name: "intent", required: true, maxLength: 32_768 },
                             { name: "seed", required: true, maxLength: 256 },
                             { name: "project_context", required: false, maxLength: 16_384 },
+                            { name: "creator_seed", required: false, maxLength: 256 },
+                            { name: "skip_creator_dna", required: false },
                         ]);
                         const intent = sanitize(args.intent);
                         const seed = sanitize(args.seed);
                         const context = args.project_context ? sanitize(args.project_context) : undefined;
+                        const skipCreatorDNA = args.skip_creator_dna === true;
+
+                        // === L0 CREATOR DNA LAYER (Optional but Recommended) ===
+                        // Generates a unique designer persona that interprets the intent
+                        let creatorGenome = undefined;
+                        let creatorPersona = undefined;
+                        let creativeBrief = undefined;
+                        
+                        if (!skipCreatorDNA) {
+                            try {
+                                // Import L0/L0.5 modules dynamically to avoid circular deps
+                                const { generateCreatorGenome } = await import("./creator/generator.js");
+                                const { generatePersona, generateBrief } = await import("./brief/generator.js");
+                                
+                                // L0: Generate Creator Genome from seed
+                                const creatorSeed = args.creator_seed || `creator-${seed}-${Date.now()}`;
+                                creatorGenome = generateCreatorGenome(creatorSeed);
+                                
+                                // L0.5: Decode into persona via LLM
+                                creatorPersona = await generatePersona(creatorGenome);
+                                
+                                // L0.75: Generate creative brief (persona interprets intent)
+                                creativeBrief = await generateBrief(creatorPersona, {
+                                    description: intent,
+                                    sector: context || 'technology',
+                                    mood_hints: [],
+                                });
+                            } catch (err) {
+                                // Log but don't fail - L1 can still generate without L0
+                                console.error("L0 Creator DNA generation failed (continuing without):", err);
+                            }
+                        }
 
                         // 1. Epigenetic Parsing (if assets provided)
                         let epigeneticData = undefined;
@@ -778,7 +812,7 @@ class DesignGenomeServer {
                         }
 
                         // 2. Semantic Extraction (single LLM call: traits + sector + archetype + copy intelligence)
-                        const finalContext = epigeneticData?.brandContext || context;
+                        const finalContext = creativeBrief?.concept?.statement || epigeneticData?.brandContext || context;
                         const analysis = await this.extractor.analyze(intent, finalContext);
                         const traits = analysis.traits;
                         const detectedSector = analysis.sector.primary as any;
@@ -786,8 +820,29 @@ class DesignGenomeServer {
                         const copy = analysis.copy;
                         const structural = analysis.structural;
 
+                        // 3. L0 → L1 Bridge: Apply persona influence to traits if available
+                        let influencedTraits = traits;
+                        let personaInfluence = undefined;
+                        if (creatorPersona && creativeBrief) {
+                            try {
+                                const { PersonaDesignBridge } = await import("./bridge/persona-to-design.js");
+                                const bridge = new PersonaDesignBridge();
+                                personaInfluence = bridge.calculateInfluence(creatorPersona, creativeBrief);
+                                
+                                // Apply influence to traits
+                                influencedTraits = {
+                                    ...traits,
+                                    informationDensity: bridge.clamp(traits.informationDensity + (personaInfluence.densityMod || 0)),
+                                    emotionalTemperature: bridge.clamp(traits.emotionalTemperature + (personaInfluence.saturationMod || 0)),
+                                    playfulness: bridge.clamp((personaInfluence.motionSpeedMod || 1) - 0.8),
+                                };
+                            } catch (err) {
+                                console.error("L0→L1 bridge failed (using original traits):", err);
+                            }
+                        }
+
                         // 4. DNA Sequencing (pass copy intelligence + LLM copy to sequencer)
-                        const genome = this.sequencer.generate(seed, traits, {
+                        const genome = this.sequencer.generate(seed, influencedTraits, {
                             primarySector: detectedSector,
                             options: {
                                 fontProvider: args.font_provider,
@@ -801,8 +856,23 @@ class DesignGenomeServer {
                         const complexityResult = this.complexityAnalyzer.analyze(intent, finalContext ?? "", traits, structural);
                         const { finalComplexity, tier } = complexityResult;
 
-                        // 6. CSS (always generated)
-                        const css = this.cssGen.generate(genome, { format: "expanded" });
+                        // 6. CSS (always generated) - with persona influence if available
+                        const css = this.cssGen.generate(genome, { 
+                            format: "expanded",
+                            personaInfluence: personaInfluence ? {
+                                hueShift: personaInfluence.hueShift,
+                                saturationMod: personaInfluence.saturationMod,
+                                lightnessMod: personaInfluence.lightnessMod,
+                                densityMod: personaInfluence.densityMod,
+                                whitespaceMod: personaInfluence.whitespaceMod,
+                                radiusMod: personaInfluence.radiusMod,
+                                elevationMod: personaInfluence.elevationMod,
+                                trackingMod: personaInfluence.trackingMod,
+                                physicsStyle: personaInfluence.physicsStyle,
+                                copyTone: personaInfluence.copyTone,
+                                metaphorPrimary: personaInfluence.metaphorPrimary,
+                            } : undefined
+                        });
                         const webglComponents = this.webglGen.generateR3F(genome);
                         const fxAtmosphere = this.fxGen.generateCSSClass(genome);
 
@@ -1058,6 +1128,25 @@ class DesignGenomeServer {
                                     finalComplexity,
                                     css,
                                     layout_contract,
+                                    // L0 CREATOR DNA — The generative foundation
+                                    // Simulated designer who interprets the intent through their unique worldview
+                                    creatorDNA: creatorGenome ? {
+                                        genome: creatorGenome,
+                                        persona: creatorPersona ? {
+                                            id: creatorPersona.id,
+                                            biography: creatorPersona.biography,
+                                            instincts: creatorPersona.instincts,
+                                            worldview: creatorPersona.worldview,
+                                            creative_behavior: creatorPersona.creative_behavior,
+                                        } : undefined,
+                                        brief: creativeBrief ? {
+                                            concept: creativeBrief.concept,
+                                            metaphor_system: creativeBrief.metaphor_system,
+                                            design_principles: creativeBrief.design_principles,
+                                            component_language: creativeBrief.component_language,
+                                        } : undefined,
+                                        persona_influence: personaInfluence || undefined,
+                                    } : undefined,
                                     // Three-layer genome guide — which field drives which implementation concern
                                     genome_layer_guide: {
                                         L1_design_genome: {
@@ -1991,21 +2080,126 @@ class DesignGenomeServer {
                     }
 
                     case "extract_genome_from_url": {
-                        if (!args.url) {
-                            throw new McpError(ErrorCode.InvalidParams, "Missing URL");
-                        }
+                        validateArgs([
+                            { name: "url", required: true, maxLength: 2048 },
+                            { name: "intent", required: false, maxLength: 32_768 },
+                            { name: "seed", required: false, maxLength: 256 },
+                            { name: "generate_full_pipeline", required: false },
+                        ]);
+                        const url = sanitize(args.url);
+                        const intent = args.intent ? sanitize(args.intent) : `Design inspired by ${url}`;
+                        const seed = args.seed ? sanitize(args.seed) : `url-${Date.now()}`;
+                        const generateFullPipeline = args.generate_full_pipeline === true;
 
                         // Use Playwright to scrape the URL and extract CSS/design tokens
-                        const extracted = await urlGenomeExtractor.extract(args.url);
+                        const extracted = await urlGenomeExtractor.extract(url);
                         
                         // Clean up browser after extraction
                         await urlGenomeExtractor.closeBrowser();
+                        
+                        // If requested, generate full L0→L1 pipeline from extracted style
+                        let l0Data = undefined;
+                        let l1Data = undefined;
+                        
+                        if (generateFullPipeline) {
+                            try {
+                                // L0: Generate Creator Genome epigenetically influenced by extracted style
+                                const { generateCreatorGenomeFromSnapshot } = 
+                                    await import("./creator/generator.js");
+                                const { generatePersona, generateBrief } = await import("./brief/generator.js");
+                                const { PersonaDesignBridge } = await import("./bridge/persona-to-design.js");
+                                
+                                // Create L0 genome from snapshot
+                                const creatorGenome = generateCreatorGenomeFromSnapshot(seed, {
+                                    colors: {
+                                        primary: extracted.colors.primary || undefined,
+                                        secondary: extracted.colors.secondary || undefined,
+                                        background: extracted.colors.background || undefined,
+                                        text: extracted.colors.text || undefined,
+                                    },
+                                    typography: extracted.typography,
+                                    layout: {
+                                        density: extracted.layout.density === 'compact' ? 'low' :
+                                                 extracted.layout.density === 'spacious' ? 'high' : 'medium',
+                                        edgeStyle: extracted.layout.borderRadius > 8 ? 'rounded' :
+                                                   extracted.layout.borderRadius < 4 ? 'sharp' : 'soft',
+                                        borderRadius: extracted.layout.borderRadius,
+                                    },
+                                    animation: {
+                                        hasAnimations: extracted.animation.complexity !== 'minimal',
+                                        style: extracted.animation.complexity === 'minimal' ? 'minimal' :
+                                               extracted.animation.complexity === 'expressive' ? 'heavy' : 'moderate',
+                                        complexity: extracted.animation.complexity,
+                                    },
+                                });
+                                
+                                // L0.5: Decode into persona
+                                const persona = await generatePersona(creatorGenome);
+                                
+                                // L0.75: Generate creative brief
+                                const brief = await generateBrief(persona, {
+                                    description: intent,
+                                    sector: extracted.sector || 'technology',
+                                });
+                                
+                                l0Data = {
+                                    creatorGenome,
+                                    persona: {
+                                        id: persona.id,
+                                        biography: persona.biography,
+                                        instincts: persona.instincts,
+                                        worldview: persona.worldview,
+                                        creative_behavior: persona.creative_behavior,
+                                    },
+                                    brief: {
+                                        concept: brief.concept,
+                                        metaphor_system: brief.metaphor_system,
+                                        design_principles: brief.design_principles,
+                                    },
+                                };
+                                
+                                // L1: Generate design genome through persona bridge
+                                const bridge = new PersonaDesignBridge();
+                                const designResult = await bridge.generateDesignThroughPersona(persona, {
+                                    description: intent,
+                                    sector: extracted.sector || 'technology',
+                                });
+                                
+                                // Generate CSS from the L1 genome WITH persona influence
+                                const urlCss = this.cssGen.generate(designResult.genome, { 
+                                    format: "expanded",
+                                    personaInfluence: {
+                                        hueShift: designResult.influence.hueShift,
+                                        saturationMod: designResult.influence.saturationMod,
+                                        lightnessMod: designResult.influence.lightnessMod,
+                                        densityMod: designResult.influence.densityMod,
+                                        whitespaceMod: designResult.influence.whitespaceMod,
+                                        radiusMod: designResult.influence.radiusMod,
+                                        elevationMod: designResult.influence.elevationMod,
+                                        trackingMod: designResult.influence.trackingMod,
+                                        physicsStyle: designResult.influence.physicsStyle,
+                                        copyTone: designResult.influence.copyTone,
+                                        metaphorPrimary: designResult.influence.metaphorPrimary,
+                                    }
+                                });
+                                
+                                l1Data = {
+                                    genome: designResult.genome,
+                                    css: urlCss,
+                                    dnaHash: designResult.genome.dnaHash,
+                                    influence: designResult.influence,
+                                };
+                            } catch (err) {
+                                console.error("Full pipeline generation failed:", err);
+                                // Continue with just the extraction
+                            }
+                        }
                         
                         return {
                             content: [{
                                 type: "text",
                                 text: JSON.stringify({
-                                    url: args.url,
+                                    url,
                                     sector: extracted.sector,
                                     confidence: extracted.confidence,
                                     colors: extracted.colors,
@@ -2013,8 +2207,39 @@ class DesignGenomeServer {
                                     layout: extracted.layout,
                                     animation: extracted.animation,
                                     extractedAt: extracted.extractedAt,
-                                    warning: "This is a flat style snapshot — NOT a chromosome genome. Do not pass this to generate_design_brief, generate_ecosystem, or generate_civilization.",
-                                    suggested_next: [
+                                    // L0/L1 data if full pipeline was requested
+                                    creatorDNA: l0Data,
+                                    designGenome: l1Data,
+                                    warning: l1Data 
+                                        ? "Full L0→L1 pipeline generated from URL style. This is a chromosome genome."
+                                        : "This is a flat style snapshot — NOT a chromosome genome. Pass generate_full_pipeline=true to generate L0→L1.",
+                                    suggested_next: l1Data ? [
+                                        {
+                                            action: "write_file",
+                                            file: "genome.json",
+                                            field: "designGenome.genome",
+                                            instruction: "Save the L1 genome to genome.json",
+                                            always: true,
+                                        },
+                                        {
+                                            action: "write_file",
+                                            file: "design-tokens.css",
+                                            field: "designGenome.css",
+                                            instruction: "Write the CSS tokens",
+                                            always: true,
+                                        },
+                                        {
+                                            tool: "generate_design_brief",
+                                            pass: "designGenome.genome",
+                                            reason: "Synthesize design philosophy from L1 genome",
+                                        },
+                                    ] : [
+                                        {
+                                            param: "generate_full_pipeline",
+                                            value: true,
+                                            description: "Set to true to generate complete L0→L1 genome from URL",
+                                            generates: "Creator DNA (L0) + Persona (L0.5) + Design Genome (L1)",
+                                        },
                                         {
                                             tool: "generate_design_genome",
                                             how: "Pass this snapshot as project_context (stringified or summarized). Example: generate_design_genome({ intent: 'your intent here', seed: 'your-seed', project_context: JSON.stringify(this_output) })",

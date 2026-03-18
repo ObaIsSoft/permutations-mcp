@@ -202,6 +202,8 @@ As this persona, generate a creative brief. Return ONLY valid JSON:
 }
 // ===== LATENT DECODERS (for LLM context) =====
 function decodeCulturalVector(vec) {
+    if (!vec || vec.length < 3)
+        return "Transitional/Mixed, suburban/small-city, balanced exposure";
     const [x, y, z] = vec;
     const regions = [];
     if (x > 0.3)
@@ -225,9 +227,13 @@ function decodeCulturalVector(vec) {
     return regions.join(', ');
 }
 function decodeTemporalNostalgia(curve) {
+    if (!curve?.points || !Array.isArray(curve.points)) {
+        return ['moderate contemporary'];
+    }
     return curve.points.slice(0, 3).map(p => {
-        const year = 1900 + p.position * 130;
-        const intensity = p.weight > 0.7 ? 'strong' : p.weight > 0.4 ? 'moderate' : 'subtle';
+        const year = 1900 + (p.position ?? 0.5) * 130;
+        const weight = p.weight ?? 0.5;
+        const intensity = weight > 0.7 ? 'strong' : weight > 0.4 ? 'moderate' : 'subtle';
         if (year < 1940)
             return `${intensity} early-20th-century`;
         if (year < 1970)
@@ -240,6 +246,8 @@ function decodeTemporalNostalgia(curve) {
     });
 }
 function decodeAestheticSensibility(vec) {
+    if (!vec || vec.length < 3)
+        return 'eclectic';
     const [a1, a2, a3] = vec;
     const prefs = [];
     if (a1 > 0.3)
@@ -257,6 +265,8 @@ function decodeAestheticSensibility(vec) {
     return prefs.length > 0 ? prefs.join(', ') : 'eclectic';
 }
 function decodeCognitivePattern(vec) {
+    if (!vec || vec.length < 3)
+        return 'balanced';
     const [c1, c2, c3] = vec;
     const patterns = [];
     if (c1 > 0.3)
@@ -274,6 +284,8 @@ function decodeCognitivePattern(vec) {
     return patterns.length > 0 ? patterns.join('/') : 'balanced';
 }
 function decodeSocialVector(vec) {
+    if (!vec || vec.length < 2)
+        return 'observer';
     const [s1, s2] = vec;
     const positions = [];
     if (s1 > 0.3)
@@ -287,6 +299,8 @@ function decodeSocialVector(vec) {
     return positions.length > 0 ? positions.join('/') : 'observer';
 }
 function decodeMaterialAffinity(vec) {
+    if (!vec || vec.length < 3)
+        return 'material-agnostic';
     const [m1, m2, m3] = vec;
     const materials = [];
     if (m1 > 0.3)
@@ -304,8 +318,9 @@ function decodeMaterialAffinity(vec) {
     return materials.length > 0 ? materials.join(', ') : 'material-agnostic';
 }
 function decodeNarrativePattern(vec, authorial) {
-    const [n1] = vec;
-    const [a1, a2] = authorial;
+    const n1 = vec?.[0] ?? 0;
+    const a1 = authorial?.[0] ?? 0;
+    const a2 = authorial?.[1] ?? 0;
     const patterns = [];
     if (n1 > 0.3)
         patterns.push("hero-journey");
@@ -327,8 +342,15 @@ function decodeNarrativePattern(vec, authorial) {
 function decodeSensoryWeights(curve) {
     const senses = ['visual', 'tactile', 'auditory', 'spatial', 'kinesthetic'];
     const weights = {};
+    if (!curve?.points || !Array.isArray(curve.points)) {
+        // Return default equal weights
+        senses.forEach((sense, i) => {
+            weights[sense] = 0.2;
+        });
+        return weights;
+    }
     curve.points.forEach((p, i) => {
-        weights[senses[i] || `sense_${i}`] = p.weight;
+        weights[senses[i] || `sense_${i}`] = p.weight ?? 0.2;
     });
     return weights;
 }
