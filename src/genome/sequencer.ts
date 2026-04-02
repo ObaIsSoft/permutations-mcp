@@ -55,13 +55,6 @@ import {
     getColorBias,
     SUB_SECTOR_KEYWORDS
 } from "./sector-profiles.js";
-import {
-    COPY_PATTERN_BANKS,
-    generateHeadlineFromPatterns,
-    generateCTAFromPatterns,
-    generateTaglineFromPatterns,
-    generateSentenceFromTemplate
-} from "./copy-patterns.js";
 import { EntropyPool } from "./entropy-pool.js";
 
 export interface SequencerConfig {
@@ -594,8 +587,9 @@ export class GenomeSequencer {
     }
 
     /**
-     * Generate copy engine — LLM output only, no pattern fallback.
-     * All copy is derived from intent via the extractor. Pattern banks are not used here.
+     * Generate copy engine — LLM output only.
+     * All copy is derived from intent via the extractor.
+     * When no LLM copy is provided, returns empty strings — the HTML generator skips sections with empty content.
      */
     private generateCopyEngine(
         profile: ReturnType<typeof getSectorProfile>,
@@ -637,17 +631,15 @@ export class GenomeSequencer {
             };
         }
 
-        // No LLM — structural copy from pattern banks, all personal/content fields empty.
+        // No LLM copy provided — return empty strings.
         // HTML generator skips sections with empty content.
-        const ci = copyIntelligence || this.generateDefaultCopyIntelligence(profile);
-        const sector = profile.sector;
-
+        // Real copy must come from LLM extraction via the extractor.
         return {
-            headline:                 generateHeadlineFromPatterns(ci.headlineStyle, sector, ci.emotionalRegister, b),
-            subheadline:              generateSentenceFromTemplate(ci.sentenceStructure, sector, ci.emotionalRegister, b),
-            cta:                      generateCTAFromPatterns(ci.ctaAggression, sector, ci.emotionalRegister, b),
+            headline:                 "",
+            subheadline:              "",
+            cta:                      "",
             ctaSecondary:             "",
-            tagline:                  generateTaglineFromPatterns(sector, ci.emotionalRegister, b),
+            tagline:                  "",
             companyName:              "",
             authorName:               "",
             authorTitle:              "",
@@ -655,9 +647,9 @@ export class GenomeSequencer {
             sectionTitleTestimonials: "",
             sectionTitleFeatures:     "",
             sectionTitleFAQ:          "",
-            stats:                    this.generateStatsFromPatterns(sector, b),
-            faq:                      this.generateFAQFromPatterns(sector, ci, b),
-            features:                 this.generateFeaturesFromPatterns(sector, ci, b),
+            stats:                    [],
+            faq:                      [],
+            features:                 [],
             footerProductTitle:       "",
             footerCompanyTitle:       "",
             footerNavProduct:         [],
@@ -926,88 +918,6 @@ export class GenomeSequencer {
         };
 
         return sectorDefaults[profile.sector] || sectorDefaults.technology;
-    }
-
-    /**
-     * Generate stats with sector-appropriate labels
-     * Values remain as placeholders — real numbers must come from actual business data
-     */
-    private generateStatsFromPatterns(sector: PrimarySector, b: (index: number) => number): { label: string; value: string }[] {
-        const statLabels: Record<string, [string, string, string]> = {
-            healthcare:    ["Patients Served",    "Satisfaction Rate",    "Years of Experience"],
-            fintech:       ["Assets Managed",     "Average Returns",      "Clients Worldwide"],
-            legal:         ["Cases Won",          "Years of Practice",    "Client Satisfaction"],
-            technology:    ["Users Onboarded",    "Uptime",               "Customer Satisfaction"],
-            education:     ["Students Enrolled",  "Completion Rate",      "Course Satisfaction"],
-            commerce:      ["Products Sold",      "Customer Rating",      "Repeat Buyers"],
-            automotive:    ["Vehicles Serviced",  "Customer Satisfaction","Years of Excellence"],
-            real_estate:   ["Properties Sold",    "Client Satisfaction",  "Years in Market"],
-            travel:        ["Trips Booked",       "Traveler Rating",      "Destinations Covered"],
-            food:          ["Dishes Served",      "Customer Rating",      "Years of Craft"],
-            sports:        ["Athletes Trained",   "Win Rate",             "Championships"],
-            manufacturing: ["Units Produced",     "Quality Rate",         "Years of Precision"],
-            entertainment: ["Events Hosted",      "Audience Rating",      "Content Hours"]
-        };
-        const labels = statLabels[sector] || statLabels.technology;
-        return [
-            { label: labels[0], value: "{{VALUE_1}}" },
-            { label: labels[1], value: "{{VALUE_2}}" },
-            { label: labels[2], value: "{{VALUE_3}}" }
-        ];
-    }
-
-    /**
-     * Generate FAQ from copy pattern banks
-     */
-    private generateFAQFromPatterns(sector: PrimarySector, ci: CopyIntelligence, b: (index: number) => number): { question: string; answer: string }[] {
-        const banks = COPY_PATTERN_BANKS;
-        const terms = banks.industryTerms[sector as keyof typeof banks.industryTerms] || banks.industryTerms.technology;
-        const verbs = banks.verbs[ci.emotionalRegister as keyof typeof banks.verbs] || banks.verbs.professional;
-
-        // FIX 2: Use uniform selection to eliminate modulo bias
-        const t0 = this.pool!.selectUniform(200, terms);
-        const t1 = this.pool!.selectUniform(201, terms);
-        const t2 = this.pool!.selectUniform(202, terms);
-        const v0 = this.pool!.selectUniform(203, verbs);
-        const v1 = this.pool!.selectUniform(204, verbs);
-
-        return [
-            {
-                question: `How does your ${t0} approach work?`,
-                answer: `We ${v0} ${t0} through a process built around your specific needs and goals.`
-            },
-            {
-                question: `What makes your ${t1} different?`,
-                answer: `Our ${t1} is designed to ${v1} outcomes that matter — faster and more reliably than alternatives.`
-            },
-            {
-                question: `Can I get started with ${t2} right away?`,
-                answer: `Yes. Getting started takes minutes. Our onboarding is designed to deliver value from day one.`
-            }
-        ];
-    }
-
-    /**
-     * Generate features from copy pattern banks
-     */
-    private generateFeaturesFromPatterns(sector: PrimarySector, ci: CopyIntelligence, b: (index: number) => number): { title: string; description: string }[] {
-        const banks = COPY_PATTERN_BANKS;
-        const terms = banks.industryTerms[sector as keyof typeof banks.industryTerms] || banks.industryTerms.technology;
-        const adjs = banks.adjectives[ci.emotionalRegister as keyof typeof banks.adjectives] || banks.adjectives.professional;
-        const actions = banks.headlineFragments.benefit_action;
-        const outcomes = banks.headlineFragments.benefit_outcome;
-
-        return [0, 1, 2].map(i => {
-            const term = terms[Math.floor(b(210 + i) * terms.length) % terms.length];
-            const adj = adjs[Math.floor(b(213 + i) * adjs.length) % adjs.length];
-            const action = actions[Math.floor(b(216 + i) * actions.length) % actions.length];
-            const outcome = outcomes[Math.floor(b(219 + i) * outcomes.length) % outcomes.length];
-            const cap = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
-            return {
-                title: `${action} ${cap(term)}`,
-                description: `${cap(adj)} ${term} that ${outcome.toLowerCase()}s your results.`
-            };
-        });
     }
 
     /**

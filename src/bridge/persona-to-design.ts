@@ -69,7 +69,7 @@ export class PersonaDesignBridge {
     const genome = await this.generateInfluencedGenome(
       intent,
       influence,
-      persona.genome
+      persona
     );
     
     return { genome, brief, influence };
@@ -131,11 +131,17 @@ export class PersonaDesignBridge {
   private async generateInfluencedGenome(
     intent: DesignIntent,
     influence: PersonaInfluence,
-    personaGenome: CreatorPersona['genome']
+    persona: CreatorPersona
   ): Promise<DesignGenome> {
 
-    // Extract traits from intent
-    const traits = await this.extractor.extractTraits(intent.description);
+    // Extract traits from intent — persona context shapes the LLM's analysis
+    const analysis = await this.extractor.analyze(intent.description, undefined, {
+      biography: persona.biography.origin,
+      instincts: persona.instincts.visual_language,
+      worldview: persona.worldview.design_philosophy,
+      creativeBehavior: persona.creative_behavior.chaos_tolerance > 0.5 ? "experimental" : "systematic",
+    });
+    const traits = analysis.traits;
 
     // Apply persona influence to traits
     const influencedTraits: ContentTraits = {
@@ -176,7 +182,7 @@ export class PersonaDesignBridge {
     // Pass 2: directly express persona latent vectors onto chromosomes
     // This makes same-intent + different-persona produce genuinely distinct designs,
     // not just slight color/density variations.
-    this.applyPersonaToChromosomes(genome, personaGenome);
+    this.applyPersonaToChromosomes(genome, persona);
 
     return genome;
   }
@@ -186,7 +192,8 @@ export class PersonaDesignBridge {
    * These are strong, opinionated overrides — the persona's worldview
    * physically reshapes the design character, not just nudges it.
    */
-  private applyPersonaToChromosomes(genome: DesignGenome, g: CreatorPersona['genome']): void {
+  private applyPersonaToChromosomes(genome: DesignGenome, persona: CreatorPersona): void {
+    const g = persona.genome;
     const ch = genome.chromosomes;
 
     // ── Motion physics (ch8) ────────────────────────────────────────

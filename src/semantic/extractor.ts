@@ -5,10 +5,110 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ContentTraits } from "../genome/types.js";
 import * as crypto from "crypto";
 
-type LLMProvider = "groq" | "openai" | "anthropic" | "gemini" | "openrouter" | "huggingface" | "hf-inference";
+type LLMProvider = "groq" | "openai" | "anthropic" | "gemini" | "openrouter" | "hf-inference";
 
-const LLM_TIMEOUT_MS = 30_000;   // 30s timeout per attempt (increased for cold starts)
-const LLM_MAX_RETRIES = 3;       // Retry up to 3 times with exponential backoff + jitter
+const LLM_TIMEOUT_MS = 30_000;
+const LLM_MAX_RETRIES = 3;
+
+interface LLMClient {
+    chatJSON<T>(prompt: string, opts: { model: string; temperature: number; maxTokens?: number }): Promise<T>;
+    chatText(prompt: string, opts: { model: string; temperature: number; maxTokens: number }): Promise<string>;
+}
+
+type ChatJSONOpts = { model: string; temperature: number; maxTokens?: number };
+type ChatTextOpts = { model: string; temperature: number; maxTokens: number };
+
+function createLLMClient(provider: LLMProvider, apiKey: string): LLMClient {
+    switch (provider) {
+        case "groq": {
+            const c = new Groq({ apiKey });
+            return {
+                async chatJSON<T>(p: string, opts: ChatJSONOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
+                    return JSON.parse(r.choices[0].message.content || "{}") as T;
+                },
+                async chatText(p: string, opts: ChatTextOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
+                    return r.choices[0].message.content || "";
+                },
+            };
+        }
+        case "openai": {
+            const c = new OpenAI({ apiKey });
+            return {
+                async chatJSON<T>(p: string, opts: ChatJSONOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
+                    return JSON.parse(r.choices[0].message.content || "{}") as T;
+                },
+                async chatText(p: string, opts: ChatTextOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
+                    return r.choices[0].message.content || "";
+                },
+            };
+        }
+        case "anthropic": {
+            const c = new Anthropic({ apiKey });
+            return {
+                async chatJSON<T>(p: string, opts: ChatJSONOpts) {
+                    const r = await c.messages.create({ model: opts.model, max_tokens: opts.maxTokens || 4096, messages: [{ role: "user", content: p }] });
+                    const t = r.content[0];
+                    if (t.type !== "text") throw new Error("Unexpected response type");
+                    const m = t.text.match(/\{[\s\S]*\}/);
+                    if (!m) throw new Error("No JSON in response");
+                    return JSON.parse(m[0]) as T;
+                },
+                async chatText(p: string, opts: ChatTextOpts) {
+                    const r = await c.messages.create({ model: opts.model, max_tokens: opts.maxTokens, messages: [{ role: "user", content: p }] });
+                    const t = r.content[0];
+                    if (t.type !== "text") throw new Error("Unexpected response type");
+                    return t.text;
+                },
+            };
+        }
+        case "gemini": {
+            const gm = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: "gemini-2.0-flash" });
+            return {
+                async chatJSON<T>(_p: string, opts: ChatJSONOpts) {
+                    const r = await gm.generateContent({ contents: [{ role: "user", parts: [{ text: _p }] }], generationConfig: { temperature: opts.temperature, responseMimeType: "application/json" } });
+                    const t = r.response.text();
+                    const j = t.match(/\{[\s\S]*\}/);
+                    if (!j) throw new Error("No JSON in response");
+                    return JSON.parse(j[0]) as T;
+                },
+                async chatText(p: string, opts: ChatTextOpts) {
+                    const r = await gm.generateContent({ contents: [{ role: "user", parts: [{ text: p }] }], generationConfig: { temperature: opts.temperature } });
+                    return r.response.text();
+                },
+            };
+        }
+        case "openrouter": {
+            const c = new OpenAI({ apiKey, baseURL: "https://openrouter.ai/api/v1" });
+            return {
+                async chatJSON<T>(p: string, opts: ChatJSONOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
+                    return JSON.parse(r.choices[0].message.content || "{}") as T;
+                },
+                async chatText(p: string, opts: ChatTextOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
+                    return r.choices[0].message.content || "";
+                },
+            };
+        }
+        case "hf-inference": {
+            const c = new OpenAI({ apiKey, baseURL: "https://router.huggingface.co/together/v1" });
+            return {
+                async chatJSON<T>(p: string, opts: ChatJSONOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
+                    return JSON.parse(r.choices[0].message.content || "{}") as T;
+                },
+                async chatText(p: string, opts: ChatTextOpts) {
+                    const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
+                    return r.choices[0].message.content || "";
+                },
+            };
+        }
+    }
+}
 
 /**
  * Structural properties of a product — binary/count answers about what it DOES.
@@ -172,12 +272,7 @@ interface LLMResponse {
 
 export class SemanticTraitExtractor {
     private apiKeyMissing: boolean = false;
-    private groq?: Groq;
-    private openai?: OpenAI;
-    private anthropic?: Anthropic;
-    private gemini?: any;
-    private openrouter?: OpenAI; // OpenRouter uses OpenAI-compatible API
-    private huggingface?: any;
+    private client: LLMClient;
     private provider: LLMProvider;
 
     constructor(apiKey?: string, provider?: LLMProvider) {
@@ -186,7 +281,7 @@ export class SemanticTraitExtractor {
         const anthropicKey = process.env.ANTHROPIC_API_KEY;
         const geminiKey = process.env.GEMINI_API_KEY;
         const openrouterKey = process.env.OPENROUTER_API_KEY;
-        const huggingfaceKey = process.env.HUGGINGFACE_API_KEY;
+        const hfKey = process.env.HUGGINGFACE_API_KEY;
 
         if (provider) {
             this.provider = provider;
@@ -200,13 +295,13 @@ export class SemanticTraitExtractor {
             this.provider = "gemini";
         } else if (openrouterKey) {
             this.provider = "openrouter";
-        } else if (huggingfaceKey) {
-            this.provider = "huggingface";
+        } else if (hfKey) {
+            this.provider = "hf-inference";
         } else {
             this.provider = "groq";
         }
 
-        const key = apiKey || groqKey || openaiKey || anthropicKey || geminiKey || openrouterKey || huggingfaceKey;
+        const key = apiKey || groqKey || openaiKey || anthropicKey || geminiKey || openrouterKey || hfKey;
 
         if (!key) {
             throw new Error(
@@ -214,44 +309,7 @@ export class SemanticTraitExtractor {
             );
         }
 
-        switch (this.provider) {
-            case "groq":
-                this.groq = new Groq({ apiKey: key });
-                break;
-            case "openai":
-                this.openai = new OpenAI({ apiKey: key });
-                break;
-            case "anthropic":
-                this.anthropic = new Anthropic({ apiKey: key });
-                break;
-            case "gemini":
-                const genAI = new GoogleGenerativeAI(key);
-                this.gemini = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-                break;
-            case "openrouter":
-                // OpenRouter uses OpenAI-compatible API
-                this.openrouter = new OpenAI({
-                    apiKey: key,
-                    baseURL: "https://openrouter.ai/api/v1",
-                });
-                break;
-            case "huggingface":
-                // HuggingFace Serverless API is deprecated
-                // Use "hf-inference" provider with HF Inference Providers instead
-                throw new Error(
-                    "Provider 'huggingface' is deprecated. Use 'hf-inference' instead with:\n" +
-                    "new SemanticTraitExtractor(key, 'hf-inference')\n\n" +
-                    "Requires HF Inference Providers (Together, Fireworks, etc.) with billing enabled."
-                );
-            case "hf-inference":
-                // HF Inference Providers - OpenAI compatible API
-                // User must set up billing and use router.huggingface.co
-                this.openrouter = new OpenAI({
-                    apiKey: key,
-                    baseURL: "https://router.huggingface.co/together/v1", // Default to Together
-                });
-                break;
-        }
+        this.client = createLLMClient(this.provider, key);
     }
 
     /**
@@ -270,9 +328,17 @@ export class SemanticTraitExtractor {
 
     /**
      * Single-call extraction: traits + sector + subSector + archetype
+     * When personaContext is provided, the LLM answers structural questions through
+     * the persona's lens — their worldview, instincts, and creative behavior shape
+     * the trait extraction directly, rather than applying post-hoc numeric tweaks.
      */
-    async analyze(intent: string, projectContext?: string): Promise<DesignAnalysis> {
-        const prompt = this.buildPrompt(intent, projectContext);
+    async analyze(intent: string, projectContext?: string, personaContext?: {
+        biography: string;
+        instincts: string[];
+        worldview: string;
+        creativeBehavior: string;
+    }): Promise<DesignAnalysis> {
+        const prompt = this.buildPrompt(intent, projectContext, personaContext);
         let lastError: Error | null = null;
 
         for (let attempt = 1; attempt <= LLM_MAX_RETRIES; attempt++) {
@@ -451,66 +517,15 @@ Rules:
         flora?:     Array<{ name: string; purpose: string }>;
         fauna?:     Array<{ name: string; purpose: string }>;
     }> {
-        switch (this.provider) {
-            case "groq": {
-                if (!this.groq) throw new Error("Groq not initialized");
-                const r = await this.groq.chat.completions.create({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" },
-                    temperature: 0.4,
-                });
-                return JSON.parse(r.choices[0].message.content || "{}");
-            }
-            case "openai": {
-                if (!this.openai) throw new Error("OpenAI not initialized");
-                const r = await this.openai.chat.completions.create({
-                    model: "gpt-4.1",
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" },
-                    temperature: 0.4,
-                });
-                return JSON.parse(r.choices[0].message.content || "{}");
-            }
-            case "anthropic": {
-                if (!this.anthropic) throw new Error("Anthropic not initialized");
-                const r = await this.anthropic.messages.create({
-                    model: "claude-3-7-sonnet-latest",
-                    max_tokens: 2048,
-                    messages: [{ role: "user", content: prompt }],
-                });
-                const c = r.content[0];
-                if (c.type !== "text") throw new Error("Unexpected Anthropic response type");
-                const m = c.text.match(/\{[\s\S]*\}/);
-                if (!m) throw new Error("No JSON in Anthropic response");
-                return JSON.parse(m[0]);
-            }
-            case "gemini": {
-                if (!this.gemini) throw new Error("Gemini not initialized");
-                const r = await this.gemini.generateContent({
-                    contents: [{ role: "user", parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
-                });
-                const m = r.response.text().match(/\{[\s\S]*\}/);
-                if (!m) throw new Error("No JSON in Gemini response");
-                return JSON.parse(m[0]);
-            }
-            case "openrouter":
-            case "hf-inference": {
-                const client = this.openrouter;
-                if (!client) throw new Error("OpenRouter/Inference not initialized");
-                const r = await client.chat.completions.create({
-                    model: "meta-llama/llama-3-70b-instruct",
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" },
-                    temperature: 0.4,
-                });
-                return JSON.parse(r.choices[0].message.content || "{}");
-            }
-            default:
-                // Unknown provider: skip organism naming
-                return { microbial: [], flora: [], fauna: [] };
-        }
+        const models: Record<LLMProvider, string> = {
+            groq: "llama-3.3-70b-versatile",
+            openai: "gpt-4.1",
+            anthropic: "claude-3-7-sonnet-latest",
+            gemini: "gemini-2.0-flash",
+            openrouter: "meta-llama/llama-3-70b-instruct",
+            "hf-inference": "meta-llama/Llama-3.3-70B-Instruct",
+        };
+        return this.client.chatJSON(prompt, { model: models[this.provider], temperature: 0.4, maxTokens: 2048 });
     }
 
     /**
@@ -571,66 +586,15 @@ Rules:
     private async callCivilizationComponentsProvider(prompt: string): Promise<{
         components?: Array<{ name: string; purpose: string }>;
     }> {
-        switch (this.provider) {
-            case "groq": {
-                if (!this.groq) throw new Error("Groq not initialized");
-                const r = await this.groq.chat.completions.create({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" },
-                    temperature: 0.4,
-                });
-                return JSON.parse(r.choices[0].message.content || "{}");
-            }
-            case "openai": {
-                if (!this.openai) throw new Error("OpenAI not initialized");
-                const r = await this.openai.chat.completions.create({
-                    model: "gpt-4.1",
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" },
-                    temperature: 0.4,
-                });
-                return JSON.parse(r.choices[0].message.content || "{}");
-            }
-            case "anthropic": {
-                if (!this.anthropic) throw new Error("Anthropic not initialized");
-                const r = await this.anthropic.messages.create({
-                    model: "claude-3-7-sonnet-latest",
-                    max_tokens: 2048,
-                    messages: [{ role: "user", content: prompt }],
-                });
-                const c = r.content[0];
-                if (c.type !== "text") throw new Error("Unexpected Anthropic response type");
-                const m = c.text.match(/\{[\s\S]*\}/);
-                if (!m) throw new Error("No JSON in Anthropic response");
-                return JSON.parse(m[0]);
-            }
-            case "gemini": {
-                if (!this.gemini) throw new Error("Gemini not initialized");
-                const r = await this.gemini.generateContent({
-                    contents: [{ role: "user", parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
-                });
-                const m = r.response.text().match(/\{[\s\S]*\}/);
-                if (!m) throw new Error("No JSON in Gemini response");
-                return JSON.parse(m[0]);
-            }
-            case "openrouter":
-            case "hf-inference": {
-                const client = this.openrouter;
-                if (!client) throw new Error("OpenRouter/Inference not initialized");
-                const r = await client.chat.completions.create({
-                    model: "meta-llama/llama-3-70b-instruct",
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" },
-                    temperature: 0.4,
-                });
-                return JSON.parse(r.choices[0].message.content || "{}");
-            }
-            default:
-                // Unknown provider: skip
-                return { components: [] };
-        }
+        const models: Record<LLMProvider, string> = {
+            groq: "llama-3.3-70b-versatile",
+            openai: "gpt-4.1",
+            anthropic: "claude-3-7-sonnet-latest",
+            gemini: "gemini-2.0-flash",
+            openrouter: "meta-llama/llama-3-70b-instruct",
+            "hf-inference": "meta-llama/Llama-3.3-70B-Instruct",
+        };
+        return this.client.chatJSON(prompt, { model: models[this.provider], temperature: 0.4, maxTokens: 2048 });
     }
 
     /**
@@ -655,88 +619,15 @@ Rules:
     }
 
     private async callTextProvider(prompt: string): Promise<string> {
-        switch (this.provider) {
-            case "groq": {
-                if (!this.groq) throw new Error("Groq not initialized");
-                const r = await this.groq.chat.completions.create({
-                    model: "llama-3.3-70b-versatile",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                    max_tokens: 4096,
-                });
-                return r.choices[0].message.content || "";
-            }
-            case "openai": {
-                if (!this.openai) throw new Error("OpenAI not initialized");
-                const r = await this.openai.chat.completions.create({
-                    model: "gpt-4.1",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                    max_tokens: 4096,
-                });
-                return r.choices[0].message.content || "";
-            }
-            case "anthropic": {
-                if (!this.anthropic) throw new Error("Anthropic not initialized");
-                const r = await this.anthropic.messages.create({
-                    model: "claude-3-7-sonnet-latest",
-                    max_tokens: 4096,
-                    messages: [{ role: "user", content: prompt }],
-                });
-                const c = r.content[0];
-                if (c.type !== "text") throw new Error("Unexpected Anthropic response type");
-                return c.text;
-            }
-            case "gemini": {
-                if (!this.gemini) throw new Error("Gemini not initialized");
-                const r = await this.gemini.generateContent({
-                    contents: [{ role: "user", parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.7 },
-                });
-                return r.response.text();
-            }
-            case "openrouter": {
-                if (!this.openrouter) throw new Error("OpenRouter not initialized");
-                const r = await this.openrouter.chat.completions.create({
-                    model: "meta-llama/llama-3-70b-instruct",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                    max_tokens: 4096,
-                });
-                return r.choices[0].message.content || "";
-            }
-            case "hf-inference": {
-                // HF Inference Providers (Together, Fireworks, etc. via router.huggingface.co)
-                if (!this.openrouter) throw new Error("HF Inference not initialized");
-                const r = await this.openrouter.chat.completions.create({
-                    model: "meta-llama/Llama-3.3-70B-Instruct", // Default model
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7,
-                    max_tokens: 4096,
-                });
-                return r.choices[0].message.content || "";
-            }
-            default: {
-                // This should not happen if constructor validation is correct
-                throw new Error(`Unknown provider: ${this.provider}`);
-            }
-        }
-    }
-
-    /**
-     * Backward compatibility: extract traits only
-     */
-    async extractTraits(intent: string, projectContext?: string): Promise<ContentTraits> {
-        const analysis = await this.analyze(intent, projectContext);
-        return analysis.traits;
-    }
-
-    /**
-     * Backward compatibility: classify sector
-     */
-    async classifySector(content: string): Promise<{ primary: string; confidence: number }> {
-        const analysis = await this.analyze(content);
-        return { primary: analysis.sector.primary, confidence: analysis.sector.confidence };
+        const models: Record<LLMProvider, string> = {
+            groq: "llama-3.3-70b-versatile",
+            openai: "gpt-4.1",
+            anthropic: "claude-3-7-sonnet-latest",
+            gemini: "gemini-2.0-flash",
+            openrouter: "meta-llama/llama-3-70b-instruct",
+            "hf-inference": "meta-llama/Llama-3.3-70B-Instruct",
+        };
+        return this.client.chatText(prompt, { model: models[this.provider], temperature: 0.7, maxTokens: 4096 });
     }
 
     /** Race a promise against a timeout */
@@ -749,21 +640,47 @@ Rules:
 
     /** Dispatch to the configured provider */
     private callProvider(prompt: string): Promise<LLMResponse> {
-        switch (this.provider) {
-            case "groq": return this.extractWithGroq(prompt);
-            case "openai": return this.extractWithOpenAI(prompt);
-            case "anthropic": return this.extractWithAnthropic(prompt);
-            case "gemini": return this.extractWithGemini(prompt);
-            case "openrouter": return this.extractWithOpenRouter(prompt);
-            case "hf-inference": return this.extractWithHuggingFace(prompt);
-            default: throw new Error(`Unknown provider: ${this.provider}`);
-        }
+        const models: Record<LLMProvider, string> = {
+            groq: "llama-3.3-70b-versatile",
+            openai: "gpt-4.1",
+            anthropic: "claude-3-7-sonnet-latest",
+            gemini: "gemini-2.0-flash",
+            openrouter: "meta-llama/llama-3-70b-versatile",
+            "hf-inference": "meta-llama/Llama-3.3-70B-Instruct",
+        };
+        return this.client.chatJSON(prompt, { model: models[this.provider], temperature: 0.2 });
     }
 
-    private buildPrompt(intent: string, projectContext?: string): string {
+    private buildPrompt(intent: string, projectContext?: string, personaContext?: {
+        biography: string;
+        instincts: string[];
+        worldview: string;
+        creativeBehavior: string;
+    }): string {
+        const personaSection = personaContext ? `
+═══════════════════════════════════════════════════════════════
+CREATOR PERSONA CONTEXT — ANSWER THROUGH THIS DESIGNER'S LENS
+═══════════════════════════════════════════════════════════════
+
+You are analyzing this product's design requirements as if you were this designer:
+
+Background: ${personaContext.biography}
+Instincts: ${personaContext.instincts.join(', ')}
+Worldview: ${personaContext.worldview}
+Creative Behavior: ${personaContext.creativeBehavior}
+
+This designer would naturally emphasize their instincts and approach problems with their creative behavior.
+Answer the following structural and trait questions as this designer would — let their
+perspective shape your assessment of information density, emotional temperature, playfulness,
+spatial dependency, and all other traits. Their worldview should influence how you interpret
+the product's needs.
+
+═══════════════════════════════════════════════════════════════
+` : '';
+
         return `You are a Semantic Trait Extractor for a parametric design system with 32-chromosome DNA generation (ch0-sector through ch32-token_inheritance).
 
-Analyze the design intent and map to 8 trait vectors (0.0-1.0). Your output directly generates the design genome.
+${personaSection}Analyze the design intent and map to 8 trait vectors (0.0-1.0). Your output directly generates the design genome.
 
 ═══════════════════════════════════════════════════════════════
 TRAIT DEFINITIONS (with real-world anchors)
@@ -1150,90 +1067,6 @@ OUTPUT INSTRUCTIONS
   }
 }
 `;
-    }
-
-    private async extractWithGroq(prompt: string): Promise<LLMResponse> {
-        if (!this.groq) throw new Error("Groq client not initialized");
-        const response = await this.groq.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-            temperature: 0.2,
-        });
-        const content = response.choices[0].message.content || "{}";
-        return JSON.parse(content);
-    }
-
-    private async extractWithOpenAI(prompt: string): Promise<LLMResponse> {
-        if (!this.openai) throw new Error("OpenAI client not initialized");
-        const response = await this.openai.chat.completions.create({
-            model: "gpt-4.1",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-            temperature: 0.2,
-        });
-        const content = response.choices[0].message.content || "{}";
-        return JSON.parse(content);
-    }
-
-    private async extractWithAnthropic(prompt: string): Promise<LLMResponse> {
-        if (!this.anthropic) throw new Error("Anthropic client not initialized");
-        const response = await this.anthropic.messages.create({
-            model: "claude-3-7-sonnet-latest",
-            max_tokens: 1024,
-            messages: [{ role: "user", content: prompt }],
-        });
-        const content = response.content[0];
-        let text = "";
-        if (content.type === "text") {
-            text = content.text;
-        } else {
-            throw new Error("Unexpected response type from Anthropic");
-        }
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("No JSON found in Anthropic response");
-        return JSON.parse(jsonMatch[0]);
-    }
-
-    private async extractWithGemini(prompt: string): Promise<LLMResponse> {
-        if (!this.gemini) throw new Error("Gemini client not initialized");
-        const result = await this.gemini.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
-        });
-        const text = result.response.text();
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("No JSON found in Gemini response");
-        return JSON.parse(jsonMatch[0]);
-    }
-
-    private async extractWithOpenRouter(prompt: string): Promise<LLMResponse> {
-        if (!this.openrouter) throw new Error("OpenRouter client not initialized");
-        const response = await this.openrouter.chat.completions.create({
-            model: "meta-llama/llama-3.3-70b-versatile", // Default to Llama 4 Scout
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-            temperature: 0.2,
-        });
-        const content = response.choices[0].message.content || "{}";
-        return JSON.parse(content);
-    }
-
-    private async extractWithHuggingFace(prompt: string): Promise<LLMResponse> {
-        // HF Inference Providers (Together, Fireworks, etc. via router.huggingface.co)
-        // Requires separate billing setup on HuggingFace
-        const client = this.openrouter;
-        if (!client) throw new Error("HF Inference not initialized");
-        
-        const response = await client.chat.completions.create({
-            model: "meta-llama/Llama-3.3-70B-Instruct",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-            temperature: 0.2,
-        });
-        
-        const content = response.choices[0].message.content || "{}";
-        return JSON.parse(content);
     }
 
     private clamp(value: number): number {

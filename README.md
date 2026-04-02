@@ -24,7 +24,7 @@ Genome generates four interlocking genomes from a single seed:
 16-chromosome latent-space DNA encoding a simulated designer persona: cultural vector, temporal nostalgia, obsession traversal, formative era, authorial voice, technical spectrum, aesthetic sensibility, cognitive style, social positioning, material affinity, narrative instinct, chaos tolerance, cross-pollination, temporal perception, sensory priority, and coherence style. Decoded via LLM into unique personas with voices like "whispered forest diaries" or "Forged industrial poetry" — each interpreting the same intent through different creative lenses.
 
 **Layer 1 — DesignGenome:** *What does it look like?*
-32-chromosome DNA: color system (with dark-mode-safe variants), typography, motion physics, grid logic, edge style, hero strategy, trust signals, copy intelligence, state topology, routing pattern, token inheritance. Generated directly or influenced by L0 Creator Persona (chaos → physics, aesthetic → hue, etc.).
+40-chromosome DNA (ch0–ch32, some with sub-chromosomes): color system (with dark-mode-safe variants), typography, motion physics, grid logic, edge style, hero strategy, trust signals, copy intelligence, state topology, routing pattern, token inheritance. Generated directly or influenced by L0 Creator Persona — the persona's worldview shapes how the LLM interprets the intent, not just post-hoc numeric tweaks.
 
 **Layer 2 — EcosystemGenome:** *What kind of components are these?*
 12-chromosome ecology derived from the design genome. Biome (32 classes), energy source (16 types), symbiosis pattern (16 types), trophic structure (16 types), succession stage (12 stages), adaptation axis (16 axes), population pattern (16 patterns), temporal rhythm (16 rhythms), spatial axis (16 dimensions), capacity class (16 levels), mutation rate, and expressiveness — each a functional metaphor that answers: how many components, how tightly coupled, how data flows between them.
@@ -40,7 +40,7 @@ Genome generates four interlocking genomes from a single seed:
 
 **Four-layer SHA-256 hash chain:** `seed → CreatorGenome → DesignGenome → EcosystemGenome → CivilizationGenome`
 
-Each layer is deterministic (same seed = same result forever) and derived from the previous layer's hash. Predecessor chromosome values bias successor selections via a weighted gravity system — this is not just hash ancestry, the actual design values flow downstream.
+Each layer is deterministic (same seed = same result forever) and derived from the previous layer's hash. Predecessor chromosome values bias successor selections via a deterministic gravity system — 75% ecological coherence, 25% hash-driven diversity. This is not just hash ancestry, the actual design values flow downstream.
 
 **Vocabulary-invariant complexity scoring:** Complexity tier is computed from what the product *does*, not how it's described. "A tool doctors use to track patients" and "clinical monitoring dashboard" produce the same tier. The LLM answers 10 binary/count structural questions about product behavior; deterministic code maps those answers to a complexity score.
 
@@ -127,7 +127,7 @@ The `generate_design_genome` response includes `suggested_next` — a dynamic li
 ### `generate_design_genome` — STEP 1
 Full pipeline: structural analysis → LLM extraction → DNA sequencing across all three layers. Returns genome, CSS, topology, and `genome_report` markdown explaining every chromosome.
 
-Pass `offline: true` to skip LLM and use hash-based inference (no API key needed, fully deterministic).
+**LLM is required.** A valid API key (GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY) must be configured. Without it, the tool fails with a clear error message.
 
 **Font providers:**
 - `"google"` — Google Fonts (1000+ fonts) *(default)*
@@ -176,18 +176,6 @@ Requires one API key. Single LLM call returns structural props + traits + sector
 ```
 
 Supported providers: Groq, OpenAI, Anthropic, Google Gemini, OpenRouter, HuggingFace.
-
-### Mode 2: Offline (No LLM)
-
-```json
-{
-  "intent": "minimal portfolio site",
-  "seed": "studio-portfolio-2026",
-  "offline": true
-}
-```
-
-No API key required. Hash-based trait inference. Sector defaults to `technology`. Fully deterministic.
 
 ---
 

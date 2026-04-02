@@ -39,6 +39,29 @@ import { EpigeneticParser } from "./genome/epigenetics.js";
 import { detectArchetype } from "./genome/archetypes.js";
 import { PatternDetector } from "./constraints/pattern-detector.js";
 import { ecosystemGenerator, Ecosystem } from "./genome/ecosystem.js";
+import { CivilizationTier } from "./genome/civilization.js";
+
+interface EcosystemResponse {
+    biome: string;
+    biomeDescription: string;
+    organisms: {
+        counts: { microbial: number; flora: number; fauna: number; total: number };
+        microbial: Array<{ id: string; name: string; category: string; colorTreatment: string }>;
+        flora: Array<{ id: string; name: string; category: string; motionStyle: string }>;
+        fauna: Array<{ id: string; name: string; category: string; complexity: number }>;
+    };
+    relationships: Array<{ container: string; contained: string; pattern: string }>;
+    evolution: { complexity: number; diversity: number; stability: number; generations: number };
+    civilizationReady: boolean;
+    civilizationGap: number;
+}
+
+interface CivilizationResponse {
+    designPhilosophy: string;
+    archetype: string;
+    archetypeDescription: string;
+    [key: string]: unknown;
+}
 import { CivilizationGenerator } from "./genome/civilization.js";
 import { ComplexityAnalyzer } from "./genome/complexity-analyzer.js";
 import { generateCivilizationOutput } from "./generators/civilization-generators.js";
@@ -77,18 +100,23 @@ function validateGenome(genome: any, context: string): asserts genome is { chrom
 
 // ── Chromosome Access Tracker ───────────────────────────────────────────────
 // Tracks which chromosomes are accessed during genome usage to ensure full utilization
+// These names MUST match the actual keys in DesignGenome['chromosomes'] from sequencer.ts
 
-// L1 Design Genome: 32 chromosomes
+// L1 Design Genome: 40 chromosomes (ch0–ch32, some with sub-chromosomes)
 const CHROMOSOME_REGISTRY = [
-    'ch0_sector_primary', 'ch0_sector_secondary',
-    'ch1_structure', 'ch2_density', 'ch3_type_display', 'ch4_type_body',
+    'ch0_sector_primary', 'ch0_sector_secondary', 'ch0_sub_sector', 'ch0_brand_weight',
+    'ch1_structure', 'ch2_rhythm', 'ch3_type_display', 'ch4_type_body',
     'ch5_color_primary', 'ch6_color_temp', 'ch7_edge', 'ch8_motion',
-    'ch9_grid', 'ch10_hierarchy', 'ch11_texture', 'ch12_depth',
-    'ch13_z_index', 'ch14_responsive', 'ch15_spacing', 'ch16_shadow',
-    'ch17_material', 'ch18_accessibility', 'ch19_hero_type', 'ch20_hero_variant_detail',
-    'ch21_trust_signals', 'ch22_social_proof', 'ch23_content_depth', 'ch23_information_architecture',
-    'ch24_breakpoint_strategy', 'ch25_typographic_scale', 'ch26_color_system', 'ch27_motion_choreography',
-    'ch28_type_casing', 'ch29_physics_material', 'ch30_state', 'ch31_biomarker_geometry'
+    'ch9_grid', 'ch10_hierarchy', 'ch11_texture', 'ch12_signature',
+    'ch13_atmosphere', 'ch14_physics', 'ch15_biomarker', 'ch16_typography',
+    'ch17_accessibility', 'ch18_rendering', 'ch19_hero_type', 'ch19_hero_variant_detail',
+    'ch20_visual_treatment', 'ch21_trust_signals', 'ch21_trust_content',
+    'ch22_social_proof', 'ch22_impact_demonstration',
+    'ch23_content_depth', 'ch23_information_architecture',
+    'ch24_personalization', 'ch25_copy_engine',
+    'ch26_color_system', 'ch27_motion_choreography', 'ch28_iconography',
+    'ch29_copy_intelligence',
+    'ch30_state_topology', 'ch31_routing_pattern', 'ch32_token_inheritance'
 ];
 
 // L2 Ecosystem Genome: 12 chromosomes
@@ -817,38 +845,29 @@ class DesignGenomeServer {
                             }
                         }
 
-                        // 2. Semantic Extraction (single LLM call: traits + sector + archetype + copy intelligence)
+                        // 2. Semantic Extraction — pass persona context so LLM answers through the designer's lens
                         const finalContext = creativeBrief?.concept?.statement || epigeneticData?.brandContext || context;
-                        const analysis = await this.extractor.analyze(intent, finalContext);
+                        
+                        // Build persona context for LLM trait extraction
+                        let personaContextForLLM: { biography: string; instincts: string[]; worldview: string; creativeBehavior: string } | undefined;
+                        if (creatorPersona && creativeBrief) {
+                            personaContextForLLM = {
+                                biography: creatorPersona.biography.origin + " " + creatorPersona.biography.formative_years,
+                                instincts: creatorPersona.instincts.visual_language,
+                                worldview: creatorPersona.worldview.design_philosophy + " " + creatorPersona.worldview.core_metaphor,
+                                creativeBehavior: creatorPersona.creative_behavior.chaos_tolerance > 0.5 ? "experimental and boundary-pushing" : "disciplined and systematic",
+                            };
+                        }
+                        
+                        const analysis = await this.extractor.analyze(intent, finalContext, personaContextForLLM);
                         const traits = analysis.traits;
                         const detectedSector = analysis.sector.primary as any;
                         const copyIntelligence = analysis.copyIntelligence;
                         const copy = analysis.copy;
                         const structural = analysis.structural;
 
-                        // 3. L0 → L1 Bridge: Apply persona influence to traits if available
-                        let influencedTraits = traits;
-                        let personaInfluence = undefined;
-                        if (creatorPersona && creativeBrief) {
-                            try {
-                                const { PersonaDesignBridge } = await import("./bridge/persona-to-design.js");
-                                const bridge = new PersonaDesignBridge();
-                                personaInfluence = bridge.calculateInfluence(creatorPersona, creativeBrief);
-                                
-                                // Apply influence to traits
-                                influencedTraits = {
-                                    ...traits,
-                                    informationDensity: bridge.clamp(traits.informationDensity + (personaInfluence.densityMod || 0)),
-                                    emotionalTemperature: bridge.clamp(traits.emotionalTemperature + (personaInfluence.saturationMod || 0)),
-                                    playfulness: bridge.clamp((personaInfluence.motionSpeedMod || 1) - 0.8),
-                                };
-                            } catch (err) {
-                                console.error("L0→L1 bridge failed (using original traits):", err);
-                            }
-                        }
-
-                        // 4. DNA Sequencing (pass copy intelligence + LLM copy to sequencer)
-                        const genome = this.sequencer.generate(seed, influencedTraits, {
+                        // 3. DNA Sequencing — traits already shaped by persona via LLM
+                        const genome = this.sequencer.generate(seed, traits, {
                             primarySector: detectedSector,
                             options: {
                                 fontProvider: args.font_provider,
@@ -862,22 +881,9 @@ class DesignGenomeServer {
                         const complexityResult = this.complexityAnalyzer.analyze(intent, finalContext ?? "", traits, structural);
                         const { finalComplexity, tier } = complexityResult;
 
-                        // 6. CSS (always generated) - with persona influence if available
+                        // 6. CSS (always generated)
                         const css = this.cssGen.generate(genome, { 
                             format: "expanded",
-                            personaInfluence: personaInfluence ? {
-                                hueShift: personaInfluence.hueShift,
-                                saturationMod: personaInfluence.saturationMod,
-                                lightnessMod: personaInfluence.lightnessMod,
-                                densityMod: personaInfluence.densityMod,
-                                whitespaceMod: personaInfluence.whitespaceMod,
-                                radiusMod: personaInfluence.radiusMod,
-                                elevationMod: personaInfluence.elevationMod,
-                                trackingMod: personaInfluence.trackingMod,
-                                physicsStyle: personaInfluence.physicsStyle,
-                                copyTone: personaInfluence.copyTone,
-                                metaphorPrimary: personaInfluence.metaphorPrimary,
-                            } : undefined
                         });
                         const scaffoldCSS = this.cssGen.generateScaffoldCSS(genome, { format: "expanded" });
                         const webglComponents = this.webglGen.generateR3F(genome);
@@ -945,8 +951,8 @@ class DesignGenomeServer {
                         // Agents implement structure from this contract; no HTML template to anchor on.
                         const layout_contract = this.buildLayoutContract(genome, finalComplexity, tier);
 
-                        let ecosystemOutput: unknown | undefined;
-                        let civilizationOutput: unknown | undefined;
+                        let ecosystemOutput: EcosystemResponse | undefined;
+                        let civilizationOutput: CivilizationResponse | undefined;
 
                         // SHA-256 hash chain — each layer derived from the previous layer's output
                         const genomeEcoHash = ecoHashFromGenomeHash(genome.dnaHash);
@@ -971,7 +977,7 @@ class DesignGenomeServer {
                             const ecoBiome2 = ecoBiomeOptions2[hashByte(genomeEcoHash, 0, ecoBiomeOptions2.length)];
                             const ecoBiomeDesc2 = BIOME_CONTEXT[ecoBiome2] ?? ecoBiome2;
 
-                            ecosystemOutput = {
+                            const ecoOut: EcosystemResponse = {
                                 biome: ecoBiome2,
                                 biomeDescription: ecoBiomeDesc2,
                                 organisms: {
@@ -1004,11 +1010,11 @@ class DesignGenomeServer {
                                     })),
                                 evolution: eco.evolution,
                                 civilizationReady: eco.civilizationReady,
-                                // How far complexity needs to grow to reach tribal (0.81) threshold
                                 civilizationGap: parseFloat(
                                     Math.max(0, 0.81 - eco.evolution.complexity).toFixed(3)
                                 )
                             };
+                            ecosystemOutput = ecoOut;
 
                             // Civilization emerges from ecosystem when complexity crosses tribal (0.81)
                             if (finalComplexity >= 0.81) {
@@ -1172,7 +1178,6 @@ class DesignGenomeServer {
                                             design_principles: creativeBrief.design_principles,
                                             component_language: creativeBrief.component_language,
                                         } : undefined,
-                                        persona_influence: personaInfluence || undefined,
                                     } : undefined,
                                     // Three-layer genome guide — which field drives which implementation concern
                                     genome_layer_guide: {
@@ -1469,16 +1474,9 @@ class DesignGenomeServer {
                         // Previously used extractTraits() which discarded sector info,
                         // then passed args.options (user-supplied) which loses the inferred sector
                         const context = args.project_context || "";
-                        let ecoTraits: any;
-                        let ecoSector: string = "technology";
-                        try {
-                            const ecoAnalysis = await this.extractor.analyze(args.intent, context);
-                            ecoTraits = ecoAnalysis.traits;
-                            ecoSector = ecoAnalysis.sector?.primary || "technology";
-                        } catch {
-                            // Offline fallback
-                            ecoTraits = await this.extractor.extractTraits(args.intent, context);
-                        }
+                        const ecoAnalysis = await this.extractor.analyze(args.intent, context);
+                        const ecoTraits = ecoAnalysis.traits;
+                        const ecoSector = ecoAnalysis.sector?.primary || "technology";
 
                         // Estimate organism counts from traits to size the LLM naming call.
                         // Uses informationDensity as a proxy for complexity — close enough
@@ -1794,16 +1792,9 @@ class DesignGenomeServer {
 
                         // M-12: Single LLM call — use analyze() to get both traits AND sector at once
                         const context = args.project_context || "";
-                        let civTraits: any;
-                        let civSector: string = "technology";
-                        try {
-                            const civAnalysis = await this.extractor.analyze(args.intent, context);
-                            civTraits = civAnalysis.traits;
-                            civSector = civAnalysis.sector?.primary || "technology";
-                        } catch {
-                            // Fallback: extractTraits with default sector
-                            civTraits = await this.extractor.extractTraits(args.intent, context);
-                        }
+                        const civAnalysis = await this.extractor.analyze(args.intent, context);
+                        const civTraits = civAnalysis.traits;
+                        const civSector = civAnalysis.sector?.primary || "technology";
 
                         // ECOSYSTEM INTEGRATION: Use provided ecosystem or generate standalone
                         let ecosystem = args.ecosystem;
@@ -2034,7 +2025,7 @@ class DesignGenomeServer {
                         // Apply changes
                         if (changes.new_seed) {
                             // Generate completely new genome
-                            const traits = preserveTraits ? original.traits : await this.extractor.extractTraits("updated", "");
+                            const traits = preserveTraits ? original.traits : (await this.extractor.analyze("updated", "")).traits;
                             const config = { primarySector: changes.sector || original.sectorContext.primary };
                             const regenerated = this.sequencer.generate(changes.new_seed, traits, config);
                             

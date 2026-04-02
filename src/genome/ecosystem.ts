@@ -18,7 +18,6 @@
  */
 
 import { DesignGenome, ContentTraits } from "./types.js";
-import { GenomeSequencer } from "./sequencer.js";
 import { ComponentSpec } from "./civilization.js";
 import { EcosystemGenome } from "./ecosystem-types.js";
 import { sequenceEcosystemGenome } from "./ecosystem-sequencer.js";
@@ -122,66 +121,10 @@ export interface Ecosystem {
 }
 
 /**
- * Topology-derived organism descriptors
- * NOT templates - these describe mathematical patterns that emerge from chromosomes
- */
-const TOPOLOGY_PATTERNS = {
-    microbial: [
-        { prefix: 'action', patterns: ['clickable', 'trigger', 'toggle'] },
-        { prefix: 'indicator', patterns: ['status', 'badge', 'signal'] },
-        { prefix: 'token', patterns: ['chip', 'tag', 'pill'] },
-        { prefix: 'identity', patterns: ['avatar', 'icon', 'glyph'] },
-        { prefix: 'loader', patterns: ['spinner', 'skeleton', 'progress'] },
-        { prefix: 'separator', patterns: ['divider', 'spacer', 'rule'] },
-        // NEW: Network connectors (fungi-like)
-        { prefix: 'bridge', patterns: ['connector', 'sync', 'relay'] },
-        { prefix: 'mycelium', patterns: ['bus', 'channel', 'stream'] },
-        // NEW: Ephemeral (virus-like)
-        { prefix: 'spore', patterns: ['toast', 'notification', 'alert'] },
-        { prefix: 'phage', patterns: ['tooltip', 'hint', 'help'] }
-    ],
-    flora: [
-        { prefix: 'input', patterns: ['field', 'control', 'selector'] },
-        { prefix: 'container', patterns: ['card', 'panel', 'section'] },
-        { prefix: 'navigation', patterns: ['menu', 'tabs', 'breadcrumb'] },
-        { prefix: 'reveal', patterns: ['dropdown', 'tooltip', 'popover'] },
-        { prefix: 'organization', patterns: ['list', 'accordion', 'tree'] },
-        { prefix: 'selection', patterns: ['toggle', 'switch', 'radio'] },
-        // NEW: Network structures
-        { prefix: 'rhizome', patterns: ['network', 'mesh', 'graph'] },
-        { prefix: 'hyphae', patterns: ['thread', 'connection', 'link'] }
-    ],
-    fauna: [
-        { prefix: 'overlay', patterns: ['modal', 'dialog', 'drawer'] },
-        { prefix: 'data', patterns: ['table', 'chart', 'grid'] },
-        { prefix: 'media', patterns: ['carousel', 'gallery', 'player'] },
-        { prefix: 'search', patterns: ['finder', 'explorer', 'filter'] },
-        { prefix: 'structure', patterns: ['layout', 'shell', 'frame'] },
-        { prefix: 'input', patterns: ['form', 'wizard', 'editor'] },
-        // NEW: Spatial/Experiential
-        { prefix: 'viewport', patterns: ['stage', 'canvas', 'portal'] },
-        { prefix: 'lens', patterns: ['magnifier', 'inspector', 'detail'] }
-    ]
-};
-
-// Organism IDs for hash-driven selection
-const ORGANISM_REGISTRY = {
-    microbial: ['action', 'indicator', 'token', 'identity', 'loader', 'separator', 'bridge', 'mycelium', 'spore', 'phage'],
-    flora: ['input', 'container', 'navigation', 'reveal', 'organization', 'selection', 'rhizome', 'hyphae'],
-    fauna: ['overlay', 'data', 'media', 'search', 'structure', 'input', 'viewport', 'lens']
-};
-
-/**
  * Generates a complete ecosystem of design components
  * All organisms share ONE genome (the environment)
  */
 export class EcosystemGenerator {
-    private sequencer: GenomeSequencer;
-    
-    constructor() {
-        this.sequencer = new GenomeSequencer();
-    }
-    
     generate(
         seed: string,
         traits: ContentTraits,
@@ -261,12 +204,14 @@ export class EcosystemGenerator {
         const counts = this.calculateOrganismCounts(genome, options);
 
         // Generate organisms from the shared environment.
-        // When organismsDefinition is provided, LLM-supplied names and purposes are used.
-        // Falls back to topology-derived abstract naming when not provided.
+        // LLM-supplied names and purposes are required.
         const defs = options?.organismsDefinition;
-        const microbial = this.generateMicrobialColony(genome, ecosystemGenome, counts.microbial, defs?.microbial);
-        const flora = this.generateFloraEcosystem(genome, ecosystemGenome, microbial, counts.flora, defs?.flora);
-        const fauna = this.generateFaunaPopulation(genome, ecosystemGenome, flora, counts.fauna, defs?.fauna);
+        if (!defs) {
+            throw new Error("organismsDefinition is required. Call extractor.analyzeOrganisms() to get product-specific component names.");
+        }
+        const microbial = this.generateMicrobialColony(genome, ecosystemGenome, counts.microbial, defs.microbial);
+        const flora = this.generateFloraEcosystem(genome, ecosystemGenome, microbial, counts.flora, defs.flora);
+        const fauna = this.generateFaunaPopulation(genome, ecosystemGenome, flora, counts.fauna, defs.fauna);
         
         // Calculate ecosystem complexity
         const complexity = this.calculateComplexity(genome, microbial, flora, fauna);
@@ -451,80 +396,23 @@ export class EcosystemGenerator {
         };
     }
     
-    /**
-     * HASH-DRIVEN: Select which organism types exist in this ecosystem.
-     * Not all sites have the same anatomy - navigation might not exist,
-     * or might be replaced by constellation_nav, etc.
-     */
-    private selectOrganismTypes(
-        genome: DesignGenome, 
-        category: 'microbial' | 'flora' | 'fauna',
-        maxCount: number
-    ): string[] {
-        const registry = ORGANISM_REGISTRY[category];
-        const selected: string[] = [];
-        
-        // Use genome hash to determine which organisms exist
-        // Each organism has a presence probability based on hash bytes
-        const hash = genome.dnaHash;
-        
-        for (let i = 0; i < registry.length && selected.length < maxCount; i++) {
-            // Use different parts of hash for each organism decision
-            const byteIndex = (i * 2) % 32;
-            const byteValue = parseInt(hash.slice(byteIndex * 2, byteIndex * 2 + 2), 16);
-            
-            // Threshold varies by organism category and ecosystem needs
-            // Some organisms are more likely than others based on genome traits
-            const threshold = category === 'flora' && registry[i] === 'navigation' 
-                ? 128  // 50% chance of navigation in flora
-                : category === 'fauna' && registry[i] === 'structure'
-                ? 100  // 40% chance of structure shell
-                : 180; // ~70% chance for others
-            
-            if (byteValue > threshold) {
-                selected.push(registry[i]);
-            }
-        }
-        
-        // Ensure at least some organisms exist
-        if (selected.length === 0 && maxCount > 0) {
-            const fallbackIndex = parseInt(hash.slice(0, 2), 16) % registry.length;
-            selected.push(registry[fallbackIndex]);
-        }
-        
-        return selected;
-    }
-
     // === MICROBIAL COLONY ===
-    // Atomic components: LLM-named when definitions provided, topology-derived as fallback
-    // HASH-DRIVEN: Which microbes exist depends on genome, not template
-    private generateMicrobialColony(genome: DesignGenome, eco: EcosystemGenome, count: number, definitions?: OrganismDefinition[]): Organism[] {
+    // Atomic components: LLM-named (definitions required)
+    private generateMicrobialColony(genome: DesignGenome, eco: EcosystemGenome, count: number, definitions: OrganismDefinition[]): Organism[] {
         const organisms: Organism[] = [];
         const baseEntropy = genome.chromosomes.ch12_signature.entropy;
         const mutationRate = eco.chromosomes.eco_ch11_mutation.rate;
-        
-        // HASH-DRIVEN: Select which organism types exist
-        const organismTypes = this.selectOrganismTypes(genome, 'microbial', count);
-        const patterns = TOPOLOGY_PATTERNS.microbial;
 
-        for (let i = 0; i < organismTypes.length; i++) {
+        for (let i = 0; i < Math.min(count, definitions.length); i++) {
             const mutation = this.generateMutation(genome, i);
-            const def = definitions?.[i];
-            
-            // Find pattern for this organism type
-            const organismId = organismTypes[i];
-            const pattern = patterns.find(p => p.prefix === organismId) || patterns[i % patterns.length];
-            
-            const variantCount = Math.floor(this.deriveFromHash(mutation, 4)) + 2;
-            const variants = this.generateVariantNames(pattern.patterns, variantCount, mutation);
-            const name = def?.name ?? this.deriveOrganismName(pattern.prefix, mutation, i, 'microbial');
+            const def = definitions[i];
 
             organisms.push({
-                id: `M-${i}-${organismId}`,
-                name,
-                purpose: def?.purpose ?? '',
+                id: `M-${i}-${def.name}`,
+                name: def.name,
+                purpose: def.purpose,
                 category: 'microbial',
-                spec: this.createComponentSpec(name, variants, 'microbial', genome),
+                spec: this.createComponentSpec(def.name, ['default', 'active', 'disabled'], 'microbial', genome),
                 adaptation: {
                     mutation,
                     entropy: baseEntropy * (1 + i * 0.05) * (0.5 + mutationRate),
@@ -537,7 +425,7 @@ export class EcosystemGenerator {
                     texture: this.deriveTexture(genome)
                 },
                 topology: {
-                    containmentDepth: 0, // Microbes have no children
+                    containmentDepth: 0,
                     edgeProfile: genome.chromosomes.ch7_edge.componentRadius / 32,
                     motionComplexity: genome.chromosomes.ch8_motion.physics === 'none' ? 0 : 
                                      genome.chromosomes.ch8_motion.physics === 'spring' ? 0.8 : 0.4,
@@ -555,51 +443,37 @@ export class EcosystemGenerator {
     }
     
     // === FLORA ECOSYSTEM ===
-    // Growing components: LLM-named when definitions provided, topology-derived as fallback
-    // HASH-DRIVEN: Which flora types exist depends on genome
+    // Growing components: LLM-named (definitions required)
     private generateFloraEcosystem(
         genome: DesignGenome,
         eco: EcosystemGenome,
         microbial: Organism[],
         count: number,
-        definitions?: OrganismDefinition[]
+        definitions: OrganismDefinition[]
     ): Organism[] {
         const organisms: Organism[] = [];
         const baseEntropy = genome.chromosomes.ch12_signature.entropy;
         const symbiosisDepth = eco.chromosomes.eco_ch3_symbiosis.depth;
         const trophicCascade = eco.chromosomes.eco_ch4_trophic.cascade;
         const mutationRate = eco.chromosomes.eco_ch11_mutation.rate;
-        
-        // HASH-DRIVEN: Select which organism types exist
-        const organismTypes = this.selectOrganismTypes(genome, 'flora', count);
-        const patterns = TOPOLOGY_PATTERNS.flora;
 
-        for (let i = 0; i < organismTypes.length; i++) {
+        for (let i = 0; i < Math.min(count, definitions.length); i++) {
             const mutation = this.generateMutation(genome, i + 100);
-            const def = definitions?.[i];
-            
-            // Find pattern for this organism type
-            const organismId = organismTypes[i];
-            const pattern = patterns.find(p => p.prefix === organismId) || patterns[i % patterns.length];
-            
-            const variantCount = Math.floor(this.deriveFromHash(mutation, 5)) + 2;
-            const variants = this.generateVariantNames(pattern.patterns, variantCount, mutation);
-            const name = def?.name ?? this.deriveOrganismName(pattern.prefix, mutation, i, 'flora');
+            const def = definitions[i];
 
-            // CHROMOSOME-DRIVEN: trophic cascade modulates how many microbes this flora contains
-            const preyCount = Math.min(4, Math.floor(this.deriveFromHash(mutation, 4) * (1 + trophicCascade)) + 1);
+            const preyCount = Math.min(4, Math.floor(mutationRate * 4 * (1 + trophicCascade)) + 1);
             const prey: string[] = [];
             for (let p = 0; p < preyCount && p < microbial.length; p++) {
-                const microIndex = Math.floor(this.deriveFromHash(mutation + p, microbial.length));
+                const microIndex = Math.floor((parseInt(mutation.slice(0, 4), 16) + p) % microbial.length);
                 prey.push(microbial[microIndex]?.id || `M-${p}`);
             }
             
             organisms.push({
-                id: `F-${i}-${organismId}`,
-                name,
-                purpose: def?.purpose ?? '',
+                id: `F-${i}-${def.name}`,
+                name: def.name,
+                purpose: def.purpose,
                 category: 'flora',
-                spec: this.createComponentSpec(name, variants, 'flora', genome),
+                spec: this.createComponentSpec(def.name, ['default', 'active', 'disabled', 'loading'], 'flora', genome),
                 adaptation: {
                     mutation,
                     entropy: baseEntropy * (1.2 + i * 0.08) * (0.5 + mutationRate),
@@ -612,14 +486,14 @@ export class EcosystemGenerator {
                     texture: this.deriveTexture(genome)
                 },
                 topology: {
-                    containmentDepth: Math.max(1, Math.round(1 + symbiosisDepth)), // eco_ch3_symbiosis.depth drives nesting depth
+                    containmentDepth: Math.max(1, Math.round(1 + symbiosisDepth)),
                     edgeProfile: genome.chromosomes.ch7_edge.radius / 32,
                     motionComplexity: genome.chromosomes.ch8_motion.physics === 'spring' ? 0.6 : 0.3,
                     interactionPattern: `${genome.chromosomes.ch8_motion.physics}-container`
                 },
                 relationships: {
                     symbiosis: this.findSymbioticFlora(i, count),
-                    prey: [...new Set(prey)], // Deduplicate
+                    prey: [...new Set(prey)],
                     predator: i < 4 ? `A-${Math.floor(i / 2)}` : undefined
                 }
             });
@@ -629,50 +503,36 @@ export class EcosystemGenerator {
     }
     
     // === FAUNA POPULATION ===
-    // Complex moving components: LLM-named when definitions provided, topology-derived as fallback
-    // HASH-DRIVEN: Which fauna types exist depends on genome
+    // Complex moving components: LLM-named (definitions required)
     private generateFaunaPopulation(
         genome: DesignGenome,
         eco: EcosystemGenome,
         flora: Organism[],
         count: number,
-        definitions?: OrganismDefinition[]
+        definitions: OrganismDefinition[]
     ): Organism[] {
         const organisms: Organism[] = [];
         const baseEntropy = genome.chromosomes.ch12_signature.entropy;
         const trophicCascade = eco.chromosomes.eco_ch4_trophic.cascade;
         const energyFlux = eco.chromosomes.eco_ch2_energy.flux;
-        
-        // HASH-DRIVEN: Select which organism types exist
-        const organismTypes = this.selectOrganismTypes(genome, 'fauna', count);
-        const patterns = TOPOLOGY_PATTERNS.fauna;
 
-        for (let i = 0; i < organismTypes.length; i++) {
+        for (let i = 0; i < Math.min(count, definitions.length); i++) {
             const mutation = this.generateMutation(genome, i + 200);
-            const def = definitions?.[i];
-            
-            // Find pattern for this organism type
-            const organismId = organismTypes[i];
-            const pattern = patterns.find(p => p.prefix === organismId) || patterns[i % patterns.length];
-            
-            const variantCount = Math.floor(this.deriveFromHash(mutation, 5)) + 2;
-            const variants = this.generateVariantNames(pattern.patterns, variantCount, mutation);
-            const name = def?.name ?? this.deriveOrganismName(pattern.prefix, mutation, i, 'fauna');
+            const def = definitions[i];
 
-            // CHROMOSOME-DRIVEN: trophic cascade modulates how many flora this fauna orchestrates
-            const preyCount = Math.min(5, Math.floor(this.deriveFromHash(mutation, 5) * (1 + trophicCascade)) + 2);
+            const preyCount = Math.min(5, Math.floor(energyFlux * 5 * (1 + trophicCascade)) + 2);
             const prey: string[] = [];
             for (let p = 0; p < preyCount && p < flora.length; p++) {
-                const floraIndex = Math.floor(this.deriveFromHash(mutation + p, flora.length));
+                const floraIndex = Math.floor((parseInt(mutation.slice(0, 4), 16) + p) % flora.length);
                 prey.push(flora[floraIndex]?.id || `F-${p}`);
             }
             
             organisms.push({
-                id: `A-${i}-${organismId}`,
-                name,
-                purpose: def?.purpose ?? '',
+                id: `A-${i}-${def.name}`,
+                name: def.name,
+                purpose: def.purpose,
                 category: 'fauna',
-                spec: this.createComponentSpec(name, variants, 'fauna', genome),
+                spec: this.createComponentSpec(def.name, ['default', 'active', 'disabled', 'loading', 'error'], 'fauna', genome),
                 adaptation: {
                     mutation,
                     entropy: baseEntropy * (1.5 + i * 0.1) * (0.5 + energyFlux),
@@ -685,7 +545,7 @@ export class EcosystemGenerator {
                     texture: this.deriveTexture(genome)
                 },
                 topology: {
-                    containmentDepth: 2, // Fauna contain flora which contain microbes
+                    containmentDepth: 2,
                     edgeProfile: genome.chromosomes.ch7_edge.radius / 32,
                     motionComplexity: genome.chromosomes.ch15_biomarker.complexity > 0.7 ? 0.9 : 0.6,
                     interactionPattern: `${genome.chromosomes.ch8_motion.physics}-orchestrator`
@@ -701,62 +561,16 @@ export class EcosystemGenerator {
         return organisms;
     }
     
-    // === TOPOLOGY-DERIVED NAMING ===
-    
     /**
-     * Derive organism name from topology signature
-     * NOT from a hardcoded template list
+     * Generate variant names from component category
      */
-    private deriveOrganismName(
-        prefix: string,
-        mutation: string,
-        index: number,
-        category: 'microbial' | 'flora' | 'fauna'
-    ): string {
-        // Use mutation hash to select suffix
-        const suffixes = {
-            microbial: ['Atom', 'Bit', 'Unit', 'Cell', 'Node', 'Point'],
-            flora: ['Pod', 'Cluster', 'Group', 'Set', 'Bundle', 'Block'],
-            fauna: ['Stack', 'Flow', 'Chain', 'Array', 'Grid', 'Tree']
+    private generateVariantNames(category: 'microbial' | 'flora' | 'fauna', mutation: string): string[] {
+        const variantSets: Record<string, string[]> = {
+            microbial: ['default', 'active', 'disabled'],
+            flora: ['default', 'active', 'disabled', 'loading'],
+            fauna: ['default', 'active', 'disabled', 'loading', 'error']
         };
-        
-        const hash = parseInt(mutation.slice(0, 4), 16);
-        const suffix = suffixes[category][hash % suffixes[category].length];
-        
-        // Capitalize prefix + suffix
-        const capitalizedPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-        return `${capitalizedPrefix}${suffix}`;
-    }
-    
-    /**
-     * Generate variant names from pattern pool
-     * NOT from hardcoded arrays
-     */
-    private generateVariantNames(patterns: string[], count: number, mutation: string): string[] {
-        const variants: string[] = [];
-        const hash = parseInt(mutation.slice(0, 8), 16);
-        
-        for (let i = 0; i < count && i < patterns.length; i++) {
-            const index = (hash + i) % patterns.length;
-            variants.push(patterns[index]);
-        }
-        
-        // Add state variants based on mutation
-        const states = ['default', 'active', 'disabled', 'loading'];
-        const stateIndex = hash % states.length;
-        if (!variants.includes(states[stateIndex])) {
-            variants.push(states[stateIndex]);
-        }
-        
-        return variants;
-    }
-    
-    /**
-     * Derive value from hash string (0-1 range)
-     */
-    private deriveFromHash(hash: string, max: number): number {
-        const num = parseInt(hash.slice(0, 4), 16);
-        return (num / 65536) * max;
+        return variantSets[category] || ['default'];
     }
     
     // === RELATIONSHIP GENERATION ===
@@ -828,7 +642,6 @@ export class EcosystemGenerator {
             { name: 'style', type: 'CSSProperties', required: false }
         ];
         
-        // Add category-specific props
         const categoryProps: Record<string, Array<{name: string; type: string; required: boolean; default?: any}>> = {
             microbial: [
                 { name: 'onClick', type: '() => void', required: false },
@@ -872,7 +685,6 @@ export class EcosystemGenerator {
     }
     
     private generateMutation(genome: DesignGenome, index: number): string {
-        const baseMutation = genome.chromosomes.ch12_signature.uniqueMutation;
         const variantSeed = `${genome.dnaHash}-${index}`;
         let hash = 0;
         for (let i = 0; i < variantSeed.length; i++) {
@@ -884,17 +696,14 @@ export class EcosystemGenerator {
     }
     
     private deriveColorTreatment(genome: DesignGenome, index: number): Organism['characteristics']['colorTreatment'] {
-        // Use ch26_color_system if available, fallback to ch5
         const cs = genome.chromosomes.ch26_color_system;
         if (cs) {
             const treatments: Organism['characteristics']['colorTreatment'][] = ['primary', 'secondary', 'accent', 'neutral'];
-            // Hash-derived from secondary color relationship
             const relationshipSeed = cs.secondary.relationship === "complementary" ? 0 : 
                                      cs.secondary.relationship === "analogous" ? 1 :
                                      cs.secondary.relationship === "split" ? 2 : 3;
             return treatments[(relationshipSeed + index) % 4];
         }
-        // Fallback to ch5
         const hue = genome.chromosomes.ch5_color_primary.hue;
         const treatments: Organism['characteristics']['colorTreatment'][] = ['primary', 'secondary', 'accent', 'neutral'];
         const quadrant = Math.floor(hue / 90);
@@ -902,7 +711,6 @@ export class EcosystemGenerator {
     }
     
     private deriveMotionStyle(genome: DesignGenome, category: 'microbial' | 'flora' | 'fauna'): Organism['characteristics']['motionStyle'] {
-        // Prefer ch27_motion_choreography if available
         const mc = genome.chromosomes.ch27_motion_choreography;
         if (mc) {
             if (mc.choreographyStyle === "elegant" || mc.choreographyStyle === "smooth") return 'subtle';
@@ -910,7 +718,6 @@ export class EcosystemGenerator {
             if (mc.choreographyStyle === "dramatic") return 'complex';
         }
         
-        // Fallback to ch8
         const physics = genome.chromosomes.ch8_motion.physics;
         const complexity = genome.chromosomes.ch15_biomarker.complexity;
         
@@ -947,95 +754,36 @@ export class EcosystemGenerator {
     }
     
     /**
-     * Generate icon organisms from ch28_iconography
-     * Icons are microbial organisms with specific characteristics
+     * Find symbiotic relationships for microbial organisms
      */
-    generateIconOrganisms(genome: DesignGenome): Organism[] {
-        const iconography = genome.chromosomes.ch28_iconography;
-        if (!iconography) return [];
-        
-        const organisms: Organism[] = [];
-        const count = Math.floor(iconography.sizeScale * 8) + 4; // 4-16 icons based on scale
-        
-        for (let i = 0; i < count; i++) {
-            const mutation = this.generateMutation(genome, i + 1000);
-            
-            organisms.push({
-                id: `I-${i}`,
-                name: `Icon${iconography.style.charAt(0).toUpperCase() + iconography.style.slice(1)}-${i}`,
-                purpose: `${iconography.style} icon using ${iconography.library} at ${iconography.strokeWeight} stroke weight`,
-                category: 'microbial',
-                spec: {
-                    name: `icon-${i}`,
-                    category: 'input',
-                    props: [
-                        { name: 'name', type: 'string', required: true },
-                        { name: 'size', type: 'number', required: false, default: iconography.sizeScale },
-                        { name: 'strokeWidth', type: 'number', required: false, default: iconography.strokeWeight === 'thin' ? 1 : iconography.strokeWeight === 'bold' ? 3 : 2 }
-                    ],
-                    variants: [iconography.style, iconography.cornerTreatment, `${iconography.animation}`],
-                    accessibility: {
-                        role: 'img',
-                        ariaProps: ['aria-label', 'aria-hidden'],
-                        keyboard: []
-                    }
-                },
-                adaptation: {
-                    mutation,
-                    entropy: genome.chromosomes.ch12_signature.entropy * 0.5,
-                    generation: 1
-                },
-                characteristics: {
-                    colorTreatment: iconography.colorTreatment === 'inherit' ? 'neutral' : 
-                                   iconography.colorTreatment === 'primary' ? 'primary' :
-                                   iconography.colorTreatment === 'secondary' ? 'secondary' : 'accent',
-                    motionStyle: iconography.animation === 'none' ? 'none' : 'subtle',
-                    scale: iconography.sizeScale < 1 ? 'small' : iconography.sizeScale > 1.2 ? 'medium' : 'micro',
-                    texture: 'flat'
-                },
-                topology: {
-                    containmentDepth: 0,
-                    edgeProfile: iconography.cornerTreatment === 'sharp' ? 0 : 
-                                 iconography.cornerTreatment === 'rounded' ? 0.5 : 1,
-                    motionComplexity: iconography.animation === 'none' ? 0 : 
-                                      iconography.animation === 'draw' ? 0.8 : 0.4,
-                    interactionPattern: `${iconography.library}-icon`
-                },
-                relationships: {
-                    symbiosis: [],
-                    prey: [],
-                    predator: undefined
-                }
-            });
-        }
-        
-        return organisms;
-    }
-    
     private findSymbioticMicrobes(index: number, total: number): string[] {
         const symbiosis: string[] = [];
-        // Each microbe symbioses with 1-2 neighbors
-        if (index > 0) symbiosis.push(`M-${index - 1}`);
-        if (index < total - 1) symbiosis.push(`M-${index + 1}`);
+        if (index + 1 < total) symbiosis.push(`M-${index + 1}`);
+        if (index + 2 < total) symbiosis.push(`M-${index + 2}`);
         return symbiosis;
     }
     
+    /**
+     * Find symbiotic relationships for flora organisms
+     */
     private findSymbioticFlora(index: number, total: number): string[] {
         const symbiosis: string[] = [];
-        // Flora symbioses with adjacent flora
-        if (index > 0) symbiosis.push(`F-${index - 1}`);
-        if (index < total - 1) symbiosis.push(`F-${index + 1}`);
+        if (index + 1 < total) symbiosis.push(`F-${index + 1}`);
         return symbiosis;
     }
     
+    /**
+     * Find symbiotic relationships for fauna organisms
+     */
     private findSymbioticFauna(index: number, total: number): string[] {
         const symbiosis: string[] = [];
-        // Fauna symbioses with adjacent fauna
-        if (index > 0) symbiosis.push(`A-${index - 1}`);
-        if (index < total - 1) symbiosis.push(`A-${index + 1}`);
+        if (index + 1 < total) symbiosis.push(`A-${index + 1}`);
         return symbiosis;
     }
     
+    /**
+     * Calculate habitability score from traits
+     */
     private calculateHabitability(traits: ContentTraits): number {
         const density = 1 - Math.abs(traits.informationDensity - 0.7);
         const temperature = 1 - Math.abs(traits.emotionalTemperature - 0.5);
@@ -1048,12 +796,8 @@ export class EcosystemGenerator {
         options?: { microbialCount?: number; floraCount?: number; faunaCount?: number }
     ): { microbial: number; flora: number; fauna: number; carryingCapacity: number } {
         const ch = genome.chromosomes;
-        const comp = ch.ch15_biomarker.complexity; // 0.0–1.0, drives tier scaling
+        const comp = ch.ch15_biomarker.complexity;
 
-        // Organism counts scale with complexity tier — biology before civilization.
-        // Microbial first appears at prokaryotic (0.11), scales to 16 at endotherm (0.80).
-        // Flora first appears at bryophyte (0.34), scales to 12 at endotherm (0.80).
-        // Fauna first appears at invertebrate_fauna (0.57), scales to 10 at endotherm (0.80).
         const baseMicrobial = comp < 0.11
             ? 0
             : Math.min(16, Math.floor(2 + ((comp - 0.11) / 0.69) * 14));
@@ -1100,8 +844,73 @@ export class EcosystemGenerator {
     }
     
     private calculateStability(traits: ContentTraits, complexity: number): number {
-        const volatility = traits.playfulness * complexity;
-        return Math.max(0, 1 - volatility);
+        const stability = 1 - traits.playfulness * complexity;
+        return Math.max(0, Math.min(1, stability));
+    }
+    
+    /**
+     * Generate icon organisms from ch28_iconography
+     */
+    generateIconOrganisms(genome: DesignGenome): Organism[] {
+        const iconography = genome.chromosomes.ch28_iconography;
+        if (!iconography) return [];
+        
+        const organisms: Organism[] = [];
+        const count = Math.floor(iconography.sizeScale * 8) + 4;
+        
+        for (let i = 0; i < count; i++) {
+            const mutation = this.generateMutation(genome, i + 1000);
+            
+            organisms.push({
+                id: `I-${i}`,
+                name: `Icon${iconography.style.charAt(0).toUpperCase() + iconography.style.slice(1)}-${i}`,
+                purpose: `${iconography.style} icon using ${iconography.library} at ${iconography.strokeWeight} stroke weight`,
+                category: 'microbial',
+                spec: {
+                    name: `icon-${i}`,
+                    category: 'input',
+                    props: [
+                        { name: 'name', type: 'string', required: true },
+                        { name: 'size', type: 'number', required: false, default: iconography.sizeScale },
+                        { name: 'strokeWidth', type: 'number', required: false, default: iconography.strokeWeight === 'thin' ? 1 : iconography.strokeWeight === 'bold' ? 3 : 2 }
+                    ],
+                    variants: [iconography.style, iconography.cornerTreatment, `${iconography.animation}`],
+                    accessibility: {
+                        role: 'img',
+                        ariaProps: ['aria-label', 'aria-hidden'],
+                        keyboard: []
+                    }
+                },
+                adaptation: {
+                    mutation,
+                    entropy: genome.chromosomes.ch12_signature.entropy * 0.5,
+                    generation: 1
+                },
+                characteristics: {
+                    colorTreatment: iconography.colorTreatment === 'inherit' ? 'neutral' : 
+                                   iconography.colorTreatment === 'primary' ? 'primary' :
+                                   iconography.colorTreatment === 'secondary' ? 'secondary' : 'accent',
+                    motionStyle: iconography.animation === 'none' ? 'none' : 'subtle',
+                    scale: iconography.sizeScale < 1 ? 'small' : iconography.sizeScale > 1.2 ? 'medium' : 'micro',
+                    texture: 'flat'
+                },
+                topology: {
+                    containmentDepth: 0,
+                    edgeProfile: iconography.cornerTreatment === 'sharp' ? 0 : 
+                                 iconography.cornerTreatment === 'rounded' ? 0.5 : 1,
+                    motionComplexity: iconography.animation === 'none' ? 0 : 
+                                      iconography.animation === 'draw' ? 0.8 : 0.4,
+                    interactionPattern: iconography.animation
+                },
+                relationships: {
+                    symbiosis: [],
+                    prey: undefined,
+                    predator: undefined
+                }
+            });
+        }
+        
+        return organisms;
     }
 }
 

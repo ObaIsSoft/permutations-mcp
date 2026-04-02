@@ -222,33 +222,23 @@ function capacityGravity(g: DesignGenome): number {
 // ── Biased selection ────────────────────────────────────────────────────────
 
 /**
- * Weighted probability pick — gravity is the preferred TARGET INDEX (not an offset).
- * Weight distribution: target = 4×, target ± 1 = 2×, all others = 1×.
- * This gives ~30% pull toward the ecologically coherent choice while preserving
- * broad hash-driven diversity across the remaining options.
- * Previously used rotation + clamp which collapsed predatory/decomposer/photosynthetic
- * to identical effective shifts for small arrays.
+ * Deterministic selection — gravity is the preferred TARGET INDEX.
+ * 75% of the time: use the gravity target directly (ecological coherence).
+ * 25% of the time: use hash byte for diversity (adjacent option).
+ * Same seed → same output always. No probability distributions.
  */
-function biasedPick<T>(options: T[], rawByte: number, gravity: number): T {
+function deterministicPick<T>(options: T[], rawByte: number, gravity: number): T {
     const len = options.length;
     const target = ((Math.round(gravity) % len) + len) % len;
 
-    // Build cumulative weights
-    const cumulative: number[] = [];
-    let total = 0;
-    for (let i = 0; i < len; i++) {
-        const d = Math.min(Math.abs(i - target), len - Math.abs(i - target));
-        const w = d === 0 ? 4 : d === 1 ? 2 : 1;
-        total += w;
-        cumulative.push(total);
+    if (rawByte < 192) {
+        // 75%: gravity target — ecologically coherent
+        return options[target];
+    } else {
+        // 25%: hash-driven diversity — pick adjacent option
+        const adjacent = ((target + (rawByte % 3) - 1) % len + len) % len;
+        return options[adjacent];
     }
-
-    // Map rawByte (0–255) uniformly into weight-space
-    const pos = Math.floor((rawByte / 256) * total);
-    for (let i = 0; i < len; i++) {
-        if (pos < cumulative[i]) return options[i];
-    }
-    return options[len - 1];
 }
 
 function norm(byte: number): number {
@@ -265,54 +255,54 @@ export function sequenceEcosystemGenome(
     const b = Buffer.from(hash, "hex");
 
     const chromosomes: EcosystemChromosomes = {
-        // bytes[0,1] — biome (full byte, not nibble — weighted biasedPick needs 0–255 range)
+        // bytes[0,1] — biome (full byte, not nibble — weighted deterministicPick needs 0–255 range)
         eco_ch1_biome: {
-            class:     biasedPick(BIOME_CLASSES, b[0], biomeGravity(designGenome)),
+            class:     deterministicPick(BIOME_CLASSES, b[0], biomeGravity(designGenome)),
             intensity: norm(b[1]),
         },
         // bytes[2,3] — energy
         eco_ch2_energy: {
-            source: biasedPick(ENERGY_SOURCES, b[2], energyGravity(designGenome)),
+            source: deterministicPick(ENERGY_SOURCES, b[2], energyGravity(designGenome)),
             flux:   norm(b[3]),
         },
         // bytes[4,5] — symbiosis
         eco_ch3_symbiosis: {
-            pattern: biasedPick(SYMBIOSIS_PATTERNS, b[4], symbiosisGravity(designGenome)),
+            pattern: deterministicPick(SYMBIOSIS_PATTERNS, b[4], symbiosisGravity(designGenome)),
             depth:   norm(b[5]),
         },
         // bytes[6,7] — trophic
         eco_ch4_trophic: {
-            structure: biasedPick(TROPHIC_STRUCTURES, b[6], trophicGravity(designGenome)),
+            structure: deterministicPick(TROPHIC_STRUCTURES, b[6], trophicGravity(designGenome)),
             cascade:   norm(b[7]),
         },
         // bytes[8,9] — succession
         eco_ch5_succession: {
-            stage: biasedPick(SUCCESSION_STAGES, b[8], successionGravity(designGenome, complexityHint)),
+            stage: deterministicPick(SUCCESSION_STAGES, b[8], successionGravity(designGenome, complexityHint)),
             drift: norm(b[9]),
         },
         // bytes[10,11] — adaptation
         eco_ch6_adaptation: {
-            axis:     biasedPick(ADAPTATION_AXES, b[10], adaptationGravity(designGenome)),
+            axis:     deterministicPick(ADAPTATION_AXES, b[10], adaptationGravity(designGenome)),
             strength: norm(b[11]),
         },
         // bytes[12,13] — population
         eco_ch7_population: {
-            pattern:  biasedPick(POPULATION_PATTERNS, b[12], populationGravity(designGenome)),
+            pattern:  deterministicPick(POPULATION_PATTERNS, b[12], populationGravity(designGenome)),
             variance: norm(b[13]),
         },
         // bytes[14,15] — temporal
         eco_ch8_temporal: {
-            rhythm:    biasedPick(TEMPORAL_RHYTHMS, b[14], temporalGravity(designGenome)),
+            rhythm:    deterministicPick(TEMPORAL_RHYTHMS, b[14], temporalGravity(designGenome)),
             intensity: norm(b[15]),
         },
         // bytes[16,17] — spatial
         eco_ch9_spatial: {
-            axis:      biasedPick(SPATIAL_AXES, b[16], spatialGravity(designGenome)),
+            axis:      deterministicPick(SPATIAL_AXES, b[16], spatialGravity(designGenome)),
             isolation: norm(b[17]),
         },
         // bytes[18,19] — carrying capacity
         eco_ch10_capacity: {
-            class:    biasedPick(CAPACITY_CLASSES, b[18], capacityGravity(designGenome)),
+            class:    deterministicPick(CAPACITY_CLASSES, b[18], capacityGravity(designGenome)),
             pressure: norm(b[19]),
         },
         // bytes[20,21] — mutation
