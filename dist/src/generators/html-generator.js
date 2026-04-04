@@ -65,6 +65,27 @@ function gv(genome) {
         pageTransition: choreo.pageTransition ?? "fade",
     };
 }
+const REM_TO_VAR = {
+    "0.25rem": "var(--spacing-xs)",
+    "0.5rem": "var(--spacing-sm)",
+    "1rem": "var(--spacing-md)",
+    "1.5rem": "var(--spacing-lg)",
+    "2rem": "var(--spacing-xl)",
+    "3rem": "var(--spacing-2xl)",
+    "4rem": "var(--spacing-section)",
+    "5rem": "var(--spacing-section)",
+    "6rem": "var(--spacing-section)",
+};
+/**
+ * Replace hardcoded rem values in spacing/layout CSS properties with genome CSS vars.
+ * Scoped to padding, margin, gap, top/left/right/bottom, and width (for sidebars).
+ */
+function replaceRemWithVars(css) {
+    return css.replace(/(padding|margin|gap|top|left|right|bottom|width)(\s*:\s*)([^;}]+)/g, (_match, prop, colon, value) => {
+        const replaced = value.replace(/(\d+(?:\.\d+)?rem)/g, (rem) => REM_TO_VAR[rem] ?? rem);
+        return `${prop}${colon}${replaced}`;
+    });
+}
 function darken(hex, amount) {
     const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
     return `#${Math.round(r * amount).toString(16).padStart(2, "0")}${Math.round(g * amount).toString(16).padStart(2, "0")}${Math.round(b * amount).toString(16).padStart(2, "0")}`;
@@ -115,39 +136,44 @@ ${bodyContent}
         const indent = "  ";
         let html = "";
         if (layout.pattern?.blueprint)
-            html += this.renderBlueprint(layout.pattern.blueprint, v, animConfig, indent, 0);
+            html += this.renderBlueprint(layout.pattern.blueprint, v, animConfig, indent, 0, this.resolveAdaptiveProps(layout.pattern));
         else
             html += `${indent}<div class="page-layout layout-${layout.type}">\n`;
         if (navigation?.pattern?.blueprint)
-            html += this.renderBlueprint(navigation.pattern.blueprint, v, animConfig, indent + "  ", 0);
+            html += this.renderBlueprint(navigation.pattern.blueprint, v, animConfig, indent + "  ", 0, this.resolveAdaptiveProps(navigation.pattern));
         else if (navigation)
             html += this.renderNavFallback(navigation, v, animConfig, indent + "  ", 0);
         html += `${indent}  <main class="main-content">\n`;
         if (sidebar?.pattern?.blueprint)
-            html += this.renderBlueprint(sidebar.pattern.blueprint, v, animConfig, indent + "    ", 0);
+            html += this.renderBlueprint(sidebar.pattern.blueprint, v, animConfig, indent + "    ", 0, this.resolveAdaptiveProps(sidebar.pattern));
         if (hero?.pattern?.blueprint)
-            html += this.renderBlueprint(hero.pattern.blueprint, v, animConfig, indent + "    ", 0);
+            html += this.renderBlueprint(hero.pattern.blueprint, v, animConfig, indent + "    ", 0, this.resolveAdaptiveProps(hero.pattern));
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
             const delay = i * animConfig.staggerInterval;
             if (section.pattern?.blueprint)
-                html += this.renderBlueprint(section.pattern.blueprint, v, animConfig, indent + "    ", delay);
+                html += this.renderBlueprint(section.pattern.blueprint, v, animConfig, indent + "    ", delay, this.resolveAdaptiveProps(section.pattern));
             else
                 html += this.renderSectionFallback(section, v, animConfig, indent + "    ", delay);
         }
         html += `${indent}  </main>\n`;
         if (footer?.pattern?.blueprint)
-            html += this.renderBlueprint(footer.pattern.blueprint, v, animConfig, indent + "  ", sections.length * animConfig.staggerInterval);
+            html += this.renderBlueprint(footer.pattern.blueprint, v, animConfig, indent + "  ", sections.length * animConfig.staggerInterval, this.resolveAdaptiveProps(footer.pattern));
         html += `${indent}</div>`;
         return html;
     }
-    renderBlueprint(blueprint, v, animConfig, indent, delay) {
+    renderBlueprint(blueprint, v, animConfig, indent, delay, adaptiveProps) {
         const props = {
             headline: v.headline || "", subheadline: v.subheadline || "", title: v.headline || "",
             description: v.subheadline || "", cta: v.cta || "", ctaSecondary: v.ctaSecondary || "",
             companyName: v.companyName || "", tagline: v.tagline || "", logo: v.companyName || "",
             year: new Date().getFullYear().toString(), colorPrimary: v.primary, colorAccent: v.accent,
             radius: String(v.radiusMd), spacing: String(v.md), gridColumns: String(v.columns),
+            // Blueprint-local adaptive prop names ({{columns}}, {{width}}, etc.)
+            columns: String(v.columns), width: "280px", backdrop: "none",
+            color1: v.primary, color2: v.secondary, imagePosition: "right",
+            // Spread resolved adaptive props last so genome values override defaults
+            ...(adaptiveProps || {}),
             stats: (v.stats || []).map((s) => `<div class="stat"><span class="stat-value">${s.value}</span><span class="stat-label">${s.label}</span></div>`).join("\n"),
             featureCards: (v.features || []).map((f) => `<div class="feature-card"><div class="feature-icon"></div><h3 class="feature-title">${f.title}</h3><p class="feature-description">${f.description}</p></div>`).join("\n"),
             faqItems: (v.faq || []).map((f) => `<details class="faq-item"><summary class="faq-question">${f.question}</summary><div class="faq-answer"><p>${f.answer}</p></div></details>`).join("\n"),
@@ -160,6 +186,9 @@ ${bodyContent}
             heroSection: "", leftPanel: "", rightPanel: "", carouselSlides: "", carouselDots: "",
             orbitElements: "", heroBg: "", videoSource: "", videoElement: "", mapElement: "",
             tocElement: "", children: "", sidebarElement: "", summaryElement: "",
+            // Sidebar/nav-specific and section-specific blueprint vars
+            links: "", header: v.companyName || "", footer: "", actions: "", image: "",
+            statItems: (v.stats || []).map((s) => `<div class="stat-item"><span class="stat-value">${s.value}</span><span class="stat-label">${s.label}</span></div>`).join("\n"),
             ctaTitle: v.headline || "", ctaDesc: v.subheadline || "", ctaText: v.cta || "",
         };
         let template = blueprint.template;
@@ -189,12 +218,48 @@ ${bodyContent}
             lines.push(`  <link href="${v.bodyFontImportUrl}" rel="stylesheet">`);
         return lines.join("\n");
     }
+    /** Resolve adaptive props for a pattern — genomeRef → actual genome value */
+    resolveAdaptiveProps(pattern) {
+        if (!pattern?.adaptiveProps?.length)
+            return {};
+        const result = {};
+        const ch = this.genome.chromosomes;
+        for (const ap of pattern.adaptiveProps) {
+            const parts = ap.genomeRef.split(".");
+            let val = ch;
+            for (const part of parts)
+                val = val?.[part];
+            if (val !== undefined && val !== null) {
+                result[ap.name] = String(val);
+            }
+        }
+        return result;
+    }
     generateCSS(v, animConfig) {
-        const patternStyles = new Set();
         const allPatterns = [this.spec.layout.pattern, this.spec.navigation?.pattern, this.spec.hero?.pattern, this.spec.footer?.pattern, this.spec.sidebar?.pattern, ...this.spec.sections.map(s => s.pattern)].filter(Boolean);
-        for (const pattern of allPatterns)
-            if (pattern?.blueprint?.styles)
-                patternStyles.add(pattern.blueprint.styles);
+        // Resolve all adaptive CSS vars from patterns into :root
+        const adaptiveVarLines = [];
+        const seenAdaptiveNames = new Set();
+        for (const pattern of allPatterns) {
+            if (!pattern?.adaptiveProps?.length)
+                continue;
+            const resolved = this.resolveAdaptiveProps(pattern);
+            for (const ap of pattern.adaptiveProps) {
+                if (seenAdaptiveNames.has(ap.name))
+                    continue;
+                seenAdaptiveNames.add(ap.name);
+                const value = resolved[ap.name] ?? ap.defaultValue;
+                if (value !== undefined)
+                    adaptiveVarLines.push(`  --${ap.name}: ${value};`);
+            }
+        }
+        // Post-process blueprint styles: replace all hardcoded rem spacing values with CSS vars
+        const patternStyles = new Set();
+        for (const pattern of allPatterns) {
+            if (!pattern?.blueprint?.styles)
+                continue;
+            patternStyles.add(replaceRemWithVars(pattern.blueprint.styles));
+        }
         const animationCSS = generateCSSKeyframes(animConfig);
         return `/* ── Genome-Derived CSS Variables ──────────────────────────────────── */
 :root {
@@ -214,6 +279,7 @@ ${bodyContent}
   --font-size-lg: ${v.fontSizeLg}px; --font-size-xl: ${v.fontSizeXl}px;
   --font-size-2xl: ${v.fontSize2xl}px; --font-size-3xl: ${v.fontSize3xl}px; --font-size-4xl: ${v.fontSize4xl}px;
   --line-height: ${v.lineHeight}; --line-height-tight: ${v.lineHeightTight};
+${adaptiveVarLines.join("\n")}
 }
 
 /* ── Reset ─────────────────────────────────────────────────────────────── */
@@ -227,12 +293,12 @@ ul, ol { list-style: none; }
 
 /* ── Buttons ───────────────────────────────────────────────────────────── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm); padding: calc(var(--spacing-md) * 0.75) var(--spacing-xl); border-radius: var(--radius-md); font-weight: 600; font-size: var(--font-size-sm); cursor: pointer; border: 2px solid transparent; transition: all calc(0.2s * var(--motion-duration)) var(--motion-easing); }
-.btn-primary { background: var(--color-primary); color: white; }
-.btn-primary:hover { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: 0 var(--spacing-sm) var(--spacing-md) rgba(0,0,0,0.15); }
-.btn-secondary { background: transparent; color: white; border-color: rgba(255,255,255,0.5); }
-.btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: white; }
+.btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
+.btn-primary:hover { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-secondary { background: transparent; color: var(--color-text-on-dark); border-color: var(--color-surface-dark-border); }
+.btn-secondary:hover { background: var(--color-surface-dark-hover); border-color: var(--color-text-on-dark); }
 .btn-outline { background: transparent; color: var(--color-primary); border-color: var(--color-primary); }
-.btn-outline:hover { background: var(--color-primary); color: white; }
+.btn-outline:hover { background: var(--color-primary); color: var(--color-on-primary); }
 
 /* ── Sections ──────────────────────────────────────────────────────────── */
 .section { padding: var(--spacing-section) var(--spacing-xl); }

@@ -275,7 +275,28 @@ ${indent}outline-offset: 2px;
             parts.push(`${indent}--color-text-secondary: hsla(0, 0%, ${textDarknessVal}%, 0.7);`);
             parts.push(`${indent}--color-text-tertiary: hsla(0, 0%, ${textDarknessVal}%, 0.5);`);
         }
-        
+
+        // Semantic utility variables — used by all pattern blueprints (no hardcoding in blueprints)
+        // on-primary: text that sits on top of primary-colored backgrounds
+        const onPrimary = primaryLight < 55 ? 'hsl(0, 0%, 97%)' : `hsl(${primaryHue}, 20%, 8%)`;
+        parts.push(`${indent}/* Semantic utilities */`);
+        parts.push(`${indent}--color-on-primary: ${onPrimary};`);
+        // dark surface: hue-tinted near-black for dark footers, panels, etc.
+        parts.push(`${indent}--color-surface-dark: hsl(${primaryHue}, 12%, 8%);`);
+        parts.push(`${indent}--color-surface-dark-border: hsla(0, 0%, 100%, 0.1);`);
+        parts.push(`${indent}--color-surface-dark-hover: hsla(0, 0%, 100%, 0.08);`);
+        parts.push(`${indent}--color-text-on-dark: hsl(0, 0%, 96%);`);
+        parts.push(`${indent}--color-text-on-dark-muted: hsla(0, 0%, 96%, 0.5);`);
+        // overlays: hue-tinted semi-transparent darks for video/modal backdrops
+        parts.push(`${indent}--color-overlay: hsla(${primaryHue}, 20%, 5%, 0.5);`);
+        parts.push(`${indent}--color-overlay-light: hsla(${primaryHue}, 20%, 5%, 0.4);`);
+        parts.push(`${indent}--color-overlay-subtle: hsla(${primaryHue}, 20%, 5%, 0.1);`);
+        // shadows: elevation system
+        parts.push(`${indent}--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);`);
+        parts.push(`${indent}--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);`);
+        parts.push(`${indent}--shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);`);
+        parts.push(`${indent}--shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.2);`);
+
         // Typography
         const typography = chromosomes.ch16_typography;
         parts.push(`${indent}/* Typography */`);

@@ -324,6 +324,126 @@ export class PersonaDesignBridge {
     } else if (elevation > 0.75) {
       ch.ch10_hierarchy.depth = 'overlapping';
     }
+
+    // ── Temporal nostalgia (c1) → texture era feel ───────────────────
+    // DistributionCurve peak: low position (≈0) = vintage; high (≈1) = contemporary/future
+    const nostalgiaPeak = (g.c1_temporal_nostalgia?.points ?? []).reduce(
+      (max: { position: number; weight: number }, p: { position: number; weight: number }) =>
+        p.weight > max.weight ? p : max,
+      { position: 0.5, weight: 0 }
+    ).position;
+    if (nostalgiaPeak < 0.35) {
+      // Vintage nostalgia → analog grain, multiply blend
+      ch.ch11_texture.noiseLevel    = Math.min(0.45, 0.25 + (0.35 - nostalgiaPeak) * 0.57);
+      ch.ch11_texture.grainFrequency = Math.min(0.8, 0.4 + (0.35 - nostalgiaPeak));
+      ch.ch11_texture.overlayBlend  = 'multiply';
+    } else if (nostalgiaPeak > 0.68) {
+      // Contemporary/future nostalgia → clean surface, low noise
+      ch.ch11_texture.noiseLevel    = Math.max(0, ch.ch11_texture.noiseLevel - 0.12);
+      ch.ch11_texture.overlayBlend  = 'none';
+    }
+
+    // ── Obsession traversal (c2) → content depth + structure depth ───
+    // depth: how deep into a subject; branching_factor: how many tangents
+    const obsessionDepth     = g.c2_obsession_traversal?.depth ?? 0.5;
+    const obsessionBranching = g.c2_obsession_traversal?.branching_factor ?? 0.5;
+    if (obsessionDepth > 0.72 && obsessionBranching > 0.5) {
+      ch.ch23_content_depth.level = 'encyclopedic';
+      ch.ch23_content_depth.estimatedSections = Math.max(
+        ch.ch23_content_depth.estimatedSections,
+        Math.round(4 + obsessionDepth * obsessionBranching * 6)
+      );
+      ch.ch1_structure.maxNesting = Math.max(ch.ch1_structure.maxNesting, 4);
+    } else if (obsessionDepth < 0.28 && obsessionBranching < 0.35) {
+      ch.ch23_content_depth.level = 'minimal';
+      ch.ch23_content_depth.estimatedSections = Math.min(
+        ch.ch23_content_depth.estimatedSections, 3
+      );
+      ch.ch1_structure.maxNesting = Math.min(ch.ch1_structure.maxNesting, 2);
+    }
+
+    // ── Formative era (c3) → surface material + overlay blend ────────
+    // c3[0]: era coordinate (0=vintage/retro, 1=contemporary/futuristic)
+    // c3[1]: subculture intensity (0=mainstream, 1=niche/underground)
+    const eraPosition = g.c3_formative_era?.[0] ?? 0.5;
+    const eraNiche    = g.c3_formative_era?.[1] ?? 0.5;
+    if (eraPosition < 0.3) {
+      ch.ch11_texture.surface      = ch.ch11_texture.surface === 'flat' ? 'matte_paper' : ch.ch11_texture.surface;
+      ch.ch11_texture.overlayBlend = ch.ch11_texture.overlayBlend === 'none' ? 'multiply' : ch.ch11_texture.overlayBlend;
+    } else if (eraPosition > 0.75) {
+      ch.ch11_texture.surface      = 'chrome';
+      ch.ch11_texture.overlayBlend = eraNiche > 0.65 ? 'screen' : 'overlay';
+    }
+
+    // ── Technical spectrum (c5) → trust signal type + vocabulary ─────
+    // c5[0]: overall tech depth (0=intuitive/visual, 1=deeply technical)
+    // c5[2]: systems thinking depth
+    const techLevel  = g.c5_technical_spectrum?.[0] ?? 0.5;
+    const systemsIQ  = g.c5_technical_spectrum?.[2] ?? 0.5;
+    if (techLevel > 0.72) {
+      if (ch.ch21_trust_signals.hasTrustSignals) {
+        ch.ch21_trust_signals.approach = 'credentials';
+      }
+      if (ch.ch29_copy_intelligence.vocabularyComplexity !== 'technical') {
+        ch.ch29_copy_intelligence.vocabularyComplexity = 'specialized';
+      }
+    } else if (techLevel < 0.28) {
+      if (ch.ch21_trust_signals.hasTrustSignals) {
+        ch.ch21_trust_signals.approach = 'testimonials';
+      }
+      ch.ch29_copy_intelligence.vocabularyComplexity = 'simple';
+    }
+    if (systemsIQ > 0.68 && ch.ch23_content_depth.level === 'minimal') {
+      ch.ch23_content_depth.level = 'standard';
+    }
+
+    // ── Narrative pattern (c10) → hero type + CTA + content structure ─
+    // c10[0]: narrative linearity (0=fragmented, 1=clear linear progression)
+    // c10[1]: exposition build (0=in-medias-res/direct, 1=slow-build/context-first)
+    const narrativeArc    = g.c10_narrative_pattern?.[0] ?? 0.5;
+    const expositionBuild = g.c10_narrative_pattern?.[1] ?? 0.5;
+    if (narrativeArc > 0.7) {
+      ch.ch23_content_depth.hasCTA          = true;
+      ch.ch23_content_depth.hasTestimonials = true;
+      if (ch.ch19_hero_type.hasHero && ch.ch19_hero_type.type === 'product_ui') {
+        ch.ch19_hero_type.type = 'stats_counter';
+      }
+    } else if (narrativeArc < 0.28) {
+      ch.ch23_content_depth.hasCTA = false;
+      if (ch.ch19_hero_type.hasHero && expositionBuild < 0.3) {
+        ch.ch19_hero_type.type = 'brand_logo';
+      }
+    }
+    if (expositionBuild > 0.65) {
+      ch.ch23_content_depth.hasFAQ = true;
+    }
+
+    // ── Sensory weights (c14) → texture intensity + hover + scrollBehavior
+    // DistributionCurve positions: 0-0.25=visual, 0.25-0.5=tactile, 0.5-0.75=auditory, 0.75-1=spatial
+    const sensoryPoints = g.c14_sensory_weights?.points ?? [];
+    const dominantSense = sensoryPoints.length > 0
+      ? sensoryPoints.reduce(
+          (max: { position: number; weight: number }, p: { position: number; weight: number }) =>
+            p.weight > max.weight ? p : max,
+          sensoryPoints[0]
+        )
+      : null;
+    const dominantPos = dominantSense?.position ?? 0.5;
+    if (dominantPos < 0.25) {
+      // Visual dominant → high contrast, strong hover response
+      ch.ch8_motion.hoverIntensity = Math.max(ch.ch8_motion.hoverIntensity, 0.72);
+      ch.ch20_visual_treatment.colorGrading =
+        ch.ch20_visual_treatment.colorGrading === 'natural' ? 'vibrant' : ch.ch20_visual_treatment.colorGrading;
+    } else if (dominantPos >= 0.25 && dominantPos < 0.5) {
+      // Tactile dominant → rough surfaces, prominent grain
+      ch.ch11_texture.noiseLevel    = Math.max(ch.ch11_texture.noiseLevel, 0.3);
+      ch.ch11_texture.grainFrequency = Math.max(ch.ch11_texture.grainFrequency, 0.55);
+      ch.ch11_texture.surface       = 'canvas';
+    } else if (dominantPos >= 0.75) {
+      // Spatial dominant → depth, overlapping layers, parallax scroll
+      ch.ch10_hierarchy.depth   = ch.ch10_hierarchy.depth === 'flat' ? 'layered' : ch.ch10_hierarchy.depth;
+      ch.ch1_structure.scrollBehavior = 'parallax';
+    }
   }
 
   clamp(val: number): number {

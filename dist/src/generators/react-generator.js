@@ -87,6 +87,23 @@ function gv(genome) {
         pageTransition: choreo.pageTransition ?? "fade",
     };
 }
+const REM_TO_VAR = {
+    "0.25rem": "var(--spacing-xs)",
+    "0.5rem": "var(--spacing-sm)",
+    "1rem": "var(--spacing-md)",
+    "1.5rem": "var(--spacing-lg)",
+    "2rem": "var(--spacing-xl)",
+    "3rem": "var(--spacing-2xl)",
+    "4rem": "var(--spacing-section)",
+    "5rem": "var(--spacing-section)",
+    "6rem": "var(--spacing-section)",
+};
+function replaceRemWithVars(css) {
+    return css.replace(/(padding|margin|gap|top|left|right|bottom|width)(\s*:\s*)([^;}]+)/g, (_match, prop, colon, value) => {
+        const replaced = value.replace(/(\d+(?:\.\d+)?rem)/g, (rem) => REM_TO_VAR[rem] ?? rem);
+        return `${prop}${colon}${replaced}`;
+    });
+}
 function darken(hex, amount) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -138,7 +155,7 @@ ${pageContent}  );
         }
         // Navigation
         if (navigation?.pattern?.blueprint) {
-            tree += this.renderBlueprint(navigation.pattern.blueprint, v, animConfig, indent + "  ", 0);
+            tree += this.renderBlueprint(navigation.pattern.blueprint, v, animConfig, indent + "  ", 0, this.resolveAdaptiveProps(navigation.pattern, spec.genome));
         }
         else if (navigation) {
             tree += this.renderNavFallback(navigation, v, animConfig, indent + "  ", 0);
@@ -147,18 +164,18 @@ ${pageContent}  );
         tree += `${indent}  <main className="main-content">\n`;
         // Sidebar
         if (sidebar?.pattern?.blueprint) {
-            tree += this.renderBlueprint(sidebar.pattern.blueprint, v, animConfig, indent + "    ", 0);
+            tree += this.renderBlueprint(sidebar.pattern.blueprint, v, animConfig, indent + "    ", 0, this.resolveAdaptiveProps(sidebar.pattern, spec.genome));
         }
         // Hero
         if (hero?.pattern?.blueprint) {
-            tree += this.renderBlueprint(hero.pattern.blueprint, v, animConfig, indent + "    ", 0);
+            tree += this.renderBlueprint(hero.pattern.blueprint, v, animConfig, indent + "    ", 0, this.resolveAdaptiveProps(hero.pattern, spec.genome));
         }
         // Sections with staggered animation
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
             const delay = i * animConfig.staggerInterval;
             if (section.pattern?.blueprint) {
-                tree += this.renderBlueprint(section.pattern.blueprint, v, animConfig, indent + "    ", delay);
+                tree += this.renderBlueprint(section.pattern.blueprint, v, animConfig, indent + "    ", delay, this.resolveAdaptiveProps(section.pattern, spec.genome));
             }
             else {
                 tree += this.renderSectionFallback(section, v, animConfig, indent + "    ", delay);
@@ -167,12 +184,28 @@ ${pageContent}  );
         tree += `${indent}  </main>\n`;
         // Footer
         if (footer?.pattern?.blueprint) {
-            tree += this.renderBlueprint(footer.pattern.blueprint, v, animConfig, indent + "  ", sections.length * animConfig.staggerInterval);
+            tree += this.renderBlueprint(footer.pattern.blueprint, v, animConfig, indent + "  ", sections.length * animConfig.staggerInterval, this.resolveAdaptiveProps(footer.pattern, spec.genome));
         }
         tree += `${indent}</div>`;
         return tree;
     }
-    renderBlueprint(blueprint, v, animConfig, indent, delay) {
+    resolveAdaptiveProps(pattern, genome) {
+        if (!pattern?.adaptiveProps?.length)
+            return {};
+        const result = {};
+        const ch = genome.chromosomes;
+        for (const ap of pattern.adaptiveProps) {
+            const parts = ap.genomeRef.split(".");
+            let val = ch;
+            for (const part of parts)
+                val = val?.[part];
+            if (val !== undefined && val !== null) {
+                result[ap.name] = String(val);
+            }
+        }
+        return result;
+    }
+    renderBlueprint(blueprint, v, animConfig, indent, delay, adaptiveProps) {
         const props = {
             headline: v.headline || "",
             subheadline: v.subheadline || "",
@@ -189,6 +222,11 @@ ${pageContent}  );
             radius: String(v.radiusMd),
             spacing: String(v.md),
             gridColumns: String(v.columns),
+            // Blueprint-local adaptive prop names ({{columns}}, {{width}}, etc.)
+            columns: String(v.columns), width: "280px", backdrop: "none",
+            color1: v.primary, color2: v.secondary, imagePosition: "right",
+            // Spread resolved adaptive props last so genome values override defaults
+            ...(adaptiveProps || {}),
             stats: (v.stats || []).map((s) => `<div className="stat"><span className="stat-value">${s.value}</span><span className="stat-label">${s.label}</span></div>`).join("\n"),
             featureCards: (v.features || []).map((f) => `<div className="feature-card"><div className="feature-icon"></div><h3 className="feature-title">${f.title}</h3><p className="feature-description">${f.description}</p></div>`).join("\n"),
             faqItems: (v.faq || []).map((f) => `<details className="faq-item"><summary className="faq-question">${f.question}</summary><div className="faq-answer"><p>${f.answer}</p></div></details>`).join("\n"),
@@ -227,6 +265,13 @@ ${pageContent}  );
             children: "",
             sidebarElement: "",
             summaryElement: "",
+            // Sidebar/nav-specific and section-specific blueprint vars
+            links: "",
+            header: v.companyName || "",
+            footer: "",
+            actions: "",
+            image: "",
+            statItems: (v.stats || []).map((s) => `<div className="stat-item"><span className="stat-value">${s.value}</span><span className="stat-label">${s.label}</span></div>`).join("\n"),
             ctaTitle: v.headline || "",
             ctaDesc: v.subheadline || "",
             ctaText: v.cta || "",
@@ -308,7 +353,6 @@ export function ${component.name}({ ${component.props.filter((p) => !p.genomeAda
     generateStyles(spec) {
         const v = gv(spec.genome);
         const animConfig = getAnimationConfig(spec.genome);
-        const patternStyles = new Set();
         const allPatterns = [
             spec.layout.pattern,
             spec.navigation?.pattern,
@@ -317,10 +361,28 @@ export function ${component.name}({ ${component.props.filter((p) => !p.genomeAda
             spec.sidebar?.pattern,
             ...spec.sections.map(s => s.pattern),
         ].filter(Boolean);
+        // Resolve all adaptive CSS vars from patterns into :root
+        const adaptiveVarLines = [];
+        const seenAdaptiveNames = new Set();
         for (const pattern of allPatterns) {
-            if (pattern?.blueprint?.styles) {
-                patternStyles.add(pattern.blueprint.styles);
+            if (!pattern?.adaptiveProps?.length)
+                continue;
+            const resolved = this.resolveAdaptiveProps(pattern, spec.genome);
+            for (const ap of pattern.adaptiveProps) {
+                if (seenAdaptiveNames.has(ap.name))
+                    continue;
+                seenAdaptiveNames.add(ap.name);
+                const value = resolved[ap.name] ?? ap.defaultValue;
+                if (value !== undefined)
+                    adaptiveVarLines.push(`  --${ap.name}: ${value};`);
             }
+        }
+        // Post-process blueprint styles: replace all hardcoded rem spacing with CSS vars
+        const patternStyles = new Set();
+        for (const pattern of allPatterns) {
+            if (!pattern?.blueprint?.styles)
+                continue;
+            patternStyles.add(replaceRemWithVars(pattern.blueprint.styles));
         }
         // Generate CSS keyframe animations from genome
         const animationCSS = generateCSSKeyframes(animConfig);
@@ -369,6 +431,7 @@ export function ${component.name}({ ${component.props.filter((p) => !p.genomeAda
   --font-size-4xl: ${v.fontSize4xl}px;
   --line-height: ${v.lineHeight};
   --line-height-tight: ${v.lineHeightTight};
+${adaptiveVarLines.join("\n")}
 }
 
 /* ── Reset ─────────────────────────────────────────────────────────────── */
@@ -382,12 +445,12 @@ ul, ol { list-style: none; }
 
 /* ── Buttons ───────────────────────────────────────────────────────────── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm); padding: calc(var(--spacing-md) * 0.75) var(--spacing-xl); border-radius: var(--radius-md); font-weight: 600; font-size: var(--font-size-sm); cursor: pointer; border: 2px solid transparent; transition: all calc(0.2s * var(--motion-duration)) var(--motion-easing); }
-.btn-primary { background: var(--color-primary); color: white; }
-.btn-primary:hover { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: 0 var(--spacing-sm) var(--spacing-md) rgba(0,0,0,0.15); }
-.btn-secondary { background: transparent; color: white; border-color: rgba(255,255,255,0.5); }
-.btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: white; }
+.btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
+.btn-primary:hover { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-secondary { background: transparent; color: var(--color-text-on-dark); border-color: var(--color-surface-dark-border); }
+.btn-secondary:hover { background: var(--color-surface-dark-hover); border-color: var(--color-text-on-dark); }
 .btn-outline { background: transparent; color: var(--color-primary); border-color: var(--color-primary); }
-.btn-outline:hover { background: var(--color-primary); color: white; }
+.btn-outline:hover { background: var(--color-primary); color: var(--color-on-primary); }
 
 /* ── Sections ──────────────────────────────────────────────────────────── */
 .section { padding: var(--spacing-section) var(--spacing-xl); }

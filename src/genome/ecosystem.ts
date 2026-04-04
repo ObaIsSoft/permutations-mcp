@@ -195,13 +195,20 @@ export class EcosystemGenerator {
         if (!genome.chromosomes) {
             throw new Error("Genome missing chromosomes. Ensure you pass the full genome object from generate_design_genome, not just dnaHash/traits.");
         }
-        const ecosystemGenome = sequenceEcosystemGenome(genome, genome.chromosomes.ch15_biomarker?.complexity ?? 0.5);
+        // Product complexity — trait-derived, same formula as server.ts estimatedCounts.
+        // ch15_biomarker.complexity is 3D/WebGL complexity (0 when 3D disabled) and
+        // must NOT be used here; it tells nothing about product information complexity.
+        const productComplexity = Math.min(1,
+            (traits.informationDensity ?? 0.5) * 0.6 +
+            (traits.trustRequirement   ?? 0.5) * 0.2 +
+            (traits.spatialDependency  ?? 0.5) * 0.2
+        );
+        const ecosystemGenome = sequenceEcosystemGenome(genome, productComplexity);
 
         // Calculate how well this environment supports life
         const habitabilityScore = this.calculateHabitability(traits);
 
-        // CHROMOSOME-DRIVEN: Counts determined by genome, not just traits
-        const counts = this.calculateOrganismCounts(genome, options);
+        const counts = this.calculateOrganismCounts(productComplexity, genome, options);
 
         // Generate organisms from the shared environment.
         // LLM-supplied names and purposes are required.
@@ -792,11 +799,10 @@ export class EcosystemGenerator {
     }
     
     private calculateOrganismCounts(
+        comp: number,
         genome: DesignGenome,
         options?: { microbialCount?: number; floraCount?: number; faunaCount?: number }
     ): { microbial: number; flora: number; fauna: number; carryingCapacity: number } {
-        const ch = genome.chromosomes;
-        const comp = ch.ch15_biomarker.complexity;
 
         const baseMicrobial = comp < 0.11
             ? 0
@@ -810,8 +816,9 @@ export class EcosystemGenerator {
             ? 0
             : Math.min(10, Math.floor(((comp - 0.57) / 0.23) * 10));
 
-        const topologyMultiplier = ch.ch1_structure.topology === 'graph'  ? 1.3 :
-                                   ch.ch1_structure.topology === 'radial' ? 1.2 : 1.0;
+        const topology = genome.chromosomes.ch1_structure?.topology;
+        const topologyMultiplier = topology === 'graph'  ? 1.3 :
+                                   topology === 'radial' ? 1.2 : 1.0;
 
         const total = baseMicrobial + baseFlora + baseFauna;
         const carryingCapacity = Math.min(1, (total / 38) * topologyMultiplier);

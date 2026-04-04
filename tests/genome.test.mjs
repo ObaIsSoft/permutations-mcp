@@ -7,6 +7,9 @@ import { GenomeSequencer } from "../dist/src/genome/sequencer.js";
 import { PatternDetector } from "../dist/src/constraints/pattern-detector.js";
 import { ComplexityAnalyzer } from "../dist/src/genome/complexity-analyzer.js";
 import { CivilizationGenerator } from "../dist/src/genome/civilization.js";
+import { fontCatalog } from "../dist/src/font-catalog.js";
+
+await fontCatalog.warmCache(["bunny", "google", "fontshare"]);
 
 // Test utilities
 function assert(condition, message) {

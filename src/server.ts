@@ -1358,10 +1358,12 @@ class DesignGenomeServer {
                         const cssVarViolations: string[] = [];
                         const hardcodedColorPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(\s*\d+|hsla?\(\s*\d+/g;
                         const cssSource = (args.css || '') + (args.html || '');
-                        const hardcodedMatches = cssSource.match(hardcodedColorPattern) || [];
-                        // Allow hardcoded values only inside :root / @layer tokens definitions
-                        const tokenBlock = cssSource.match(/:root\s*\{[^}]*\}|@layer\s+tokens[^}]*\}/g)?.join('') || '';
-                        const outsideTokens = hardcodedMatches.filter((m: string) => !tokenBlock.includes(m));
+                        // Strip token definition blocks before checking for hardcoded colors
+                        // /:root\s*\{[^}]*\}/gs handles multi-line :root blocks
+                        const cssStripped = cssSource
+                            .replace(/:root\s*\{[^}]*\}/gs, '')
+                            .replace(/@layer\s+tokens\s*\{[\s\S]*?\}/g, '');
+                        const outsideTokens = (cssStripped.match(hardcodedColorPattern) || []) as string[];
                         if (outsideTokens.length > 0) {
                             cssVarViolations.push(`${outsideTokens.length} hardcoded color value(s) found outside token definitions: ${[...new Set(outsideTokens)].slice(0, 5).join(', ')}. Use var(--color-*) instead.`);
                         }
@@ -1369,8 +1371,8 @@ class DesignGenomeServer {
                         // ── Font loading check ────────────────────────────────────
                         const fontViolations: string[] = [];
                         const genomeFonts = [
-                            { name: args.genome.chromosomes?.ch3_type_display?.fontFamily, role: 'display', importUrl: (args.genome as any).selectedLibraries?.font_display_import },
-                            { name: args.genome.chromosomes?.ch4_type_body?.fontFamily,    role: 'body',    importUrl: (args.genome as any).selectedLibraries?.font_body_import },
+                            { name: args.genome.chromosomes?.ch3_type_display?.displayName, role: 'display', importUrl: (args.genome as any).selectedLibraries?.font_display_import },
+                            { name: args.genome.chromosomes?.ch4_type_body?.displayName,    role: 'body',    importUrl: (args.genome as any).selectedLibraries?.font_body_import },
                         ].filter(f => f.name) as { name: string; role: string; importUrl: string | null }[];
 
                         for (const font of genomeFonts) {

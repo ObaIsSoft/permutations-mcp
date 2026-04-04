@@ -15,6 +15,9 @@ import assert from "assert";
 import { GenomeSequencer } from "../dist/src/genome/sequencer.js";
 import { SemanticTraitExtractor } from "../dist/src/semantic/extractor.js";
 import { PatternDetector } from "../dist/src/constraints/pattern-detector.js";
+import { fontCatalog } from "../dist/src/font-catalog.js";
+
+await fontCatalog.warmCache(["bunny", "google", "fontshare"]);
 
 let passed = 0;
 let failed = 0;
@@ -46,16 +49,10 @@ console.log("\n🔬 Production Hardening Tests\n");
 console.log("Test 1: SemanticTraitExtractor.isAvailable()");
 
 test("Returns false when no LLM keys are set", () => {
-    const orig = {
-        GROQ_API_KEY: process.env.GROQ_API_KEY,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-        GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    };
-    delete process.env.GROQ_API_KEY;
-    delete process.env.OPENAI_API_KEY;
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.GEMINI_API_KEY;
+    const ALL_KEYS = ['GROQ_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY',
+                      'GEMINI_API_KEY', 'OPENROUTER_API_KEY', 'HUGGINGFACE_API_KEY'];
+    const orig = Object.fromEntries(ALL_KEYS.map(k => [k, process.env[k]]));
+    ALL_KEYS.forEach(k => delete process.env[k]);
     const available = SemanticTraitExtractor.isAvailable();
     // Restore
     Object.entries(orig).forEach(([k, v]) => { if (v) process.env[k] = v; });

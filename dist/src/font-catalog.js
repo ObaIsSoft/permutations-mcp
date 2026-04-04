@@ -82,7 +82,9 @@ export class FontCatalogService {
         const src = provider === "none" ? "bunny" : provider;
         const cached = this.cache.get(src);
         if (!cached || cached.fonts.length === 0) {
-            throw new Error(`Font catalog not loaded for provider "${src}" — ensure warmCache() completed before genome generation`);
+            // Lazy init: trigger load in background so next call may succeed
+            this.load(src).catch(() => { });
+            throw new Error(`Font catalog not loaded for provider "${src}" — call await fontCatalog.warmCache() before genome generation (load initiated)`);
         }
         const tags = CHARGE_TAGS[charge] ?? [];
         const filtered = cached.fonts

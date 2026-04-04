@@ -1,5 +1,8 @@
 import { GenomeSequencer } from '../dist/src/genome/sequencer.js';
+import { fontCatalog } from '../dist/src/font-catalog.js';
 import { strict as assert } from 'assert';
+
+await fontCatalog.warmCache(["bunny", "google", "fontshare"]);
 
 const sequencer = new GenomeSequencer();
 

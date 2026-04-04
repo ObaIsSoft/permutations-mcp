@@ -1223,8 +1223,12 @@ export class GenomeSequencer {
             }
         }
 
+        // Fontshare doesn't carry monospace fonts — constrain to bunny/google for that charge
+        const displayProviderPool: FontProvider[] = charge === "monospace"
+            ? ["bunny", "google", "bunny", "google"]
+            : ["bunny", "google", "fontshare", "bunny"];
         const provider: FontProvider = options?.fontProvider ||
-            this.selectFromHash(b(6), ["bunny", "google", "fontshare", "bunny"] as FontProvider[]);
+            this.selectFromHash(b(6), displayProviderPool);
         const fontData = this.selectDisplayFont(b(5), charge, provider);
 
         // Tracking — hash-driven across full range when traits don't dominate
@@ -1271,8 +1275,10 @@ export class GenomeSequencer {
             charge = "grotesque";          // Dense content: high-legibility grotesque
         }
 
+        // Fontshare is display-focused and lacks monospace/grotesque coverage —
+        // body fonts only come from bunny or google which have full charge coverage
         const provider: FontProvider = options?.fontProvider ||
-            this.selectFromHash(b(8), ["bunny", "google", "fontshare", "bunny"] as FontProvider[]);
+            this.selectFromHash(b(8), ["bunny", "google", "bunny", "google"] as FontProvider[]);
         const fontData = this.selectBodyFont(b(7), charge, provider);
 
         return {
