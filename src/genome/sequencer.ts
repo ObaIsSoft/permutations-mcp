@@ -13,6 +13,8 @@ import {
     SecondarySector,
     SubSector,
     HeroType,
+    DesignPhilosophy,
+    DepthPhilosophy,
     HeroLayoutVariant,
     TrustApproach,
     TypeCharge,
@@ -69,6 +71,8 @@ import {
     SUB_SECTOR_KEYWORDS
 } from "./sector-profiles.js";
 import { EntropyPool } from "./entropy-pool.js";
+import { generatePalette } from "../color-palette-engine.js";
+import { deriveFontCount, selectFontStrategy } from "../font-system-catalog.js";
 
 export interface SequencerConfig {
     primarySector: PrimarySector;
@@ -79,6 +83,78 @@ export interface SequencerConfig {
 
 // Copy Intelligence type alias for internal use
 type CopyIntelligence = NonNullable<GenerationOptions["copyIntelligence"]>;
+
+/**
+ * Derive design philosophy from existing chromosome values.
+ * No new chromosome — computed from the genome's existing signals.
+ */
+function deriveDesignPhilosophy(
+    entropy: number,
+    physics: string,
+    edgeStyle: string,
+    noiseLevel: number,
+    primarySector: string
+): DesignPhilosophy {
+    // Sector influences
+    const technicalSectors = ["technology", "fintech", "government"];
+    const editorialSectors = ["media", "entertainment", "food", "travel"];
+    const brandSectors = ["agency", "gaming", "beauty_fashion", "hospitality"];
+    const conservativeSectors = ["healthcare", "legal", "insurance", "nonprofit"];
+
+    // Physics determines base personality
+    if (physics === "none" && entropy < 0.40) {
+        if (conservativeSectors.includes(primarySector)) return "swiss_grid";
+        return "minimalist";
+    }
+    if (physics === "glitch" || physics === "chaos") return "chaotic";
+
+    // High entropy unlocks expressive/chaotic
+    if (entropy > 0.80) return "chaotic";
+    if (entropy > 0.60 && brandSectors.includes(primarySector)) return "expressive";
+    if (entropy > 0.55) return "expressive";
+
+    // Sector-driven philosophy
+    if (technicalSectors.includes(primarySector)) {
+        return entropy > 0.40 ? "technical" : "swiss_grid";
+    }
+    if (editorialSectors.includes(primarySector)) return "editorial";
+    if (brandSectors.includes(primarySector)) return "brand_heavy";
+    if (conservativeSectors.includes(primarySector)) {
+        return entropy < 0.35 ? "minimalist" : "swiss_grid";
+    }
+
+    // Default by edge + noise
+    if (edgeStyle === "sharp" && noiseLevel < 0.3) return "swiss_grid";
+    if (noiseLevel > 0.5 && entropy > 0.45) return "editorial";
+    if (entropy < 0.30) return "minimalist";
+
+    return "brand_heavy"; // most common fallback
+}
+
+/**
+ * Derive depth philosophy from existing chromosome values.
+ */
+function deriveDepthPhilosophy(
+    philosophy: DesignPhilosophy,
+    noiseLevel: number,
+    depthCues: string,
+    atmosphereEnabled: boolean,
+    entropy: number
+): DepthPhilosophy {
+    if (philosophy === "minimalist" || philosophy === "swiss_grid") return "flat";
+    if (philosophy === "chaotic" || (philosophy === "expressive" && entropy > 0.60)) return "immersive";
+
+    const signals = [
+        noiseLevel > 0.4 ? 1 : 0,
+        atmosphereEnabled ? 1 : 0,
+        depthCues !== "none" ? 1 : 0,
+        entropy > 0.50 ? 1 : 0,
+    ].reduce((a, b) => a + b, 0);
+
+    if (signals >= 3) return "layered";
+    if (signals >= 1) return "subtle";
+    return "flat";
+}
 
 export class GenomeSequencer {
     // FIX 2/3: EntropyPool for uniform selection and unlimited entropy
@@ -117,6 +193,7 @@ export class GenomeSequencer {
 
         // Generate chromosomes
         const chromosomes = this.generateChromosomes({
+            seed,
             hash,
             bytes,
             b,
@@ -181,6 +258,7 @@ export class GenomeSequencer {
      * Generate all chromosomes
      */
     private generateChromosomes(params: {
+        seed: string;
         hash: string;
         bytes: Buffer;
         b: (index: number) => number;
@@ -196,7 +274,7 @@ export class GenomeSequencer {
         options?: GenerationOptions;
     }): DesignGenome['chromosomes'] {
         const {
-            hash, bytes, b, traits, primaryProfile, secondaryProfile,
+            seed, hash, bytes, b, traits, primaryProfile, secondaryProfile,
             subSector, subSectorConfidence, brand, brandWeight, sectorWeight, epigenetics, options
         } = params;
         
@@ -251,10 +329,33 @@ export class GenomeSequencer {
         const ch9_grid = getForced('ch9_grid', this.generateGrid(traits, b));
         const ch10_hierarchy = getForced('ch10_hierarchy', this.generateHierarchy(traits, b));
         const ch11_texture = getForced('ch11_texture', this.generateTexture(traits, b));
+        // Design philosophy — derived from already-generated chromosomes above
+        const _entropy = b(17);
+        const _noiseLevel = ch11_texture.noiseLevel;
+        const _depthCues = ch10_hierarchy.depthCues as string;
+        const _atmosphereEnabled = b(32) > 0.35;
+
+        const _designPhilosophy = deriveDesignPhilosophy(
+            _entropy,
+            ch8_motion.physics as string,
+            ch7_edge.style as string,
+            _noiseLevel,
+            primaryProfile.sector
+        );
+        const _depthPhilosophy = deriveDepthPhilosophy(
+            _designPhilosophy,
+            _noiseLevel,
+            _depthCues,
+            _atmosphereEnabled,
+            _entropy
+        );
+
         const ch12_signature = getForced('ch12_signature', {
-            entropy: b(17),
+            entropy: _entropy,
             uniqueMutation: hash.slice(0, 8),
-            variantSeed: b(18) // Byte 18 — distinct from entropy (byte 17)
+            variantSeed: b(18), // Byte 18 — distinct from entropy (byte 17)
+            designPhilosophy: _designPhilosophy,
+            depthPhilosophy: _depthPhilosophy,
         });
 
         const ch28_iconography = getForced('ch28_iconography', this.generateIconography(traits, b, primaryProfile));
@@ -586,7 +687,12 @@ export class GenomeSequencer {
             ch24_personalization,
             ch25_copy_engine,
             ch29_copy_intelligence: ch29_copy_intelligence,
-            ch26_color_system: this.generateColorSystem(ch5_color_primary, primaryProfile, b),
+            ch26_color_system: this.generateColorSystemFull(
+                ch5_color_primary, primaryProfile, b, seed,
+                ch12_signature.entropy, ch12_signature.designPhilosophy,
+                ch8_motion.physics as string, ch6_color_temp.isDark, primaryProfile.sector
+            ),
+            ch3_type_accent: null, // populated in selectFonts if fontCount === 3
             ch30_state_topology,
             ch31_routing_pattern,
             ch32_token_inheritance,
@@ -693,7 +799,54 @@ export class GenomeSequencer {
             darkMode: {
                 surfaceStack: darkModeSurfaces,
                 elevationMap: darkElevations
-            }
+            },
+            // Placeholder — populated by generateColorSystemWithPalette
+            harmonyRule: "complementary" as const,
+            palette: null as any,
+            fontCount: 2 as const,
+            fontStrategy: "contrast_pair" as const,
+        };
+    }
+
+    /**
+     * Generate complete color system including OKLCH palette and font system
+     */
+    private generateColorSystemFull(
+        primary: { hue: number; saturation: number; lightness: number; hex: string },
+        profile: ReturnType<typeof getSectorProfile>,
+        b: (index: number) => number,
+        seed: string,
+        entropy: number,
+        philosophy: DesignPhilosophy,
+        physics: string,
+        isDark: boolean,
+        sector: string
+    ) {
+        const base = this.generateColorSystem(primary, profile, b);
+
+        // Generate full OKLCH palette
+        const palette = generatePalette(
+            primary.hue,
+            primary.saturation,
+            entropy,
+            isDark,
+            physics,
+            sector,
+            philosophy,
+            seed
+        );
+
+        // Determine font count and strategy
+        const fontPool = new EntropyPool(seed + ":fonts");
+        const fontCount = deriveFontCount(philosophy, entropy, physics, sector, fontPool, 0);
+        const fontStrategy = selectFontStrategy(fontCount, philosophy, entropy, fontPool, 5);
+
+        return {
+            ...base,
+            harmonyRule: palette.rule,
+            palette,
+            fontCount,
+            fontStrategy,
         };
     }
 

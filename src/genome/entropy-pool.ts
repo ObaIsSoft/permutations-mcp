@@ -143,6 +143,13 @@ export class EntropyPool {
   getBool(index: number, probability: number = 0.5): boolean {
     return this.getFloat(index) < probability;
   }
+
+  /**
+   * Return the seed string this pool was constructed with
+   */
+  getSeed(): string {
+    return this.seed;
+  }
 }
 
 /**

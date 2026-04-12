@@ -590,6 +590,67 @@ export type RhythmDensity =
     | "fibonacci";     // Fibonacci sequence spacing
 export type TypeCharge = "geometric" | "humanist" | "monospace" | "transitional" | "grotesque" | "slab_serif" | "expressive";
 export type FontProvider = "bunny" | "google" | "fontshare" | "none";
+
+// ── Design Philosophy (derived from chromosome combination, not a new chromosome) ──
+export type DesignPhilosophy =
+    | "minimalist"    // one font, flat depth, whitespace is the design
+    | "swiss_grid"    // rigid grid, 1-2 fonts, geometric, no decoration
+    | "editorial"     // mixed hierarchy, image-forward, 2-3 fonts, pull quotes
+    | "brand_heavy"   // logo-centric, strong palette, shape motifs
+    | "technical"     // monospace-dominant, data viz, structured, dark mode
+    | "expressive"    // 3 fonts, grain, ghost text, star element, all systems active
+    | "chaotic";      // rules deliberately broken — entropy > 0.80 only
+
+// ── Depth Philosophy (genome-driven, not hardcoded) ──
+export type DepthPhilosophy =
+    | "flat"          // no depth techniques — color and space do all the work
+    | "subtle"        // 1-2 techniques: shadow or color-depth only
+    | "layered"       // 3-4 techniques stacked deliberately
+    | "immersive";    // all applicable techniques — full spatial experience
+
+// ── Font System ──
+export type FontStrategy =
+    | "single_family_weight"   // 1 font: one variable font, weight axis for all roles
+    | "same_charge"            // 2 fonts: same typographic charge
+    | "contrast_pair"          // 2 fonts: grotesque anchor + humanist serif body
+    | "serif_anchor"           // 2 fonts: high-contrast serif + grotesque body
+    | "mono_dominant"          // 2 fonts: monospace anchor + humanist body
+    | "foundry_pair"           // 2 fonts: same foundry, different forms
+    | "super_family"           // 3 fonts: sans + serif + mono from same family
+    | "expressive_pair"        // 3 fonts: display + neutral body + geometric accent
+    | "clash";                 // 3 fonts: deliberately mismatched — entropy > 0.7 only
+
+export type HarmonyRule =
+    | "monochromatic"          // same hue, 5 lightness steps
+    | "analogous_tight"        // primary ±15°, ±30°
+    | "analogous_wide"         // primary ±30°, ±60°
+    | "complementary"          // primary + 180° + neutrals
+    | "split_complementary"    // primary + 150° + 210°
+    | "triadic"                // primary + 120° + 240°
+    | "tetradic"               // primary + 90° + 180° + 270°
+    | "double_complementary"   // two complementary pairs
+    | "neutral_dominant"       // one strong hue + 4 near-neutral grays
+    | "dark_accent"            // near-black base + one vivid accent
+    | "pastel_system"          // all L=0.75-0.90, low saturation
+    | "neon_dark";             // dark base + 2-3 neon accents
+
+export interface PaletteColor {
+    name: string;                               // natural color name: "forest", "slate", "ember"
+    oklch: { l: number; c: number; h: number };
+    hex: string;
+    role: "primary" | "secondary" | "accent" | "neutral" | "background" | "surface";
+    usageHints: string[];                       // ["hero bg", "CTA button"]
+}
+
+export interface ColorPalette {
+    rule: HarmonyRule;
+    colors: PaletteColor[];                     // 5 base, up to 7 on high entropy
+    dominant: number;                           // index of loudest color
+    background: number;
+    text: number;
+    accent: number;
+    neutral: number;
+}
 export type TypeTracking = 
     | "ultra_tight"       // -0.1em, aggressive compression
     | "tight"             // -0.05em, slight compression
@@ -1234,6 +1295,17 @@ export interface DesignGenome {
             paragraphSpacing: number;      // multiplier of line-height
             hyphenation: boolean;
         };
+        // Accent font — only populated when fontCount === 3
+        ch3_type_accent: {
+            family: string;
+            displayName: string;
+            importUrl: string;
+            provider: FontProvider;
+            charge: TypeCharge;
+            weight: number;
+            fallback: string;
+            role: "numbers" | "labels" | "code" | "pull_quote" | "small_caps";
+        } | null;
         ch5_color_primary: {
             hue: number;
             saturation: number;
@@ -1285,6 +1357,11 @@ export interface DesignGenome {
                 surfaceStack: string[];    // dark mode surfaces
                 elevationMap: number[];    // lightness boosts per elevation level
             };
+            // Palette engine extensions
+            harmonyRule: HarmonyRule;      // how the full palette was constructed
+            palette: ColorPalette;         // full 5-7 color OKLCH palette
+            fontCount: 1 | 2 | 3;          // how many distinct fonts this genome uses
+            fontStrategy: FontStrategy;    // which combination strategy
         };
         ch7_edge: {
             radius: number;                // container/section radius
@@ -1345,6 +1422,8 @@ export interface DesignGenome {
             entropy: number;
             uniqueMutation: string;
             variantSeed: number;  // for hero/layout variants
+            designPhilosophy: DesignPhilosophy;   // derived from chromosome combination
+            depthPhilosophy: DepthPhilosophy;      // derived from ch10/ch11/ch13/philosophy
         };
         ch28_iconography: {
             style: "outline" | "filled" | "duotone" | "rounded" | "sharp";

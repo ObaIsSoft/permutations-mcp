@@ -11,6 +11,8 @@
 import { DesignGenome } from "./genome/types.js";
 import * as crypto from "crypto";
 import { FXGenerator } from "./generators/fx-generator.js";
+import { generatePaletteCSS } from "./color-palette-engine.js";
+import { generateFontSystemCSS } from "./font-system-catalog.js";
 
 /**
  * Persona influence on CSS generation
