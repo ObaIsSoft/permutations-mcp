@@ -5,7 +5,7 @@
  * Selection driven by entropy, physics, and WebGL availability.
  * Catalog describes WHAT each preloader is. CSS/JS in preloader-engine.ts.
  */
-import { ENTROPY_THRESHOLDS } from './constants';
+import { ENTROPY_THRESHOLDS } from './constants.js';
 export const PRELOADER_CATALOG = [
     {
         type: "none",

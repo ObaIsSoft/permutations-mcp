@@ -5,9 +5,9 @@
     "last_updated": "2026-03-15",
     "author": "ObaIsSoft",
     "repository": "https://github.com/ObaIsSoft/Permutations",
-    "lines_of_code": 14800,
+    "lines_of_code": 119603,
     "test_count": 49,
-    "tool_count": 8,
+    "tool_count": 12,
     "font_providers": 4,
     "genome_layers": 3,
     "chromosome_count": 53,
@@ -551,10 +551,10 @@
   },
 
   "real_world_usage": {
-    "website_demo": "The website/ directory is built entirely from Permutations DNA",
-    "dogfooding": "We eat our own cooking — the docs site uses generated colors, fonts, SVG biomarker",
-    "api_integration": "MCP server integrates with Cursor, Claude Desktop, Windsurf",
-    "workflow": "Designer describes intent → MCP generates DNA → AI builds UI using constraints"
+    "dogfooding": "We eat our own cooking — the genome powers its own generation with generated colors, fonts, SVG biomarkers",
+    "api_integration": "MCP server integrates with Cursor, Claude Desktop, Windsurf, and any MCP-compatible client",
+    "workflow": "Designer describes intent → MCP generates DNA → AI builds UI using constraints",
+    "mcp_installation": "genome MCP can be installed globally via `npx @obasoft/genome-mcp` or from local source for development"
   },
 
   "future_roadmap": {

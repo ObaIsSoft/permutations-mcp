@@ -632,7 +632,6 @@ export class CivilizationGenerator {
         };
     }
 }
-// Defensive: ensure all count arrays are exactly 2 elements for TierRange
 export function asTierRange(arr) {
     if (arr.length === 2)
         return [arr[0], arr[1]];

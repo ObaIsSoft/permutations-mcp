@@ -5,7 +5,7 @@
  * and WebGL availability. Catalog describes WHAT each transition is.
  * CSS/JS generation lives in generators/transition-engine.ts.
  */
-import { TRANSITION_DURATIONS, ENTROPY_THRESHOLDS } from './constants';
+import { TRANSITION_DURATIONS, ENTROPY_THRESHOLDS } from './constants.js';
 export const TRANSITION_CATALOG = [
     {
         type: "opacity_fade",
