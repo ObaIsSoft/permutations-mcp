@@ -4,12 +4,110 @@
  * Uses raw.githubusercontent.com directly (no GitHub API rate limits).
  * No stubs. No fake URLs. No auth-walled sites.
  */
+/**
+ * Return the appropriate ContentType subset for a StructuralCategory.
+ * Replaces the ALL_CONTEXTS bypass — patterns are now eligible only for
+ * contexts where they make semantic sense, enabling forbiddenFor filtering.
+ */
+function contextsForCategory(category) {
+    const BRAND = [
+        "landing", "saas", "agency", "creative", "nonprofit", "healthcare",
+        "fintech", "education", "real_estate", "travel", "food", "sports", "gaming",
+        "crypto_web3", "media", "government", "legal", "manufacturing", "automotive",
+        "hospitality", "beauty_fashion", "insurance", "energy", "ecommerce", "portfolio",
+    ];
+    const FUNCTIONAL = ["dashboard", "application", "documentation"];
+    const ALL_TYPES = [...BRAND, ...FUNCTIONAL, "blog"];
+    switch (category) {
+        // Universal — structural/utility patterns valid everywhere
+        case "layout":
+        case "navigation":
+        case "footer":
+        case "header":
+        case "content":
+        case "form":
+        case "search":
+        case "modal":
+        case "notification":
+        case "banner":
+        case "alert":
+        case "loading":
+        case "empty":
+        case "error":
+        case "success":
+        case "breadcrumb":
+        case "pagination":
+        case "menu":
+        case "dropdown":
+        case "tooltip":
+        case "popover":
+        case "accordion":
+        case "tabs":
+        case "flow":
+        case "interaction":
+        case "responsive":
+            return ALL_TYPES;
+        // Brand/marketing — hero, CTA, testimonials etc. don't belong in functional UIs
+        case "hero":
+        case "cta":
+        case "testimonial":
+        case "trust":
+        case "logo_wall":
+        case "newsletter":
+        case "feature":
+        case "stats":
+        case "team":
+        case "pricing":
+        case "faq":
+        case "process":
+        case "timeline":
+        case "comparison":
+        case "social":
+            return [...BRAND, "blog"];
+        // Data/analytics — dashboards, apps, and data-heavy brands
+        case "data":
+        case "metrics":
+        case "chart":
+        case "table":
+        case "toolbar":
+        case "status_bar":
+        case "filter":
+        case "sort":
+            return [...FUNCTIONAL, "fintech", "saas", "healthcare", "education"];
+        // Sidebar — functional navigation; valid for dashboard/app/docs
+        case "sidebar":
+            return [...FUNCTIONAL];
+        // Commerce — product-focused contexts only
+        case "product":
+            return ["ecommerce", "real_estate", "automotive", "hospitality", "beauty_fashion", "food"];
+        // Gallery — visual contexts
+        case "gallery":
+            return ["portfolio", "creative", "ecommerce", "real_estate", "travel", "food", "gaming", "media"];
+        // Blog/media — content-rich contexts
+        case "blog":
+        case "media":
+            return ["blog", "media", "landing", "saas", "agency", "creative", "education"];
+        // Map — location-relevant contexts
+        case "map":
+            return ["real_estate", "travel", "food", "hospitality", "government", "automotive"];
+        // Onboarding — app and SaaS contexts
+        case "onboarding":
+        case "tour":
+            return [...FUNCTIONAL, "saas", "fintech", "education"];
+        // Download — software/content contexts
+        case "download":
+            return ["saas", "documentation", "media", "education", "gaming"];
+        default:
+            return ALL_TYPES;
+    }
+}
 function makePattern(entry) {
     return {
         id: entry.id, name: entry.name, source: entry.source,
         category: entry.category, subcategory: entry.subcategory,
         description: entry.description, complexity: entry.complexity,
-        contexts: entry.contexts, forbiddenContexts: entry.forbiddenContexts || [],
+        contexts: entry.contexts ?? contextsForCategory(entry.category),
+        forbiddenContexts: entry.forbiddenContexts || [],
         forbiddenFor: entry.forbiddenFor || {}, tags: entry.tags,
         popularity: entry.popularity, lastModified: new Date().toISOString().split("T")[0],
         adaptiveProps: entry.adaptiveProps || [],
@@ -46,7 +144,6 @@ function extractHTML(html) {
         .replace(/formControlName="[^"]*"/g, "")
         .trim();
 }
-const ALL_CONTEXTS = ["landing", "saas", "ecommerce", "blog", "portfolio", "agency", "creative", "startup", "product", "app", "software", "service", "consulting", "freelance", "nonprofit", "charity", "education", "healthcare", "fintech", "real_estate", "travel", "food", "sports", "gaming", "crypto_web3", "media", "government", "legal", "manufacturing", "automotive", "hospitality", "beauty_fashion", "insurance", "energy", "marketplace", "social_network", "community", "news", "magazine", "podcast", "video_platform", "music_platform", "event", "conference", "webinar", "course", "membership", "subscription", "booking", "reservation", "appointment", "directory", "review", "comparison", "forum", "qa", "chat", "messaging", "email", "crm", "erp", "hr", "finance", "accounting", "inventory", "project_management", "task_management", "time_tracking", "analytics", "monitoring", "reporting", "admin", "settings", "profile", "account", "auth", "onboarding", "checkout", "payment", "subscription_management", "billing", "invoice", "receipt", "order", "shipping", "tracking", "return", "refund", "support", "help", "faq_page", "contact_page", "about", "team", "careers", "press", "legal_page", "privacy", "terms_page", "cookie_policy", "accessibility_page", "sitemap", "search_page", "404", "500", "maintenance_page", "coming_soon_page", "launch", "waitlist", "beta", "early_access", "feature", "pricing_page", "demo", "trial", "download_page", "install", "setup", "integration", "sdk", "changelog_page", "roadmap_page", "status_page", "incident", "outage", "upgrade_page", "migration_page", "deprecation", "sunsetting", "archive_page", "legacy_page", "historical", "retrospective", "case_study", "testimonial_page", "review_page", "rating", "feedback", "survey", "poll", "quiz", "assessment_page", "test", "exam", "certification_page", "badge", "achievement", "leaderboard_page", "ranking", "competition", "tournament", "challenge", "hackathon", "workshop", "training", "webinar_page", "seminar", "lecture", "classroom", "lab", "research", "study", "experiment", "simulation", "model", "prototype_page", "mockup_page", "design_page", "art", "gallery_page", "exhibition", "museum", "collection", "catalog_page", "library_page", "archive_collection", "repository", "database_page", "data_page", "dataset", "visualization", "chart_page", "graph_page", "map_page", "geospatial", "location_page", "venue", "place", "address", "directions", "route", "journey", "trip", "itinerary_page", "schedule_page", "calendar_page", "agenda_page", "planner", "organizer", "manager_page", "control_panel", "command_center", "operations", "logistics", "supply_chain", "warehouse", "fulfillment", "distribution", "delivery", "transportation", "fleet", "vehicle", "asset", "resource", "equipment", "tool_page", "utility", "service_page", "solution", "platform_page", "ecosystem_page", "network_page", "community_page", "marketplace_page", "exchange", "trading", "commerce_page", "retail", "wholesale", "b2b", "b2c", "c2c", "d2c", "enterprise", "smb", "scaleup", "growth", "expansion", "international", "global_page", "local", "regional", "national", "continental", "worldwide", "universal_page"];
 // ── Mamba UI Component Map (from master branch tree) ────────────────────────
 const MAMBA_COMPONENTS = {
     article: ["article1", "article2", "article3", "article4"],
@@ -137,7 +234,7 @@ async function fetchShadcn() {
             id: `shadcn_${name}`, name: `shadcn/${name}`, source: "shadcn",
             category: catMap[name] || "content", subcategory: name,
             description: `shadcn/ui ${name} component`,
-            complexity: 0.4, contexts: ALL_CONTEXTS,
+            complexity: 0.4,
             tags: ["shadcn", name], popularity: 0.9,
             html: extractHTML(html), css: "", deps: ["@radix-ui/react-*"],
         }));
@@ -158,7 +255,7 @@ async function fetchAceternity() {
             id: `aceternity_${name}`, name: `Aceternity/${name}`, source: "aceternity",
             category: "content", subcategory: name,
             description: `Aceternity UI ${name} component`,
-            complexity: 0.6, contexts: ALL_CONTEXTS,
+            complexity: 0.6,
             tags: ["aceternity", name], popularity: 0.7,
             html: extractHTML(html), css: "", deps: ["framer-motion", "clsx", "tailwind-merge"],
         }));
@@ -179,7 +276,7 @@ async function fetchHyperUI() {
             id: `hyperui_${name}`, name: `HyperUI/${name}`, source: "hyperui",
             category: "content", subcategory: name,
             description: `HyperUI ${name} component`,
-            complexity: 0.3, contexts: ALL_CONTEXTS,
+            complexity: 0.3,
             tags: ["hyperui", name], popularity: 0.7,
             html: extractHTML(html), css: "", deps: ["astro", "@lucide/astro"],
         }));
@@ -200,7 +297,7 @@ async function fetchMagicUI() {
             id: `magicui_${name}`, name: `MagicUI/${name}`, source: "magic_ui",
             category: "content", subcategory: name,
             description: `Magic UI ${name} animated component`,
-            complexity: 0.6, contexts: ALL_CONTEXTS,
+            complexity: 0.6,
             tags: ["magic_ui", name], popularity: 0.8,
             html: extractHTML(html), css: "", deps: ["framer-motion", "clsx", "tailwind-merge"],
         }));
@@ -238,7 +335,7 @@ async function fetchNextUI() {
             id: `nextui_${name}`, name: `NextUI/${name}`, source: "nextui",
             category: catMap[name] || "content", subcategory: name,
             description: `NextUI ${name} component`,
-            complexity: 0.5, contexts: ALL_CONTEXTS,
+            complexity: 0.5,
             tags: ["nextui", name], popularity: 0.8,
             html: extractHTML(html), css: "", deps: ["@nextui-org/react", "framer-motion"],
         }));
@@ -271,7 +368,7 @@ async function fetchMambaUI() {
                 source: "mamba_ui", category: MAMBA_CAT_MAP[category] || "content",
                 subcategory: `${category}/${variant}`,
                 description: `Mamba UI ${category} ${variant} component`,
-                complexity: 0.3, contexts: ALL_CONTEXTS,
+                complexity: 0.3,
                 tags: ["mamba_ui", category, variant], popularity: 0.7,
                 html: extractHTML(html), css: "", deps: ["tailwindcss"],
             });
@@ -329,7 +426,7 @@ async function fetchCSSLayout() {
             id: `csslayout_${name}`, name: `CSSLayout/${name}`, source: "css_layout",
             category: catMap[name] || "layout", subcategory: name,
             description: `CSS Layout ${name} pattern`,
-            complexity: 0.3, contexts: ALL_CONTEXTS,
+            complexity: 0.3,
             tags: ["css_layout", name], popularity: 0.7,
             html: html || `<!-- CSS Layout ${name} -->`,
             css: css || `/* CSS Layout ${name} */`,
@@ -377,7 +474,7 @@ async function fetchFlyonUI() {
             id: `flyonui_${name}`, name: `FlyonUI/${name}`, source: "flyonui",
             category: catMap[name] || "content", subcategory: name,
             description: `FlyonUI ${name} Tailwind component`,
-            complexity: 0.3, contexts: ALL_CONTEXTS,
+            complexity: 0.3,
             tags: ["flyonui", name], popularity: 0.7,
             html, css, deps: ["tailwindcss", "flyonui"],
         }));
@@ -414,7 +511,7 @@ async function fetchPreline() {
             id: `preline_${name}`, name: `Preline/${name}`, source: "preline",
             category: catMap[name] || "content", subcategory: name,
             description: `Preline UI ${name} component`,
-            complexity: 0.4, contexts: ALL_CONTEXTS,
+            complexity: 0.4,
             tags: ["preline", name], popularity: 0.7,
             html, css: "", deps: ["preline", "tailwindcss"],
         }));

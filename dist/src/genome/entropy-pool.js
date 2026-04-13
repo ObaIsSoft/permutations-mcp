@@ -128,6 +128,12 @@ export class EntropyPool {
     getBool(index, probability = 0.5) {
         return this.getFloat(index) < probability;
     }
+    /**
+     * Return the seed string this pool was constructed with
+     */
+    getSeed() {
+        return this.seed;
+    }
 }
 /**
  * Legacy compatibility: simple byte access function

@@ -53,10 +53,10 @@ const EXIT_ANIMATION = {
 // ── Hover Micro-Interactions ────────────────────────────────────────────────
 const HOVER_BASE = {
     scale: { transform: { scale: 1.05 }, style: {} },
-    color_shift: { transform: {}, style: { backgroundColor: "var(--color-primary)", color: "white" } },
-    shadow: { transform: {}, style: { boxShadow: "0 12px 32px rgba(0,0,0,0.2)" } },
-    lift: { transform: { y: -6 }, style: { boxShadow: "0 12px 32px rgba(0,0,0,0.15)" } },
-    glow: { transform: {}, style: { boxShadow: "0 0 24px rgba(var(--color-primary-rgb), 0.4), 0 0 48px rgba(var(--color-primary-rgb), 0.2)" } },
+    color_shift: { transform: {}, style: { backgroundColor: "var(--color-primary)", color: "var(--color-on-primary)" } },
+    shadow: { transform: {}, style: { boxShadow: "var(--shadow-lg)" } },
+    lift: { transform: { y: -6 }, style: { boxShadow: "var(--shadow-md)" } },
+    glow: { transform: {}, style: { boxShadow: "0 0 24px hsl(var(--color-primary-h) var(--color-primary-s) var(--color-primary-l) / 0.4), 0 0 48px hsl(var(--color-primary-h) var(--color-primary-s) var(--color-primary-l) / 0.2)" } },
 };
 // ── Page Transitions ────────────────────────────────────────────────────────
 const PAGE_TRANSITION_BASE = {

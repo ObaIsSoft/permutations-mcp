@@ -833,7 +833,20 @@ export function selectComponentLibrary(params) {
 export function generateComponentCode(component, genome, variant = "default") {
     const v = component.variants.find(v => v.name === variant) || component.variants[0];
     const mergedProps = { ...v.props };
-    // Apply genome-adaptive props
+    // Pre-populate genome chromosome dot-paths so templates using
+    // {{ch7_edge.radius}}, {{ch5_color_primary.hex}}, etc. resolve correctly.
+    if (genome?.chromosomes) {
+        for (const [chKey, chValue] of Object.entries(genome.chromosomes)) {
+            if (chValue && typeof chValue === "object") {
+                for (const [prop, val] of Object.entries(chValue)) {
+                    if (val !== null && val !== undefined && typeof val !== "object") {
+                        mergedProps[`${chKey}.${prop}`] = val;
+                    }
+                }
+            }
+        }
+    }
+    // Apply genome-adaptive props (overrides the flat chromosome map where explicit)
     for (const prop of component.props) {
         if (prop.genomeAdaptive) {
             const value = resolveGenomeRef(prop.genomeAdaptive.chromosome, prop.genomeAdaptive.property, genome);

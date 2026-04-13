@@ -100,6 +100,11 @@ function gv(genome: DesignGenome) {
         faq: copy.faq,
         fontImportUrl: typography.importUrl,
         bodyFontImportUrl: bodyFont.importUrl,
+        fontProvider: typography.provider ?? "bunny",
+        bodyFontProvider: bodyFont.provider ?? "bunny",
+        fontCount: (sys.fontCount ?? 2) as 1 | 2 | 3,
+        accentFontImportUrl: ch.ch3_type_accent?.importUrl ?? null,
+        accentFontProvider: ch.ch3_type_accent?.provider ?? null,
         primaryHue, primarySat: Math.round((colors.saturation ?? 0.6) * 100), primaryLight,
         onPrimary: primaryLight < 55 ? 'hsl(0, 0%, 97%)' : `hsl(${primaryHue}, 20%, 8%)`,
         colorSurfaceDark: `hsl(${primaryHue}, 12%, 8%)`,
@@ -163,7 +168,7 @@ export class ReactGenerator {
             pages: [this.generatePage(spec)],
             components: this.generateComponents(spec),
             styles: [this.generateStyles(spec)],
-            config: [this.generateConfig(spec)],
+            config: [this.generateConfig(spec), this.generateIndexHtml(spec)],
         };
     }
 
@@ -603,6 +608,75 @@ ${animationCSS}
             path: "package.json",
             content: JSON.stringify({ name: "genome-generated-app", version: "1.0.0", private: true, dependencies: deps }, null, 2),
         };
+    }
+
+    private generateIndexHtml(spec: PageCompositionSpec): ConfigFile {
+        const v = gv(spec.genome);
+        const fontLinks = this.generateFontLinks(v);
+        return {
+            path: "index.html",
+            content: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${v.companyName || "App"}</title>
+${fontLinks}
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`,
+        };
+    }
+
+    private generateFontLinks(v: ReturnType<typeof gv>): string {
+        const lines: string[] = [];
+        const seenProviders = new Set<string>();
+        const seenUrls = new Set<string>();
+
+        const addPreconnect = (provider: string | null) => {
+            if (!provider || seenProviders.has(provider)) return;
+            seenProviders.add(provider);
+            if (provider === "google") {
+                lines.push('    <link rel="preconnect" href="https://fonts.googleapis.com">');
+                lines.push('    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
+            } else if (provider === "bunny") {
+                lines.push('    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>');
+            } else if (provider === "fontshare") {
+                lines.push('    <link rel="preconnect" href="https://api.fontshare.com" crossorigin>');
+            }
+        };
+
+        const addFontLink = (url: string | null | undefined, display: "block" | "swap" | "optional") => {
+            if (!url || seenUrls.has(url)) return;
+            seenUrls.add(url);
+            const normalised = url.replace(/[?&]display=[^&]+/, "");
+            const separator = normalised.includes("?") ? "&" : "?";
+            const finalUrl = `${normalised}${separator}display=${display}`;
+            lines.push(`    <link href="${finalUrl}" rel="stylesheet">`);
+        };
+
+        // Anchor font — block (prevent jarring shift on hero type)
+        if (v.fontImportUrl) {
+            addPreconnect(v.fontProvider);
+            addFontLink(v.fontImportUrl, "block");
+        }
+
+        // Body font — swap (immediate fallback, reflows acceptable)
+        if (v.fontCount >= 2 && v.bodyFontImportUrl && v.bodyFontImportUrl !== v.fontImportUrl) {
+            addPreconnect(v.bodyFontProvider);
+            addFontLink(v.bodyFontImportUrl, "swap");
+        }
+
+        // Accent font — optional (enhancement only)
+        if (v.fontCount === 3 && v.accentFontImportUrl) {
+            addPreconnect(v.accentFontProvider);
+            addFontLink(v.accentFontImportUrl, "optional");
+        }
+
+        return lines.join("\n");
     }
 
     private generateImports(libraries: LibrarySelection, genome: DesignGenome): string {

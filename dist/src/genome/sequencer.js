@@ -7,8 +7,150 @@
 import * as crypto from "crypto";
 import { fontCatalog } from "../font-catalog.js";
 import { GenomeConstraintSolver } from "./constraint-solver.js";
+import { solveWithSetTheory } from "./constraint-solver-v2.js";
 import { getSectorProfile, generateHueFromForbidden, generateSaturationFromBias, generateLightnessFromBias, selectHeroType, selectTrustApproach, SUB_SECTOR_KEYWORDS } from "./sector-profiles.js";
 import { EntropyPool } from "./entropy-pool.js";
+import { generatePalette } from "../color-palette-engine.js";
+import { deriveFontCount, selectFontStrategy } from "../font-system-catalog.js";
+/**
+ * Derive design philosophy from existing chromosome values.
+ * No new chromosome — computed from the genome's existing signals.
+ */
+function deriveDesignPhilosophy(entropy, physics, edgeStyle, noiseLevel, primarySector) {
+    // Sector influences
+    const technicalSectors = ["technology", "fintech", "government"];
+    const editorialSectors = ["media", "entertainment", "food", "travel"];
+    const brandSectors = ["agency", "gaming", "beauty_fashion", "hospitality"];
+    const conservativeSectors = ["healthcare", "legal", "insurance", "nonprofit"];
+    // Physics determines base personality
+    if (physics === "none" && entropy < 0.40) {
+        if (conservativeSectors.includes(primarySector))
+            return "swiss_grid";
+        return "minimalist";
+    }
+    if (physics === "glitch" || physics === "chaos")
+        return "chaotic";
+    // High entropy unlocks expressive/chaotic
+    if (entropy > 0.80)
+        return "chaotic";
+    if (entropy > 0.60 && brandSectors.includes(primarySector))
+        return "expressive";
+    if (entropy > 0.55)
+        return "expressive";
+    // Sector-driven philosophy
+    if (technicalSectors.includes(primarySector)) {
+        return entropy > 0.40 ? "technical" : "swiss_grid";
+    }
+    if (editorialSectors.includes(primarySector))
+        return "editorial";
+    if (brandSectors.includes(primarySector))
+        return "brand_heavy";
+    if (conservativeSectors.includes(primarySector)) {
+        return entropy < 0.35 ? "minimalist" : "swiss_grid";
+    }
+    // Default by edge + noise
+    if (edgeStyle === "sharp" && noiseLevel < 0.3)
+        return "swiss_grid";
+    if (noiseLevel > 0.5 && entropy > 0.45)
+        return "editorial";
+    if (entropy < 0.30)
+        return "minimalist";
+    return "brand_heavy"; // most common fallback
+}
+/**
+ * Derive depth philosophy from existing chromosome values.
+ */
+function deriveDepthPhilosophy(philosophy, noiseLevel, depthCues, atmosphereEnabled, entropy) {
+    if (philosophy === "minimalist" || philosophy === "swiss_grid")
+        return "flat";
+    if (philosophy === "chaotic" || (philosophy === "expressive" && entropy > 0.60))
+        return "immersive";
+    const signals = [
+        noiseLevel > 0.4 ? 1 : 0,
+        atmosphereEnabled ? 1 : 0,
+        depthCues !== "none" ? 1 : 0,
+        entropy > 0.50 ? 1 : 0,
+    ].reduce((a, b) => a + b, 0);
+    if (signals >= 3)
+        return "layered";
+    if (signals >= 1)
+        return "subtle";
+    return "flat";
+}
+function deriveVariationSequence(philosophy, entropy, pool, poolOffset) {
+    if (philosophy === "minimalist" || philosophy === "swiss_grid")
+        return "minimal_voice";
+    if (philosophy === "chaotic")
+        return "mixed_chaos";
+    if (philosophy === "editorial")
+        return "editorial_flow";
+    if (philosophy === "technical")
+        return "app_story";
+    if (philosophy === "brand_heavy")
+        return entropy > 0.55 ? "brand_reveal" : "hero_build";
+    if (philosophy === "expressive")
+        return entropy > 0.65 ? "mixed_chaos" : "editorial_flow";
+    // standard: entropy-gated
+    const eligible = entropy > 0.60
+        ? ["hero_build", "editorial_flow", "mixed_chaos"]
+        : ["hero_build", "app_story", "brand_reveal"];
+    return eligible[Math.floor(pool.getFloat(poolOffset) * eligible.length)];
+}
+function deriveRhythmPattern(philosophy, entropy, pool, poolOffset) {
+    if (philosophy === "minimalist")
+        return pool.getFloat(poolOffset) > 0.5 ? "spacing_scale" : "line_weight";
+    if (philosophy === "swiss_grid")
+        return pool.getFloat(poolOffset) > 0.5 ? "line_weight" : "typographic_rule";
+    if (philosophy === "technical")
+        return pool.getFloat(poolOffset) > 0.5 ? "line_weight" : "icon_system";
+    if (philosophy === "brand_heavy")
+        return pool.getFloat(poolOffset) > 0.4 ? "logo_echo" : "shape_motif";
+    if (philosophy === "editorial")
+        return pool.getFloat(poolOffset) > 0.5 ? "image_grid_echo" : "gradient_echo";
+    if (philosophy === "chaotic") {
+        const opts = ["shape_motif", "texture_repeat", "color_band", "gradient_echo"];
+        return opts[Math.floor(pool.getFloat(poolOffset) * opts.length)];
+    }
+    // expressive / standard
+    const opts = entropy > 0.55
+        ? ["shape_motif", "color_band", "gradient_echo", "texture_repeat"]
+        : ["color_band", "spacing_scale", "icon_system", "image_grid_echo"];
+    return opts[Math.floor(pool.getFloat(poolOffset) * opts.length)];
+}
+function deriveStarType(philosophy, entropy, physics, hasVideo, pool, poolOffset) {
+    // Philosophies that don't use a star
+    if (philosophy === "minimalist" || philosophy === "swiss_grid")
+        return "none";
+    // Low entropy → safe choices
+    if (entropy < 0.25)
+        return "none";
+    if (entropy < 0.40) {
+        const safe = ["oversized_phrase", "signature_image", "data_number"];
+        return safe[Math.floor(pool.getFloat(poolOffset) * safe.length)];
+    }
+    // Build eligible list from philosophy + physics + entropy
+    const eligible = [];
+    if (philosophy !== "technical")
+        eligible.push("oversized_phrase", "signature_image");
+    if (physics !== "none")
+        eligible.push("animated_gradient");
+    if (physics !== "none" && physics !== "step")
+        eligible.push("kinetic_type", "svg_mark");
+    if (physics !== "none" && entropy > 0.55)
+        eligible.push("noise_canvas");
+    if (physics !== "none" && entropy > 0.60)
+        eligible.push("3d_object");
+    if (hasVideo)
+        eligible.push("video_loop");
+    if (entropy > 0.40)
+        eligible.push("color_field", "grid_mosaic");
+    if (philosophy === "brand_heavy" || philosophy === "expressive")
+        eligible.push("logo_as_art");
+    eligible.push("data_number");
+    if (eligible.length === 0)
+        return "none";
+    return eligible[Math.floor(pool.getFloat(poolOffset) * eligible.length)];
+}
 export class GenomeSequencer {
     // FIX 2/3: EntropyPool for uniform selection and unlimited entropy
     pool = null;
@@ -32,6 +174,7 @@ export class GenomeSequencer {
         const sectorWeight = options?.sectorWeight ?? 0.5;
         // Generate chromosomes
         const chromosomes = this.generateChromosomes({
+            seed,
             hash,
             bytes,
             b,
@@ -71,18 +214,26 @@ export class GenomeSequencer {
                 rationale: []
             }
         };
-        // Apply constraint solver
+        // Step 1: V1 priority-based solver — resolves conflicts by trait importance
         const solver = new GenomeConstraintSolver();
         const result = solver.solve(genome);
-        // Add generation rationale
-        genome.generation.rationale = result.rationale;
-        return result.genome;
+        // Step 2: V2 set-theoretic solver — refines remaining values via set intersection,
+        // ensuring all active traits agree on the final chromosome values.
+        const v2result = solveWithSetTheory(result.genome);
+        // Merge rationale from both passes
+        genome.generation.rationale = [
+            ...result.rationale,
+            ...(v2result.compromises.length > 0
+                ? v2result.compromises.map(c => `[set-theoretic] ${c.property}: ${c.requested} → ${c.actual} (${c.reason})`)
+                : []),
+        ];
+        return v2result.genome;
     }
     /**
      * Generate all chromosomes
      */
     generateChromosomes(params) {
-        const { hash, bytes, b, traits, primaryProfile, secondaryProfile, subSector, subSectorConfidence, brand, brandWeight, sectorWeight, epigenetics, options } = params;
+        const { seed, hash, bytes, b, traits, primaryProfile, secondaryProfile, subSector, subSectorConfidence, brand, brandWeight, sectorWeight, epigenetics, options } = params;
         // FIX 2/3: Access pool via this.pool for uniform selection
         const pool = this.pool;
         // Check if chromosomes are disabled
@@ -123,10 +274,21 @@ export class GenomeSequencer {
         const ch9_grid = getForced('ch9_grid', this.generateGrid(traits, b));
         const ch10_hierarchy = getForced('ch10_hierarchy', this.generateHierarchy(traits, b));
         const ch11_texture = getForced('ch11_texture', this.generateTexture(traits, b));
+        // Design philosophy — derived from already-generated chromosomes above
+        const _entropy = b(17);
+        const _noiseLevel = ch11_texture.noiseLevel;
+        const _depthCues = ch10_hierarchy.depthCues;
+        const _atmosphereEnabled = b(32) > 0.35;
+        const _designPhilosophy = deriveDesignPhilosophy(_entropy, ch8_motion.physics, ch7_edge.style, _noiseLevel, primaryProfile.sector);
+        const _depthPhilosophy = deriveDepthPhilosophy(_designPhilosophy, _noiseLevel, _depthCues, _atmosphereEnabled, _entropy);
         const ch12_signature = getForced('ch12_signature', {
-            entropy: b(17),
+            entropy: _entropy,
             uniqueMutation: hash.slice(0, 8),
-            variantSeed: b(18) // Byte 18 — distinct from entropy (byte 17)
+            variantSeed: b(18), // Byte 18 — distinct from entropy (byte 17)
+            designPhilosophy: _designPhilosophy,
+            depthPhilosophy: _depthPhilosophy,
+            variationSequence: deriveVariationSequence(_designPhilosophy, _entropy, this.pool, 195),
+            rhythmPattern: deriveRhythmPattern(_designPhilosophy, _entropy, this.pool, 197),
         });
         const ch28_iconography = getForced('ch28_iconography', this.generateIconography(traits, b, primaryProfile));
         const ch13_atmosphere = getForced('ch13_atmosphere', this.generateAtmosphere(traits, b, isDisabled('ch13_atmosphere')));
@@ -143,12 +305,15 @@ export class GenomeSequencer {
             selectHeroType(primaryProfile.sector, Math.floor(b(101) * 255));
         const heroVariant = forcedHero?.variant ||
             this.selectHeroVariant(heroType, b(102));
+        const _starType = deriveStarType(_designPhilosophy, _entropy, ch8_motion.physics, false, // hasVideo — ch20 not yet computed, default false
+        this.pool, 199);
         const ch19_hero_type = forcedHero || {
             hasHero, // ← SHA-256 derived existence
             type: hasHero ? heroType : "product_ui", // ← Default type if no hero (AI ignores)
             variant: heroVariant,
             variantIndex: Math.floor(b(30) * 10) % 10, // Use byte 30, wrap to 0-9
-            contentSource: undefined
+            contentSource: undefined,
+            starType: _starType,
         };
         const ch19_hero_variant_detail = getForced('ch19_hero_variant_detail', {
             layout: heroVariant,
@@ -425,7 +590,8 @@ export class GenomeSequencer {
             ch24_personalization,
             ch25_copy_engine,
             ch29_copy_intelligence: ch29_copy_intelligence,
-            ch26_color_system: this.generateColorSystem(ch5_color_primary, primaryProfile, b),
+            ch26_color_system: this.generateColorSystemFull(ch5_color_primary, primaryProfile, b, seed, ch12_signature.entropy, ch12_signature.designPhilosophy, ch8_motion.physics, ch6_color_temp.isDark, primaryProfile.sector),
+            ch3_type_accent: null, // populated in selectFonts if fontCount === 3
             ch30_state_topology,
             ch31_routing_pattern,
             ch32_token_inheritance,
@@ -520,7 +686,31 @@ export class GenomeSequencer {
             darkMode: {
                 surfaceStack: darkModeSurfaces,
                 elevationMap: darkElevations
-            }
+            },
+            // Placeholder — populated by generateColorSystemWithPalette
+            harmonyRule: "complementary",
+            palette: null,
+            fontCount: 2,
+            fontStrategy: "contrast_pair",
+        };
+    }
+    /**
+     * Generate complete color system including OKLCH palette and font system
+     */
+    generateColorSystemFull(primary, profile, b, seed, entropy, philosophy, physics, isDark, sector) {
+        const base = this.generateColorSystem(primary, profile, b);
+        // Generate full OKLCH palette
+        const palette = generatePalette(primary.hue, primary.saturation, entropy, isDark, physics, sector, philosophy, seed);
+        // Determine font count and strategy
+        const fontPool = new EntropyPool(seed + ":fonts");
+        const fontCount = deriveFontCount(philosophy, entropy, physics, sector, fontPool, 0);
+        const fontStrategy = selectFontStrategy(fontCount, philosophy, entropy, fontPool, 5);
+        return {
+            ...base,
+            harmonyRule: palette.rule,
+            palette,
+            fontCount,
+            fontStrategy,
         };
     }
     /**

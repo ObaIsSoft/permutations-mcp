@@ -115,7 +115,7 @@ export class PersonaDesignBridge {
             }
         };
         // Generate seed from intent + persona
-        const seed = `${intent.description}:${influence.metaphorPrimary}:${influence.copyTone}:${Date.now()}`;
+        const seed = `${intent.description}:${influence.metaphorPrimary}:${influence.copyTone}`;
         // Pass 1: generate genome from hash + influenced traits
         const genome = this.sequencer.generate(seed, influencedTraits, config);
         // Pass 2: directly express persona latent vectors onto chromosomes
@@ -408,7 +408,7 @@ export async function generateDesignVariations(intent, personaCount = 3) {
     const bridge = new PersonaDesignBridge();
     const variations = [];
     for (let i = 0; i < personaCount; i++) {
-        const seed = `${intent.description}:variation-${i}:${Date.now()}`;
+        const seed = `${intent.description}:variation-${i}`;
         const creatorGenome = generateCreatorGenome(seed);
         const persona = await generatePersona(creatorGenome);
         const result = await bridge.generateDesignThroughPersona(persona, intent);

@@ -77,6 +77,11 @@ function gv(genome: DesignGenome) {
         companyName: copy.companyName, tagline: copy.tagline,
         features: copy.features, stats: copy.stats, faq: copy.faq,
         fontImportUrl: typography.importUrl, bodyFontImportUrl: bodyFont.importUrl,
+        fontProvider: typography.provider ?? "bunny",
+        bodyFontProvider: bodyFont.provider ?? "bunny",
+        fontCount: (sys.fontCount ?? 2) as 1 | 2 | 3,
+        accentFontImportUrl: ch.ch3_type_accent?.importUrl ?? null,
+        accentFontProvider: ch.ch3_type_accent?.provider ?? null,
         primaryHue, primarySat: Math.round((colors.saturation ?? 0.6) * 100), primaryLight,
         onPrimary: primaryLight < 55 ? 'hsl(0, 0%, 97%)' : `hsl(${primaryHue}, 20%, 8%)`,
         colorSurfaceDark: `hsl(${primaryHue}, 12%, 8%)`,
@@ -243,12 +248,50 @@ ${bodyContent}
 
     private generateFontLinks(v: ReturnType<typeof gv>): string {
         const lines: string[] = [];
+        const seenProviders = new Set<string>();
+        const seenUrls = new Set<string>();
+
+        const addPreconnect = (provider: string | null) => {
+            if (!provider || seenProviders.has(provider)) return;
+            seenProviders.add(provider);
+            if (provider === "google") {
+                lines.push('  <link rel="preconnect" href="https://fonts.googleapis.com">');
+                lines.push('  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
+            } else if (provider === "bunny") {
+                lines.push('  <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>');
+            } else if (provider === "fontshare") {
+                lines.push('  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>');
+            }
+        };
+
+        const addFontLink = (url: string | null | undefined, display: "block" | "swap" | "optional") => {
+            if (!url || seenUrls.has(url)) return;
+            seenUrls.add(url);
+            // Replace or inject font-display parameter
+            const normalised = url.replace(/[?&]display=[^&]+/, "").replace(/display=swap/, "");
+            const separator = normalised.includes("?") ? "&" : "?";
+            const finalUrl = `${normalised}${separator}display=${display}`;
+            lines.push(`  <link href="${finalUrl}" rel="stylesheet">`);
+        };
+
+        // Anchor font — block (300ms block prevents jarring shift on hero type)
         if (v.fontImportUrl) {
-            lines.push('  <link rel="preconnect" href="https://fonts.googleapis.com">');
-            lines.push('  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
-            lines.push(`  <link href="${v.fontImportUrl}" rel="stylesheet">`);
+            addPreconnect(v.fontProvider);
+            addFontLink(v.fontImportUrl, "block");
         }
-        if (v.bodyFontImportUrl && v.bodyFontImportUrl !== v.fontImportUrl) lines.push(`  <link href="${v.bodyFontImportUrl}" rel="stylesheet">`);
+
+        // Body font — swap (immediate fallback, reflows acceptable)
+        if (v.fontCount >= 2 && v.bodyFontImportUrl && v.bodyFontImportUrl !== v.fontImportUrl) {
+            addPreconnect(v.bodyFontProvider);
+            addFontLink(v.bodyFontImportUrl, "swap");
+        }
+
+        // Accent font — optional (enhancement only, low priority)
+        if (v.fontCount === 3 && v.accentFontImportUrl) {
+            addPreconnect(v.accentFontProvider);
+            addFontLink(v.accentFontImportUrl, "optional");
+        }
+
         return lines.join("\n");
     }
 

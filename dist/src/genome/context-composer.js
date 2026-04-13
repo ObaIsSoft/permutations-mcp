@@ -10,7 +10,7 @@
  * NOT templates — algorithmic composition based on genome parameters.
  */
 import { selectStructure } from "./structure-selector.js";
-import { detectPageContext } from "./context-detector.js";
+import { detectPageContext, calculateComplexity } from "./context-detector.js";
 import { selectComponentLibrary, COMPONENT_LIBRARY_CATALOG } from "./component-catalog.js";
 // ── Composer ────────────────────────────────────────────────────────────────
 export class ContextComposer {
@@ -329,13 +329,40 @@ export class ContextComposer {
             type: ia.footerType ?? "minimal",
             pattern: structure.footer,
             columns: 4,
-            links: {
-                Product: ["Features", "Pricing", "Documentation"],
-                Company: ["About", "Blog", "Careers"],
-                Resources: ["Help Center", "Community", "Contact"],
-                Legal: ["Privacy", "Terms", "Cookies"],
-            },
+            links: this.generateFooterLinks(genome),
         };
+    }
+    generateFooterLinks(genome) {
+        const sector = genome.sectorContext.primary;
+        const copy = genome.chromosomes.ch25_copy_engine;
+        // Sector-appropriate footer columns. Copy engine override takes priority.
+        const footerMap = {
+            ecommerce: { Shop: ["New Arrivals", "Sale", "Wishlist"], Account: ["Orders", "Returns", "Gift Cards"], Help: ["FAQ", "Shipping", "Contact"], Legal: ["Privacy", "Terms", "Cookies"] },
+            dashboard: { Product: ["Features", "Changelog", "Roadmap"], Developers: ["API", "SDKs", "Webhooks"], Support: ["Docs", "Status", "Contact"], Legal: ["Privacy", "Terms", "Security"] },
+            landing: { Product: ["Features", "Pricing", "Integrations"], Company: ["About", "Blog", "Careers"], Resources: ["Help", "Community", "Changelog"], Legal: ["Privacy", "Terms", "Cookies"] },
+            blog: { Content: ["Articles", "Newsletter", "Archive"], Topics: ["Technology", "Design", "Business"], About: ["Team", "Mission", "Advertise"], Legal: ["Privacy", "Terms", "RSS"] },
+            portfolio: { Work: ["Projects", "Case Studies", "Archive"], Services: ["Design", "Strategy", "Consulting"], About: ["Story", "Process", "Clients"], Connect: ["Contact", "LinkedIn", "Twitter"] },
+            documentation: { Docs: ["Guides", "API Reference", "Examples"], Community: ["Forum", "GitHub", "Discord"], Company: ["About", "Blog", "Careers"], Legal: ["Privacy", "Terms", "License"] },
+            saas: { Product: ["Features", "Pricing", "Security"], Developers: ["API", "Docs", "Status"], Company: ["About", "Blog", "Careers"], Legal: ["Privacy", "Terms", "Cookies"] },
+            agency: { Services: ["Strategy", "Design", "Development"], Work: ["Case Studies", "Portfolio", "Awards"], Agency: ["About", "Team", "Culture"], Contact: ["Inquiries", "Press", "Careers"] },
+            creative: { Work: ["Portfolio", "Exhibitions", "Collaborations"], Studio: ["About", "Process", "Team"], Contact: ["Commissions", "Press", "Social"], Legal: ["Privacy", "Terms", "Copyright"] },
+            healthcare: { Services: ["Treatments", "Specialists", "Facilities"], Patients: ["Appointments", "Patient Portal", "Insurance"], About: ["Mission", "Providers", "Locations"], Legal: ["Privacy", "HIPAA", "Terms"] },
+            fintech: { Products: ["Payments", "Lending", "Insurance"], Company: ["About", "Investors", "Press"], Resources: ["API", "Docs", "Status"], Legal: ["Privacy", "Terms", "Compliance"] },
+            education: { Programs: ["Courses", "Certificates", "Bootcamps"], Support: ["Tutoring", "Career", "Community"], Institution: ["About", "Faculty", "Admissions"], Legal: ["Privacy", "Terms", "Accreditation"] },
+            real_estate: { Buy: ["Search Listings", "Open Houses", "Mortgage"], Sell: ["Home Value", "Agent Match", "Selling Guide"], About: ["Agents", "Reviews", "Press"], Legal: ["Privacy", "Terms", "Fair Housing"] },
+            travel: { Explore: ["Destinations", "Packages", "Last Minute"], Plan: ["Hotels", "Flights", "Activities"], About: ["Story", "Partners", "Press"], Legal: ["Privacy", "Terms", "Refunds"] },
+            food: { Menu: ["Dine In", "Takeout", "Catering"], About: ["Story", "Chef", "Sourcing"], Visit: ["Locations", "Hours", "Reservations"], Legal: ["Privacy", "Allergens", "Terms"] },
+            gaming: { Play: ["Games", "Beta Access", "Leaderboard"], Community: ["Forums", "Discord", "Tournaments"], About: ["Studio", "Careers", "Press"], Legal: ["Privacy", "Terms", "EULA"] },
+            crypto_web3: { Protocol: ["Whitepaper", "Tokenomics", "Roadmap"], Developers: ["Docs", "GitHub", "Grants"], Community: ["Discord", "Twitter", "Governance"], Legal: ["Privacy", "Terms", "Risk"] },
+        };
+        // Use copy engine company name as the brand column label if available
+        const links = footerMap[sector] ?? {
+            Product: ["Features", "Pricing", "Documentation"],
+            Company: ["About", "Blog", "Careers"],
+            Resources: ["Help", "Community", "Contact"],
+            Legal: ["Privacy", "Terms", "Cookies"],
+        };
+        return links;
     }
     // ── Sidebar ─────────────────────────────────────────────────────────────
     buildSidebar(genome, structure) {
@@ -343,12 +370,17 @@ export class ContextComposer {
         const ia = ch.ch23_information_architecture;
         if (!structure.sidebar && ia?.navigationType !== "sidebar")
             return null;
+        // Derive sidebar width from grid asymmetry + base spacing.
+        // asymmetry 0 = minimal (220px), asymmetry 1 = heavy sidebar (360px).
+        const asymmetry = ch.ch9_grid?.asymmetry ?? 0.5;
+        const baseSpacing = ch.ch2_rhythm?.baseSpacing ?? 16;
+        const sidebarWidth = Math.round(220 + asymmetry * 140 + baseSpacing * 0.5);
         return {
             type: "sidebar",
             pattern: structure.sidebar,
             position: "left",
             collapsible: true,
-            width: "280px",
+            width: `${sidebarWidth}px`,
         };
     }
     // ── CTA ─────────────────────────────────────────────────────────────────
@@ -375,7 +407,7 @@ export class ContextComposer {
     // ── Library Selection ───────────────────────────────────────────────────
     async selectLibraries(genome) {
         const ch = genome.chromosomes;
-        const complexity = this.calculateComplexity(genome);
+        const complexity = calculateComplexity(genome);
         const hash = genome.dnaHash;
         const b = (index) => parseInt(hash.slice((index % 32) * 2, (index % 32) * 2 + 2), 16);
         // Animation library (from animation-catalog)
@@ -481,33 +513,6 @@ export class ContextComposer {
                 duration: choreography?.hoverMicrointeraction?.duration ?? 200,
             },
         };
-    }
-    // ── Complexity Calculation ──────────────────────────────────────────────
-    calculateComplexity(genome) {
-        const ch = genome.chromosomes;
-        let score = 0;
-        if (ch.ch1_structure?.topology === "graph")
-            score += 0.3;
-        else if (ch.ch1_structure?.topology === "radial")
-            score += 0.2;
-        else if (ch.ch1_structure?.topology === "deep")
-            score += 0.25;
-        else
-            score += 0.1;
-        if (ch.ch8_motion?.physics === "particle" || ch.ch8_motion?.physics === "fluid")
-            score += 0.2;
-        else if (ch.ch8_motion?.physics === "spring" || ch.ch8_motion?.physics === "elastic")
-            score += 0.1;
-        if (ch.ch18_rendering?.primary === "webgl2")
-            score += 0.3;
-        else if (ch.ch18_rendering?.primary === "canvas2d")
-            score += 0.15;
-        if (ch.ch13_atmosphere?.fx && ch.ch13_atmosphere.fx !== "none")
-            score += 0.1;
-        if (ch.ch23_content_depth?.estimatedSections) {
-            score += Math.min(0.2, ch.ch23_content_depth.estimatedSections * 0.02);
-        }
-        return Math.min(1, Math.max(0, score));
     }
 }
 /**

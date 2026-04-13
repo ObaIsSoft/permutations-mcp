@@ -78,7 +78,8 @@ const CHROMOSOME_REGISTRY = [
     'ch24_personalization', 'ch25_copy_engine',
     'ch26_color_system', 'ch27_motion_choreography', 'ch28_iconography',
     'ch29_copy_intelligence',
-    'ch30_state_topology', 'ch31_routing_pattern', 'ch32_token_inheritance'
+    'ch30_state_topology', 'ch31_routing_pattern', 'ch32_token_inheritance',
+    'ch33_composition_strategy', 'ch34_component_topology'
 ];
 // L2 Ecosystem Genome: 12 chromosomes
 const ECOSYSTEM_CHROMOSOME_REGISTRY = [
@@ -620,6 +621,15 @@ class DesignGenomeServer {
                                 type: "string",
                                 enum: ["spec", "react", "html"],
                                 description: "Output format: spec = composition JSON, react = React JSX + CSS, html = vanilla HTML/CSS/JS files (default: spec)"
+                            },
+                            design_brief: {
+                                type: "object",
+                                description: "Optional design brief from generate_design_brief. When provided, its mandates and anti-patterns are folded into the composition rationale so the generated page honours the design philosophy.",
+                                properties: {
+                                    thesis: { type: "string" },
+                                    mandates: { type: "array", items: { type: "string" } },
+                                    antiPatterns: { type: "array", items: { type: "string" } }
+                                }
                             }
                         },
                         required: ["genome", "intent"]
@@ -717,7 +727,7 @@ class DesignGenomeServer {
                                 const { generateCreatorGenome } = await import("./creator/generator.js");
                                 const { generatePersona, generateBrief } = await import("./brief/generator.js");
                                 // L0: Generate Creator Genome from seed
-                                const creatorSeed = args.creator_seed || `creator-${seed}-${Date.now()}`;
+                                const creatorSeed = args.creator_seed || `creator-${seed}`;
                                 creatorGenome = generateCreatorGenome(creatorSeed);
                                 // L0.5: Decode into persona via LLM
                                 creatorPersona = await generatePersona(creatorGenome);
@@ -1641,8 +1651,15 @@ class DesignGenomeServer {
                         const tier = this.civilizationGen.generate(args.intent, context, traits, baseGenome, args.min_tier, civEcoGenome ?? undefined);
                         // L3 Chromosome utilization tracking
                         const civTracker = createCivilizationChromosomeTracker();
-                        // Track all 16 L3 chromosomes as accessed since they all inform the tier generation
-                        CIVILIZATION_CHROMOSOME_REGISTRY.forEach(ch => civTracker.track(ch));
+                        // Track only chromosomes that were actually sequenced into tier.civilizationGenome.
+                        // When no ecosystem is provided, civilizationGenome is absent → 0% utilization (honest).
+                        if (tier.civilizationGenome?.chromosomes) {
+                            const l3Registry = new Set(CIVILIZATION_CHROMOSOME_REGISTRY);
+                            for (const ch of Object.keys(tier.civilizationGenome.chromosomes)) {
+                                if (l3Registry.has(ch))
+                                    civTracker.track(ch);
+                            }
+                        }
                         const l3Utilization = civTracker.getReport();
                         // SHA-256 chain: civilization hash derived from ecosystem hash derived from genome hash
                         const civEcoHash = ecoHashFromGenomeHash(baseGenome.dnaHash);
@@ -1987,6 +2004,20 @@ class DesignGenomeServer {
                         validateGenome(args.genome, "generate_page_composition");
                         const { composePage } = await import("./genome/context-composer.js");
                         const spec = await composePage(args.genome, args.intent);
+                        // Wire design brief into composition rationale so generators/LLM
+                        // have the design philosophy alongside the structural spec.
+                        if (args.design_brief) {
+                            const brief = args.design_brief;
+                            if (brief.thesis) {
+                                spec.compositionRationale.unshift(`[Design Philosophy]: ${brief.thesis}`);
+                            }
+                            if (brief.mandates?.length) {
+                                spec.compositionRationale.push(`[Must implement]: ${brief.mandates.join(" | ")}`);
+                            }
+                            if (brief.antiPatterns?.length) {
+                                spec.compositionRationale.push(`[Must avoid]: ${brief.antiPatterns.join(" | ")}`);
+                            }
+                        }
                         const outputFormat = args.outputFormat ?? "spec";
                         if (outputFormat === "react") {
                             const { ReactGenerator } = await import("./generators/react-generator.js");
@@ -2104,7 +2135,7 @@ class DesignGenomeServer {
                         ]);
                         const url = sanitize(args.url);
                         const intent = args.intent ? sanitize(args.intent) : `Design inspired by ${url}`;
-                        const seed = args.seed ? sanitize(args.seed) : `url-${Date.now()}`;
+                        const seed = args.seed ? sanitize(args.seed) : `url-${crypto.createHash('sha256').update(url).digest('hex').slice(0, 16)}`;
                         const generateFullPipeline = args.generate_full_pipeline === true;
                         // Use Playwright to scrape the URL and extract CSS/design tokens
                         const extracted = await urlGenomeExtractor.extract(url);
@@ -2298,7 +2329,7 @@ class DesignGenomeServer {
                         const { generateCreatorGenome } = await import("./creator/generator.js");
                         const { generatePersona } = await import("./brief/generator.js");
                         // Use provided genome or generate new one
-                        const creatorGenome = args.genome || generateCreatorGenome(`persona-${Date.now()}`);
+                        const creatorGenome = args.genome || generateCreatorGenome(`persona-${crypto.createHash('sha256').update(sanitize(args.intent || 'default')).digest('hex').slice(0, 16)}`);
                         const persona = await generatePersona(creatorGenome);
                         const result = await generateDesignThroughPersona(persona, {
                             description: sanitize(args.intent),

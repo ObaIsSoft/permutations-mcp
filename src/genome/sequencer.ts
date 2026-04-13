@@ -13,8 +13,11 @@ import {
     SecondarySector,
     SubSector,
     HeroType,
+    StarType,
     DesignPhilosophy,
     DepthPhilosophy,
+    VariationSequence,
+    RhythmPattern,
     HeroLayoutVariant,
     TrustApproach,
     TypeCharge,
@@ -154,6 +157,82 @@ function deriveDepthPhilosophy(
     if (signals >= 3) return "layered";
     if (signals >= 1) return "subtle";
     return "flat";
+}
+
+function deriveVariationSequence(
+    philosophy: DesignPhilosophy,
+    entropy: number,
+    pool: EntropyPool,
+    poolOffset: number
+): VariationSequence {
+    if (philosophy === "minimalist" || philosophy === "swiss_grid") return "minimal_voice";
+    if (philosophy === "chaotic") return "mixed_chaos";
+    if (philosophy === "editorial") return "editorial_flow";
+    if (philosophy === "technical") return "app_story";
+    if (philosophy === "brand_heavy") return entropy > 0.55 ? "brand_reveal" : "hero_build";
+    if (philosophy === "expressive") return entropy > 0.65 ? "mixed_chaos" : "editorial_flow";
+    // standard: entropy-gated
+    const eligible: VariationSequence[] = entropy > 0.60
+        ? ["hero_build", "editorial_flow", "mixed_chaos"]
+        : ["hero_build", "app_story", "brand_reveal"];
+    return eligible[Math.floor(pool.getFloat(poolOffset) * eligible.length)];
+}
+
+function deriveRhythmPattern(
+    philosophy: DesignPhilosophy,
+    entropy: number,
+    pool: EntropyPool,
+    poolOffset: number
+): RhythmPattern {
+    if (philosophy === "minimalist") return pool.getFloat(poolOffset) > 0.5 ? "spacing_scale" : "line_weight";
+    if (philosophy === "swiss_grid") return pool.getFloat(poolOffset) > 0.5 ? "line_weight" : "typographic_rule";
+    if (philosophy === "technical") return pool.getFloat(poolOffset) > 0.5 ? "line_weight" : "icon_system";
+    if (philosophy === "brand_heavy") return pool.getFloat(poolOffset) > 0.4 ? "logo_echo" : "shape_motif";
+    if (philosophy === "editorial") return pool.getFloat(poolOffset) > 0.5 ? "image_grid_echo" : "gradient_echo";
+    if (philosophy === "chaotic") {
+        const opts: RhythmPattern[] = ["shape_motif", "texture_repeat", "color_band", "gradient_echo"];
+        return opts[Math.floor(pool.getFloat(poolOffset) * opts.length)];
+    }
+    // expressive / standard
+    const opts: RhythmPattern[] = entropy > 0.55
+        ? ["shape_motif", "color_band", "gradient_echo", "texture_repeat"]
+        : ["color_band", "spacing_scale", "icon_system", "image_grid_echo"];
+    return opts[Math.floor(pool.getFloat(poolOffset) * opts.length)];
+}
+
+function deriveStarType(
+    philosophy: DesignPhilosophy,
+    entropy: number,
+    physics: string,
+    hasVideo: boolean,
+    pool: EntropyPool,
+    poolOffset: number
+): StarType {
+    // Philosophies that don't use a star
+    if (philosophy === "minimalist" || philosophy === "swiss_grid") return "none";
+
+    // Low entropy → safe choices
+    if (entropy < 0.25) return "none";
+    if (entropy < 0.40) {
+        const safe: StarType[] = ["oversized_phrase", "signature_image", "data_number"];
+        return safe[Math.floor(pool.getFloat(poolOffset) * safe.length)];
+    }
+
+    // Build eligible list from philosophy + physics + entropy
+    const eligible: StarType[] = [];
+
+    if (philosophy !== "technical") eligible.push("oversized_phrase", "signature_image");
+    if (physics !== "none") eligible.push("animated_gradient");
+    if (physics !== "none" && physics !== "step") eligible.push("kinetic_type", "svg_mark");
+    if (physics !== "none" && entropy > 0.55) eligible.push("noise_canvas");
+    if (physics !== "none" && entropy > 0.60) eligible.push("3d_object");
+    if (hasVideo) eligible.push("video_loop");
+    if (entropy > 0.40) eligible.push("color_field", "grid_mosaic");
+    if (philosophy === "brand_heavy" || philosophy === "expressive") eligible.push("logo_as_art");
+    eligible.push("data_number");
+
+    if (eligible.length === 0) return "none";
+    return eligible[Math.floor(pool.getFloat(poolOffset) * eligible.length)];
 }
 
 export class GenomeSequencer {
@@ -356,6 +435,8 @@ export class GenomeSequencer {
             variantSeed: b(18), // Byte 18 — distinct from entropy (byte 17)
             designPhilosophy: _designPhilosophy,
             depthPhilosophy: _depthPhilosophy,
+            variationSequence: deriveVariationSequence(_designPhilosophy, _entropy, this.pool!, 195),
+            rhythmPattern: deriveRhythmPattern(_designPhilosophy, _entropy, this.pool!, 197),
         });
 
         const ch28_iconography = getForced('ch28_iconography', this.generateIconography(traits, b, primaryProfile));
@@ -383,12 +464,21 @@ export class GenomeSequencer {
         const heroVariant: HeroLayoutVariant = forcedHero?.variant ||
             this.selectHeroVariant(heroType, b(102));
 
+        const _starType = deriveStarType(
+            _designPhilosophy,
+            _entropy,
+            ch8_motion.physics,
+            false, // hasVideo — ch20 not yet computed, default false
+            this.pool!,
+            199
+        );
         const ch19_hero_type: typeof forcedHero = forcedHero || {
             hasHero,                                        // ← SHA-256 derived existence
             type: hasHero ? heroType : "product_ui",       // ← Default type if no hero (AI ignores)
             variant: heroVariant,
             variantIndex: Math.floor(b(30) * 10) % 10,     // Use byte 30, wrap to 0-9
-            contentSource: undefined
+            contentSource: undefined,
+            starType: _starType,
         };
 
         const ch19_hero_variant_detail: DesignGenome['chromosomes']['ch19_hero_variant_detail'] = getForced('ch19_hero_variant_detail', {

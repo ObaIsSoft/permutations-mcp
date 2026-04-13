@@ -251,26 +251,129 @@ const CONTEXT_RULES = {
  * Uses keyword matching against intent description + sector mapping
  * to determine what the page IS, its purpose, and audience.
  */
+/**
+ * Infer content-type signals from a snake_case layoutPattern name.
+ *
+ * Tokenizes the pattern on "_" and checks each token (and every adjacent 2-gram)
+ * against the known ContentType key set. Works for all patterns — existing,
+ * future, user-defined — with zero maintenance cost.
+ *
+ * Examples:
+ *   "dashboard_analytics"   → token "dashboard"    → weight 2 (first position)
+ *   "ecommerce_grid"        → token "ecommerce"    → weight 2
+ *   "real_estate_listings"  → 2-gram "real_estate" → weight 2
+ *   "saas_pricing"          → token "saas"         → weight 2
+ *   "travel_booking"        → token "travel"       → weight 2
+ *   "blog_magazine"         → token "blog"         → weight 2
+ *   "crypto_web3_trading"   → 2-gram "crypto_web3" → weight 2
+ *   "gallery_showcase"      → no token match       → [] (neutral; intent/sector decides)
+ */
+function layoutPatternTypeSignals(pattern, validTypes) {
+    const results = [];
+    const tokens = pattern.split("_");
+    for (let i = 0; i < tokens.length; i++) {
+        const tok = tokens[i];
+        if (validTypes.has(tok)) {
+            results.push({ type: tok, weight: i === 0 ? 2 : 1 });
+        }
+        if (i < tokens.length - 1) {
+            const bigram = `${tok}_${tokens[i + 1]}`;
+            if (validTypes.has(bigram)) {
+                results.push({ type: bigram, weight: i === 0 ? 2 : 1 });
+            }
+        }
+    }
+    return results;
+}
+// Soft signals derived from ch33 sub-chromosomes.
+// These are finite enums defined in sequencer.ts — a mapping is exhaustive, not a partial list.
+/** interactionModel (9 values) → type signals */
+const INTERACTION_TYPE_SIGNALS = {
+    dashboard_live: [["dashboard", 2]],
+    wizard_steps: [["application", 2]],
+    explorer: [["portfolio", 1], ["creative", 1], ["application", 1]],
+    infinite_feed: [["blog", 1], ["media", 1]],
+    pagination: [["blog", 1], ["ecommerce", 1], ["documentation", 1]],
+};
+/** contentFlow (8 values) → type signals */
+const CONTENT_FLOW_TYPE_SIGNALS = {
+    data_driven: [["dashboard", 2], ["application", 1]],
+    comparison_first: [["saas", 1], ["ecommerce", 1]],
+    discovery: [["portfolio", 1], ["creative", 1], ["travel", 1]],
+    narrative: [["blog", 1], ["media", 1], ["creative", 1]],
+    action_first: [["landing", 1], ["ecommerce", 1]],
+    social_first: [["media", 1]],
+};
 export function detectPageContext(intent, sector, genome) {
     const intentLower = intent.toLowerCase();
-    // Find best matching context by keyword overlap
-    let bestMatch = { type: "landing", score: 0 };
+    const scores = {};
+    // 1. Keyword scoring
     for (const [type, rule] of Object.entries(CONTEXT_RULES)) {
-        let score = 0;
+        scores[type] = 0;
         for (const keyword of rule.keywords) {
             if (intentLower.includes(keyword.toLowerCase())) {
-                score += 1;
+                scores[type] += 1;
             }
         }
         // Sector bonus
         if (type === sector)
-            score += 3;
-        if (score > bestMatch.score) {
-            bestMatch = { type, score };
+            scores[type] += 3;
+    }
+    // 2. Genome ch33 signals — smart inference from composition chromosomes.
+    //    Applied AFTER keyword scoring so intent keywords still override genome bias.
+    if (genome?.chromosomes?.ch33_composition_strategy) {
+        const ch33 = genome.chromosomes.ch33_composition_strategy;
+        const validTypes = new Set(Object.keys(CONTEXT_RULES));
+        // 2a. layoutPattern: tokenize the snake_case name; credit each token/2-gram
+        //     that matches a ContentType key. Covers all current + future patterns with
+        //     zero maintenance — a "dashboard_*" pattern always signals dashboard,
+        //     an "ecommerce_*" pattern always signals ecommerce, etc.
+        if (ch33.layoutPattern) {
+            for (const { type, weight } of layoutPatternTypeSignals(String(ch33.layoutPattern), validTypes)) {
+                scores[type] = (scores[type] ?? 0) + weight;
+            }
+        }
+        // 2b. interactionModel: finite enum → soft type signals
+        const iSigs = INTERACTION_TYPE_SIGNALS[String(ch33.interactionModel ?? "")];
+        if (iSigs) {
+            for (const [type, weight] of iSigs)
+                scores[type] = (scores[type] ?? 0) + weight;
+        }
+        // 2c. contentFlow: finite enum → soft type signals
+        const fSigs = CONTENT_FLOW_TYPE_SIGNALS[String(ch33.contentFlow ?? "")];
+        if (fSigs) {
+            for (const [type, weight] of fSigs)
+                scores[type] = (scores[type] ?? 0) + weight;
+        }
+        // 2d. heroProminence: none → functional page; full viewport → brand/landing
+        const hero = String(ch33.heroProminence ?? "");
+        if (hero === "none") {
+            scores["dashboard"] = (scores["dashboard"] ?? 0) + 1;
+            scores["application"] = (scores["application"] ?? 0) + 1;
+            scores["documentation"] = (scores["documentation"] ?? 0) + 1;
+        }
+        else if (hero === "full_viewport" || hero === "full_bleed_video" || hero === "immersive_3d") {
+            scores["landing"] = (scores["landing"] ?? 0) + 1;
+            scores["creative"] = (scores["creative"] ?? 0) + 1;
+        }
+        // 2e. navRequirement: sidebar/command signals functional/app context
+        const nav = String(ch33.navRequirement ?? "");
+        if (nav === "sidebar_persistent" || nav === "sidebar_collapsible" || nav === "command_palette") {
+            scores["dashboard"] = (scores["dashboard"] ?? 0) + 1;
+            scores["application"] = (scores["application"] ?? 0) + 1;
+            scores["documentation"] = (scores["documentation"] ?? 0) + 1;
         }
     }
-    // Default to landing if no match
-    const contentType = bestMatch.score > 0 ? bestMatch.type : "landing";
+    // 3. Pick winner
+    let bestType = "landing";
+    let bestScore = 0;
+    for (const [type, score] of Object.entries(scores)) {
+        if (score > bestScore) {
+            bestScore = score;
+            bestType = type;
+        }
+    }
+    const contentType = bestScore > 0 ? bestType : "landing";
     const rule = CONTEXT_RULES[contentType] || CONTEXT_RULES.landing;
     // Calculate complexity from genome if available
     const complexity = genome
@@ -287,9 +390,11 @@ export function detectPageContext(intent, sector, genome) {
     };
 }
 /**
- * Calculate complexity score from genome chromosomes
+ * Calculate complexity score from genome chromosomes.
+ * Exported so callers (context-composer, library selectors) can reuse it
+ * without duplicating the logic.
  */
-function calculateComplexity(genome) {
+export function calculateComplexity(genome) {
     const ch = genome.chromosomes;
     let score = 0;
     // Structure complexity

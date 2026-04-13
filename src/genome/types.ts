@@ -620,6 +620,54 @@ export type FontStrategy =
     | "expressive_pair"        // 3 fonts: display + neutral body + geometric accent
     | "clash";                 // 3 fonts: deliberately mismatched — entropy > 0.7 only
 
+// ── Star of the Show ──
+export type StarType =
+    | "none"               // No star — headline + whitespace carry the hero (swiss_grid, minimalist)
+    | "logo_as_art"        // Brand mark blown up to 40-80vw
+    | "oversized_phrase"   // 3-6 words at clamp(5rem,14vw,18rem), full viewport width
+    | "animated_gradient"  // Full-viewport animated mesh gradient
+    | "3d_object"          // Three.js scene centred, content overlaid
+    | "signature_image"    // Full-bleed photography/illustration with blend mode
+    | "data_number"        // One enormous animated stat/counter
+    | "svg_mark"           // Animated SVG path draw — brand mark reveals
+    | "kinetic_type"       // Per-character animation on one phrase
+    | "video_loop"         // Muted autoplay video loop
+    | "color_field"        // Section of pure intense colour
+    | "grid_mosaic"        // Asymmetric image grid, left 60% of viewport
+    | "noise_canvas";      // Animated canvas noise field
+
+// ── Variation ──
+export type SectionMode =
+    | "loud"       // Full-bleed, asymmetric, vivid — dense
+    | "quiet"      // Centred narrow column, generous whitespace
+    | "data"       // Grid or bento, monospace accent, structured
+    | "editorial"  // Magazine layout, pull quote, unequal columns
+    | "cinematic"  // Full viewport, minimal text, one phrase
+    | "technical"  // Code-style, monospace dominant, dark terminal
+    | "social"     // Logo wall, testimonial grid, faces
+    | "action";    // CTA-focused, button large, supporting copy minimal
+
+export type VariationSequence =
+    | "hero_build"       // cinematic → loud → quiet → data → action
+    | "editorial_flow"   // loud → editorial → quiet → social → action
+    | "app_story"        // cinematic → technical → data → editorial → action
+    | "brand_reveal"     // quiet → quiet → loud → cinematic → action
+    | "mixed_chaos"      // loud → cinematic → data → quiet → loud → action
+    | "minimal_voice";   // quiet → quiet → editorial → quiet → action
+
+// ── Rhythm ──
+export type RhythmPattern =
+    | "shape_motif"       // One shape (circle, hexagon, blob) in: bg, divider, icon, image frame
+    | "logo_echo"         // Brand mark at small/full/outline scale
+    | "color_band"        // Alternating section backgrounds from palette
+    | "texture_repeat"    // Same grain/noise at different opacities per surface
+    | "typographic_rule"  // Horizontal rules, consistent width
+    | "image_grid_echo"   // Images always same aspect ratio
+    | "spacing_scale"     // Section spacing alternates between 2xl and section vars
+    | "icon_system"       // One icon library, consistent size/weight throughout
+    | "gradient_echo"     // Same gradient angle reused: hero, CTA, footer
+    | "line_weight";      // One border/stroke weight throughout (1px or 2px)
+
 export type HarmonyRule =
     | "monochromatic"          // same hue, 5 lightness steps
     | "analogous_tight"        // primary ±15°, ±30°
@@ -1422,8 +1470,10 @@ export interface DesignGenome {
             entropy: number;
             uniqueMutation: string;
             variantSeed: number;  // for hero/layout variants
-            designPhilosophy: DesignPhilosophy;   // derived from chromosome combination
-            depthPhilosophy: DepthPhilosophy;      // derived from ch10/ch11/ch13/philosophy
+            designPhilosophy: DesignPhilosophy;    // derived from chromosome combination
+            depthPhilosophy: DepthPhilosophy;       // derived from ch10/ch11/ch13/philosophy
+            variationSequence: VariationSequence;   // section mode ordering
+            rhythmPattern: RhythmPattern;           // repeating visual element
         };
         ch28_iconography: {
             style: "outline" | "filled" | "duotone" | "rounded" | "sharp";
@@ -1470,6 +1520,7 @@ export interface DesignGenome {
             variant: HeroLayoutVariant;
             variantIndex: number;            // Hash-derived variant selection
             contentSource?: string;          // Path to screenshot/video
+            starType: StarType;              // The one hero element that anchors everything
         };
         ch19_hero_variant_detail: {
             layout: HeroLayoutVariant;

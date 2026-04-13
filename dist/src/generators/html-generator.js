@@ -24,6 +24,8 @@ function gv(genome) {
     const base = rhythm.baseSpacing ?? 16;
     const isDark = temp.isDark || false;
     const surfaceBase = temp.surfaceStack?.[0] || "#ffffff";
+    const primaryHue = Math.round(colors.hue ?? 210);
+    const primaryLight = Math.round((colors.lightness ?? 0.5) * 100);
     return {
         primary: colors.hex || "#3b82f6", primaryDark: colors.darkModeHex || colors.hex || "#2563eb",
         secondary: sys.secondary?.hex || "#6366f1", accent: sys.accent?.hex || "#f59e0b",
@@ -58,6 +60,21 @@ function gv(genome) {
         companyName: copy.companyName, tagline: copy.tagline,
         features: copy.features, stats: copy.stats, faq: copy.faq,
         fontImportUrl: typography.importUrl, bodyFontImportUrl: bodyFont.importUrl,
+        fontProvider: typography.provider ?? "bunny",
+        bodyFontProvider: bodyFont.provider ?? "bunny",
+        fontCount: (sys.fontCount ?? 2),
+        accentFontImportUrl: ch.ch3_type_accent?.importUrl ?? null,
+        accentFontProvider: ch.ch3_type_accent?.provider ?? null,
+        primaryHue, primarySat: Math.round((colors.saturation ?? 0.6) * 100), primaryLight,
+        onPrimary: primaryLight < 55 ? 'hsl(0, 0%, 97%)' : `hsl(${primaryHue}, 20%, 8%)`,
+        colorSurfaceDark: `hsl(${primaryHue}, 12%, 8%)`,
+        colorSurfaceDarkBorder: `hsla(0, 0%, 100%, 0.1)`,
+        colorSurfaceDarkHover: `hsla(0, 0%, 100%, 0.08)`,
+        colorTextOnDark: `hsl(0, 0%, 96%)`,
+        colorTextOnDarkMuted: `hsla(0, 0%, 96%, 0.5)`,
+        colorOverlay: `hsla(${primaryHue}, 20%, 5%, 0.5)`,
+        colorOverlayLight: `hsla(${primaryHue}, 20%, 5%, 0.4)`,
+        colorOverlaySubtle: `hsla(${primaryHue}, 20%, 5%, 0.1)`,
         isDark, motionPhysics: motion.physics ?? "none",
         enterDirection: motion.enterDirection ?? "up",
         hoverIntensity: motion.hoverIntensity ?? 0.5,
@@ -134,11 +151,12 @@ ${bodyContent}
     renderBody(v, animConfig) {
         const { layout, navigation, hero, sections, footer, sidebar } = this.spec;
         const indent = "  ";
+        const navType = navigation?.type ?? "none";
         let html = "";
         if (layout.pattern?.blueprint)
             html += this.renderBlueprint(layout.pattern.blueprint, v, animConfig, indent, 0, this.resolveAdaptiveProps(layout.pattern));
         else
-            html += `${indent}<div class="page-layout layout-${layout.type}">\n`;
+            html += `${indent}<div class="page-layout layout-${layout.type}" data-flow="${layout.flow}" data-density="${layout.density}" data-nav="${navType}" data-responsive="${layout.responsive}">\n`;
         if (navigation?.pattern?.blueprint)
             html += this.renderBlueprint(navigation.pattern.blueprint, v, animConfig, indent + "  ", 0, this.resolveAdaptiveProps(navigation.pattern));
         else if (navigation)
@@ -209,13 +227,48 @@ ${bodyContent}
     }
     generateFontLinks(v) {
         const lines = [];
+        const seenProviders = new Set();
+        const seenUrls = new Set();
+        const addPreconnect = (provider) => {
+            if (!provider || seenProviders.has(provider))
+                return;
+            seenProviders.add(provider);
+            if (provider === "google") {
+                lines.push('  <link rel="preconnect" href="https://fonts.googleapis.com">');
+                lines.push('  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
+            }
+            else if (provider === "bunny") {
+                lines.push('  <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>');
+            }
+            else if (provider === "fontshare") {
+                lines.push('  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>');
+            }
+        };
+        const addFontLink = (url, display) => {
+            if (!url || seenUrls.has(url))
+                return;
+            seenUrls.add(url);
+            // Replace or inject font-display parameter
+            const normalised = url.replace(/[?&]display=[^&]+/, "").replace(/display=swap/, "");
+            const separator = normalised.includes("?") ? "&" : "?";
+            const finalUrl = `${normalised}${separator}display=${display}`;
+            lines.push(`  <link href="${finalUrl}" rel="stylesheet">`);
+        };
+        // Anchor font — block (300ms block prevents jarring shift on hero type)
         if (v.fontImportUrl) {
-            lines.push('  <link rel="preconnect" href="https://fonts.googleapis.com">');
-            lines.push('  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
-            lines.push(`  <link href="${v.fontImportUrl}" rel="stylesheet">`);
+            addPreconnect(v.fontProvider);
+            addFontLink(v.fontImportUrl, "block");
         }
-        if (v.bodyFontImportUrl && v.bodyFontImportUrl !== v.fontImportUrl)
-            lines.push(`  <link href="${v.bodyFontImportUrl}" rel="stylesheet">`);
+        // Body font — swap (immediate fallback, reflows acceptable)
+        if (v.fontCount >= 2 && v.bodyFontImportUrl && v.bodyFontImportUrl !== v.fontImportUrl) {
+            addPreconnect(v.bodyFontProvider);
+            addFontLink(v.bodyFontImportUrl, "swap");
+        }
+        // Accent font — optional (enhancement only, low priority)
+        if (v.fontCount === 3 && v.accentFontImportUrl) {
+            addPreconnect(v.accentFontProvider);
+            addFontLink(v.accentFontImportUrl, "optional");
+        }
         return lines.join("\n");
     }
     /** Resolve adaptive props for a pattern — genomeRef → actual genome value */
@@ -268,6 +321,12 @@ ${bodyContent}
   --color-success: ${v.success}; --color-warning: ${v.warning}; --color-error: ${v.error};
   --color-bg: ${v.bg}; --color-surface: ${v.surface}; --color-surface-elevated: ${v.surfaceElevated};
   --color-text: ${v.text}; --color-text-muted: ${v.textMuted}; --color-border: ${v.border};
+  --color-primary-h: ${v.primaryHue}; --color-primary-s: ${v.primarySat}%; --color-primary-l: ${v.primaryLight}%;
+  --color-on-primary: ${v.onPrimary};
+  --color-surface-dark: ${v.colorSurfaceDark}; --color-surface-dark-border: ${v.colorSurfaceDarkBorder}; --color-surface-dark-hover: ${v.colorSurfaceDarkHover};
+  --color-text-on-dark: ${v.colorTextOnDark}; --color-text-on-dark-muted: ${v.colorTextOnDarkMuted};
+  --color-overlay: ${v.colorOverlay}; --color-overlay-light: ${v.colorOverlayLight}; --color-overlay-subtle: ${v.colorOverlaySubtle};
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08); --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12); --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15); --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.2);
   --font-display: ${v.fontDisplay}; --font-body: ${v.fontBody}; --font-mono: ${v.fontMono};
   --spacing-xs: ${v.xs}px; --spacing-sm: ${v.sm}px; --spacing-md: ${v.md}px;
   --spacing-lg: ${v.lg}px; --spacing-xl: ${v.xl}px; --spacing-2xl: ${v.xxl}px;
@@ -279,8 +338,24 @@ ${bodyContent}
   --font-size-lg: ${v.fontSizeLg}px; --font-size-xl: ${v.fontSizeXl}px;
   --font-size-2xl: ${v.fontSize2xl}px; --font-size-3xl: ${v.fontSize3xl}px; --font-size-4xl: ${v.fontSize4xl}px;
   --line-height: ${v.lineHeight}; --line-height-tight: ${v.lineHeightTight};
+  --composition-flow: ${this.spec.layout.flow}; --composition-density: ${this.spec.layout.density};
+  --composition-nav: ${this.spec.navigation?.type ?? "none"}; --composition-responsive: ${this.spec.layout.responsive};
+  --sidebar-width: ${this.spec.sidebar?.width ?? "280px"};
 ${adaptiveVarLines.join("\n")}
+${Object.entries(this.spec.cssVariables).map(([name, val]) => `  ${name}: ${val};`).join("\n")}
 }
+
+/* ── Composition-Strategy Layout Rules (ch33) ──────────────────────────── */
+[data-nav="sidebar_persistent"] .page-layout,
+[data-nav="sidebar_collapsible"] .page-layout { display: grid; grid-template-columns: var(--sidebar-width) 1fr; }
+[data-density="content_dense"] .section { padding: var(--spacing-lg) var(--spacing-xl); }
+[data-density="maximal"] .section { padding: var(--spacing-md) var(--spacing-lg); }
+[data-density="hero_dense"] .hero { padding: 0; min-height: 100vh; }
+[data-flow="data_driven"] .hero { display: none; }
+[data-flow="data_driven"] .main-content { padding-top: var(--spacing-md); }
+[data-flow="action_first"] .hero { order: -1; }
+[data-flow="discovery"] .section { scroll-snap-align: start; }
+[data-responsive="stack"] .grid { grid-template-columns: 1fr; }
 
 /* ── Reset ─────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -308,7 +383,16 @@ ul, ol { list-style: none; }
 
 /* ── Page Layout ───────────────────────────────────────────────────────── */
 .page-layout { display: flex; flex-direction: column; min-height: 100vh; }
-.main-content { flex: 1; }
+.main-content { flex: 1; display: flex; flex-direction: column; }
+.main-content > * { order: 10; }
+.hero { order: 5; }
+.navigation { order: 0; }
+.footer { order: 99; }
+/* ch33 contentFlow order overrides */
+[data-flow="data_driven"] .hero { order: 99; display: none; }
+[data-flow="action_first"] .hero { order: 0; }
+[data-flow="hero_first"] .hero { order: 0; }
+[data-flow="social_first"] .hero { order: 1; }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 768px) { .section { padding: var(--spacing-section) var(--spacing-md); } .section-container { padding: 0 var(--spacing-md); } }

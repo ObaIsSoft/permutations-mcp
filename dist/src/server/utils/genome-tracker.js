@@ -3,18 +3,22 @@
  *
  * Tracks L1 (Design), L2 (Ecosystem), L3 (Civilization) chromosome utilization
  */
-// L1 Design Genome: 32 chromosomes
+// L1 Design Genome: chromosomes (ch0–ch34, some with sub-chromosomes)
 const CHROMOSOME_REGISTRY = [
     'ch0_sector_primary', 'ch0_sector_secondary', 'ch0_sub_sector', 'ch0_brand_weight',
     'ch1_structure', 'ch2_rhythm', 'ch3_type_display', 'ch4_type_body',
     'ch5_color_primary', 'ch6_color_temp', 'ch7_edge', 'ch8_motion',
     'ch9_grid', 'ch10_hierarchy', 'ch11_texture', 'ch12_signature',
     'ch13_atmosphere', 'ch14_physics', 'ch15_biomarker', 'ch16_typography',
-    'ch17_accessibility', 'ch18_rendering', 'ch19_hero_type', 'ch20_visual_treatment',
-    'ch21_trust_signals', 'ch22_social_proof', 'ch23_content_depth', 'ch23_information_architecture',
-    'ch24_personalization', 'ch25_copy_engine', 'ch26_color_system', 'ch27_motion_choreography',
-    'ch28_iconography', 'ch29_copy_intelligence', 'ch30_state_topology', 'ch31_routing_pattern',
-    'ch32_token_inheritance'
+    'ch17_accessibility', 'ch18_rendering', 'ch19_hero_type', 'ch19_hero_variant_detail',
+    'ch20_visual_treatment', 'ch21_trust_signals', 'ch21_trust_content',
+    'ch22_social_proof', 'ch22_impact_demonstration',
+    'ch23_content_depth', 'ch23_information_architecture',
+    'ch24_personalization', 'ch25_copy_engine',
+    'ch26_color_system', 'ch27_motion_choreography', 'ch28_iconography',
+    'ch29_copy_intelligence',
+    'ch30_state_topology', 'ch31_routing_pattern', 'ch32_token_inheritance',
+    'ch33_composition_strategy', 'ch34_component_topology'
 ];
 // L2 Ecosystem Genome: 12 chromosomes
 const ECOSYSTEM_CHROMOSOME_REGISTRY = [
@@ -24,10 +28,10 @@ const ECOSYSTEM_CHROMOSOME_REGISTRY = [
 ];
 // L3 Civilization Genome: 16 chromosomes
 const CIVILIZATION_CHROMOSOME_REGISTRY = [
-    'civ_ch1_architecture', 'civ_ch2_governance', 'civ_ch3_infrastructure', 'civ_ch4_trade',
-    'civ_ch5_diplomacy', 'civ_ch6_military', 'civ_ch7_culture', 'civ_ch8_religion',
-    'civ_ch9_technology', 'civ_ch10_medicine', 'civ_ch11_education', 'civ_ch12_justice',
-    'civ_ch13_economy', 'civ_ch14_communication', 'civ_ch15_transport', 'civ_ch16_energy'
+    'civ_ch1_archetype', 'civ_ch2_governance', 'civ_ch3_economics', 'civ_ch4_technology',
+    'civ_ch5_culture', 'civ_ch6_resilience', 'civ_ch7_knowledge', 'civ_ch8_expansion',
+    'civ_ch9_age', 'civ_ch10_fragility', 'civ_ch11_topology', 'civ_ch12_cosmos',
+    'civ_ch13_memory', 'civ_ch14_interface', 'civ_ch15_evolution', 'civ_ch16_communication'
 ];
 /**
  * Create L1 Design Genome chromosome tracker

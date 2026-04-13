@@ -8,11 +8,51 @@
  * sensibilities directly shape the CSS output.
  */
 
-import { DesignGenome } from "./genome/types.js";
+import { DesignGenome, DesignPhilosophy } from "./genome/types.js";
 import * as crypto from "crypto";
 import { FXGenerator } from "./generators/fx-generator.js";
 import { generatePaletteCSS } from "./color-palette-engine.js";
 import { generateFontSystemCSS } from "./font-system-catalog.js";
+import { generateVariationCSS } from "./variation-catalog.js";
+import { generateRhythmCSS } from "./rhythm-catalog.js";
+import { generateStarCSS, getStarEntry } from "./star-catalog.js";
+import { generateDepthCSS } from "./depth-catalog.js";
+import type { StarType, RhythmPattern, DepthPhilosophy } from "./genome/types.js";
+
+// ── Opacity philosophy helper ─────────────────────────────────────────────────
+
+function deriveOpacityValues(philosophy: DesignPhilosophy, entropy: number): {
+    opacityPrimary: string;
+    opacitySecondary: string;
+    opacityTertiary: string;
+    opacityGhost: string;
+    opacityBorder: string;
+} {
+    // minimalist / swiss_grid: full contrast — hierarchy via size and weight only, no ghost elements
+    if (philosophy === "minimalist" || philosophy === "swiss_grid") {
+        return { opacityPrimary: "1.0", opacitySecondary: "0.85", opacityTertiary: "0.65", opacityGhost: "0", opacityBorder: "0.15" };
+    }
+    // expressive / chaotic: ghost depth — large ghost elements as textural layer
+    if (philosophy === "expressive" || philosophy === "chaotic") {
+        return { opacityPrimary: "1.0", opacitySecondary: "0.65", opacityTertiary: "0.38", opacityGhost: "0.06", opacityBorder: "0.12" };
+    }
+    // editorial: reading layers — graduated hierarchy
+    if (philosophy === "editorial") {
+        return { opacityPrimary: "1.0", opacitySecondary: "0.70", opacityTertiary: "0.45", opacityGhost: "0.04", opacityBorder: "0.10" };
+    }
+    // technical: high contrast, no decorative ghosts
+    if (philosophy === "technical") {
+        return { opacityPrimary: "1.0", opacitySecondary: "0.80", opacityTertiary: "0.55", opacityGhost: "0", opacityBorder: "0.20" };
+    }
+    // brand_heavy: attention gradient — ghost only at higher entropy
+    return {
+        opacityPrimary: "1.0",
+        opacitySecondary: "0.72",
+        opacityTertiary: "0.45",
+        opacityGhost: entropy > 0.50 ? "0.05" : "0",
+        opacityBorder: "0.12",
+    };
+}
 
 /**
  * Persona influence on CSS generation
@@ -92,6 +132,38 @@ export class CSSGenerator {
         if (fxCSS) {
             parts.push(fxCSS);
         }
+
+        // ── Phase B: Star, Variation, Rhythm ─────────────────────────────────
+        const sig = genome.chromosomes.ch12_signature;
+        const ch5 = genome.chromosomes.ch5_color_primary;
+        const ch26 = genome.chromosomes.ch26_color_system;
+        const ch19 = genome.chromosomes.ch19_hero_type;
+        const ch11 = genome.chromosomes.ch11_texture;
+        const ch14 = genome.chromosomes.ch14_physics;
+        const ch6 = genome.chromosomes.ch6_color_temp;
+
+        // Star of the Show CSS
+        const starType = (ch19?.starType ?? "none") as StarType;
+        const starEntry = getStarEntry(starType);
+        parts.push(generateStarCSS(starEntry));
+
+        // Variation (section modes) CSS — always emitted, modes apply via data-mode attrs
+        parts.push(generateVariationCSS());
+
+        // Rhythm pattern CSS — driven by ch12_signature.rhythmPattern
+        const rhythmPattern = (sig?.rhythmPattern ?? "color_band") as RhythmPattern;
+        parts.push(generateRhythmCSS(rhythmPattern));
+
+        // ── Phase C: Depth system ─────────────────────────────────────────
+        parts.push(generateDepthCSS({
+            philosophy: (sig?.depthPhilosophy ?? "subtle") as DepthPhilosophy,
+            designPhilosophy: (sig?.designPhilosophy ?? "editorial") as DesignPhilosophy,
+            entropy: sig?.entropy ?? 0.5,
+            noiseLevel: ch11?.noiseLevel ?? 0,
+            isDark: ch6?.isDark ?? false,
+            physics: genome.chromosomes.ch8_motion?.physics ?? "none",
+            material: ch14?.material ?? "standard",
+        }));
 
         return parts.join(newline + newline);
     }
@@ -395,9 +467,70 @@ ${indent}outline-offset: 2px;
         parts.push(`${indent}/* Accessibility */`);
         parts.push(`${indent}--focus-indicator: ${accessibility.focusIndicator};`);
         parts.push(`${indent}--touch-target: ${accessibility.minTouchTarget}px;`);
-        
+
+        // Design philosophy and depth — surfaced as CSS custom properties for use in generated code
+        const sig = chromosomes.ch12_signature;
+        parts.push(`${indent}/* Design philosophy */`);
+        parts.push(`${indent}--design-philosophy: "${sig.designPhilosophy}";`);
+        parts.push(`${indent}--depth-philosophy: "${sig.depthPhilosophy}";`);
+        parts.push(`${indent}--genome-entropy: ${sig.entropy.toFixed(3)};`);
+
+        // Font system — role-based vars that gate on fontCount
+        const fontCount = chromosomes.ch26_color_system?.fontCount ?? 2;
+        const fontStrategy = chromosomes.ch26_color_system?.fontStrategy ?? "contrast_pair";
+        const anchorFamily = chromosomes.ch3_type_display?.family ?? "system-ui";
+        const bodyFamily = fontCount >= 2 ? (chromosomes.ch4_type_body?.family ?? anchorFamily) : null;
+        const accentFamily = fontCount === 3 ? (chromosomes.ch3_type_accent?.family ?? bodyFamily) : null;
+        parts.push(`${indent}/* Font system (${fontCount} font${fontCount > 1 ? "s" : ""}, ${fontStrategy} strategy) */`);
+        parts.push(`${indent}--font-anchor: '${anchorFamily}';`);
+        parts.push(`${indent}--font-body: ${bodyFamily ? `'${bodyFamily}'` : "var(--font-anchor)"};`);
+        parts.push(`${indent}--font-accent: ${accentFamily ? `'${accentFamily}'` : "var(--font-body)"};`);
+        parts.push(`${indent}--font-count: ${fontCount};`);
+
+        // Opacity philosophy system — all genomes get these vars; values vary by philosophy
+        const { opacityPrimary, opacitySecondary, opacityTertiary, opacityGhost, opacityBorder } =
+            deriveOpacityValues(sig.designPhilosophy, sig.entropy);
+        parts.push(`${indent}/* Opacity philosophy */`);
+        parts.push(`${indent}--opacity-primary:   ${opacityPrimary};`);
+        parts.push(`${indent}--opacity-secondary: ${opacitySecondary};`);
+        parts.push(`${indent}--opacity-tertiary:  ${opacityTertiary};`);
+        parts.push(`${indent}--opacity-ghost:     ${opacityGhost};`);
+        parts.push(`${indent}--opacity-border:    ${opacityBorder};`);
+        parts.push(`${indent}--opacity-image:     ${sig.depthPhilosophy === "flat" ? "1.0" : "0.92"};`);
+
         parts.push(`}`);
-        
+
+        // OKLCH palette — separate blocks (must be outside :root for @supports to work)
+        if (chromosomes.ch26_color_system?.palette) {
+            parts.push(`\n/* OKLCH Color Palette — ${chromosomes.ch26_color_system.harmonyRule} harmony */`);
+            parts.push(generatePaletteCSS(chromosomes.ch26_color_system.palette));
+        }
+
+        // Font system CSS — role vars (redundant when above :root is used, but standalone useful)
+        if (fontCount > 0) {
+            parts.push(`\n/* Font system */`);
+            parts.push(generateFontSystemCSS(fontCount, anchorFamily, bodyFamily, accentFamily));
+        }
+
+        // Grain overlay — only when genome philosophy calls for it
+        const grainEnabled = sig.depthPhilosophy !== "flat"
+            && !["minimalist", "swiss_grid"].includes(sig.designPhilosophy)
+            && (chromosomes.ch11_texture?.noiseLevel ?? 0) > 0.15;
+
+        if (grainEnabled) {
+            const noiseLevel = chromosomes.ch11_texture?.noiseLevel ?? 0.3;
+            const grainOpacity = (noiseLevel * 0.15).toFixed(3);
+            const grainFreq = (0.55 + (chromosomes.ch11_texture?.grainFrequency ?? 0.5) * 0.45).toFixed(3);
+            const blendMode = chromosomes.ch11_texture?.overlayBlend ?? "soft-light";
+            parts.push(`\n/* Grain overlay — ${sig.designPhilosophy} depth philosophy */`);
+            parts.push(`.grain-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  opacity: ${grainOpacity};
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='${grainFreq}' numOctaves='4' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='1'/></svg>");
+  mix-blend-mode: ${blendMode};
+}`);
+        }
+
         return parts.join(newline);
     }
     
