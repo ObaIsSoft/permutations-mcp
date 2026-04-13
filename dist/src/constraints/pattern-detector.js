@@ -298,12 +298,18 @@ export class PatternDetector {
     static MAX_INPUT_SIZE = parseInt(process.env.GENOME_MAX_PATTERN_INPUT_BYTES || "1048576", 10);
     detect(css, html) {
         // Guard against huge inputs (ReDoS protection) - truncates with warning
+        // Import logger once at the top of the function
+        // (dynamic import not needed, use static import if possible)
+        // If logger must be dynamic, wrap in async and refactor API
+        // Here, fallback to static import
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { logger } = require('../logger.js');
         if (css.length > PatternDetector.MAX_INPUT_SIZE) {
-            console.warn(`[PatternDetector] CSS input too large (${css.length} bytes), truncating to ${PatternDetector.MAX_INPUT_SIZE} bytes`);
-            css = css.slice(0, PatternDetector.MAX_INPUT_SIZE);
+            logger.warn(`CSS input too large, truncating`, 'PatternDetector', { input: css.length, max: PatternDetector.MAX_INPUT_SIZE });
+            css = css.substring(0, PatternDetector.MAX_INPUT_SIZE);
         }
         if (html && html.length > PatternDetector.MAX_INPUT_SIZE) {
-            console.warn(`[PatternDetector] HTML input too large (${html.length} bytes), truncating to ${PatternDetector.MAX_INPUT_SIZE} bytes`);
+            logger.warn(`HTML input too large, truncating`, 'PatternDetector', { input: html.length, max: PatternDetector.MAX_INPUT_SIZE });
             html = html.slice(0, PatternDetector.MAX_INPUT_SIZE);
         }
         const violations = [];

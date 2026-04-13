@@ -7,6 +7,7 @@
  */
 
 import { DesignPhilosophy } from "./genome/types.js";
+import { ENTROPY_THRESHOLDS } from './constants.js';
 
 // ── Preloader type ────────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ export function selectPreloaderType(opts: {
     const { philosophy, entropy, physics, hasWebGL } = opts;
 
     // entropy < 0.30 or physics:none → none or minimal_bar
-    if (entropy < 0.30 || physics === "none") {
+     if (entropy < ENTROPY_THRESHOLDS.low || physics === "none") {
         return entropy < 0.20 ? "none" : "minimal_bar";
     }
 
@@ -134,13 +135,13 @@ export function selectPreloaderType(opts: {
     if (hasWebGL && entropy > 0.50) return "3d_scene_spin";
 
     // high entropy expressive types
-    if (entropy > 0.60) {
+     if (entropy > ENTROPY_THRESHOLDS.high) {
         if (philosophy === "brand_heavy" || philosophy === "expressive") return "svg_draw";
         if (philosophy === "chaotic") return "word_scatter";
     }
 
     // mid entropy
-    if (entropy > 0.40) {
+     if (entropy > ENTROPY_THRESHOLDS.mid) {
         if (philosophy === "technical") return "counter_percent";
         return "typewriter_name";
     }

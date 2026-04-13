@@ -15,9 +15,10 @@ export class GenomeAwareValidator {
         this.corrections = new Map();
         const ast = csstree.parse(css, {
             positions: true,
-            onParseError: (error) => {
+            onParseError: async (error) => {
                 // Log parsing errors but continue
-                console.error('CSS parse error:', error.message);
+                const { logger } = await import('../logger.js');
+                logger.error('CSS parse error', 'ASTPatternDetector', error);
             }
         });
         // Walk the AST and validate declarations

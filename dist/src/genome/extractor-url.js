@@ -5,12 +5,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import * as crypto from "crypto";
 import { getLimits } from '../config/limits.js';
-// Simple logger
-const logger = {
-    info: (msg, ...args) => console.log(`[URLExtractor] ${msg}`, ...args),
-    error: (msg, ...args) => console.error(`[URLExtractor] ${msg}`, ...args),
-    warn: (msg, ...args) => console.warn(`[URLExtractor] ${msg}`, ...args),
-};
+import { logger } from '../logger.js';
 export class URLGenomeExtractor {
     browser = null;
     async initBrowser() {
@@ -35,7 +30,7 @@ export class URLGenomeExtractor {
                     return await this.extractWithScrapy(url);
                 }
                 catch (scrapyError) {
-                    logger.warn("Scrapy failed:", scrapyError);
+                    logger.warn("Scrapy failed: " + (scrapyError instanceof Error ? scrapyError.message : String(scrapyError)));
                     // Continue to other methods
                 }
             }
@@ -52,20 +47,20 @@ export class URLGenomeExtractor {
                 return this.buildGenome(url, allCSS, computedStyles);
             }
             catch (browserError) {
-                logger.warn("Playwright browser failed, trying fallback:", browserError);
+                logger.warn("Playwright browser failed, trying fallback: " + (browserError instanceof Error ? browserError.message : String(browserError)));
             }
             // Option 3: Try Scrapy if Playwright failed
             try {
                 return await this.extractWithScrapy(url);
             }
             catch (scrapyError) {
-                logger.warn("Scrapy not available, falling back to native fetch:", scrapyError);
+                logger.warn("Scrapy not available, falling back to native fetch: " + (scrapyError instanceof Error ? scrapyError.message : String(scrapyError)));
             }
             // Option 4: Native fetch (last resort)
             return this.extractWithFetch(url);
         }
         catch (error) {
-            logger.error(`Failed to extract genome from ${url}:`, error);
+            logger.error(`Failed to extract genome from ${url}: ${(error instanceof Error ? error.message : String(error))}`);
             throw error;
         }
     }

@@ -5,17 +5,18 @@
  * and WebGL availability. Catalog describes WHAT each transition is.
  * CSS/JS generation lives in generators/transition-engine.ts.
  */
+import { TRANSITION_DURATIONS, ENTROPY_THRESHOLDS } from './constants';
 export const TRANSITION_CATALOG = [
     {
         type: "opacity_fade",
         description: "opacity 0→1 — universal, clean, works everywhere.",
-        durationHint: 300,
+        durationHint: TRANSITION_DURATIONS.opacityFade,
         forbiddenFor: {},
     },
     {
         type: "view_transition_api",
         description: "Native document.startViewTransition() — browser-native, progressively enhanced.",
-        durationHint: 400,
+        durationHint: TRANSITION_DURATIONS.viewTransitionApi,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
         },
@@ -23,7 +24,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "clip_wipe_right",
         description: "clip-path: inset(0 100% 0 0) → inset(0 0 0 0) — horizontal reveal.",
-        durationHint: 600,
+        durationHint: TRANSITION_DURATIONS.clipWipeRight,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             philosophies: ["minimalist"],
@@ -33,7 +34,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "clip_curtain_up",
         description: "clip-path: inset(100% 0 0) → inset(0 0 0) — curtain rises from bottom.",
-        durationHint: 700,
+        durationHint: TRANSITION_DURATIONS.clipCurtainUp,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.35,
@@ -42,7 +43,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "clip_circle_expand",
         description: "clip-path: circle(0%) → circle(150%) — radial reveal from click point.",
-        durationHint: 600,
+        durationHint: TRANSITION_DURATIONS.clipCircleExpand,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.40,
@@ -51,7 +52,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "css_3d_flip",
         description: "perspective(1200px) rotateY(90deg) → rotateY(0) — card flip.",
-        durationHint: 800,
+        durationHint: TRANSITION_DURATIONS.css3dFlip,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.45,
@@ -61,7 +62,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "color_wash",
         description: "Full-screen colour floods then drains — brand moment between pages.",
-        durationHint: 900,
+        durationHint: TRANSITION_DURATIONS.colorWash,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.40,
@@ -71,7 +72,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "morph_blob",
         description: "border-radius: 50% scale(0.8) → normal — organic emergence.",
-        durationHint: 700,
+        durationHint: TRANSITION_DURATIONS.morphBlob,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.50,
@@ -81,7 +82,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "grid_reveal",
         description: "Grid cells stagger in — structured emergence.",
-        durationHint: 1000,
+        durationHint: TRANSITION_DURATIONS.gridReveal,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.45,
@@ -91,7 +92,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "glitch_shatter",
         description: "Glitch clip-path split on exit — digital disintegration.",
-        durationHint: 600,
+        durationHint: TRANSITION_DURATIONS.glitchShatter,
         forbiddenFor: {
             requiresPhysicsNot: ["glitch"],
             minEntropy: 0.65,
@@ -100,7 +101,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "text_scramble",
         description: "Title scrambles on exit, reforms on entry — language as transition.",
-        durationHint: 800,
+        durationHint: TRANSITION_DURATIONS.textScramble,
         forbiddenFor: {
             requiresPhysicsNot: ["none"],
             minEntropy: 0.55,
@@ -110,7 +111,7 @@ export const TRANSITION_CATALOG = [
     {
         type: "noise_dissolve",
         description: "Shader noise threshold dissolve — requires WebGL.",
-        durationHint: 1000,
+        durationHint: TRANSITION_DURATIONS.noiseDissolve,
         forbiddenFor: {
             requiresWebGL: true,
             requiresPhysicsNot: ["none"],
@@ -125,7 +126,7 @@ export function getTransitionEntry(type) {
 export function selectPageTransition(opts) {
     const { philosophy, entropy, physics, hasWebGL } = opts;
     // Zero entropy or physics:none → opacity_fade or view_transition_api
-    if (entropy < 0.25 || physics === "none") {
+    if (entropy < ENTROPY_THRESHOLDS.low || physics === "none") {
         return "opacity_fade";
     }
     // minimalist → opacity_fade
@@ -138,14 +139,14 @@ export function selectPageTransition(opts) {
     if (hasWebGL && entropy > 0.60)
         return "noise_dissolve";
     // High entropy
-    if (entropy > 0.70) {
+    if (entropy > ENTROPY_THRESHOLDS.high) {
         if (philosophy === "chaotic")
             return "grid_reveal";
         if (philosophy === "expressive" || philosophy === "brand_heavy")
             return "color_wash";
     }
     // Mid entropy
-    if (entropy > 0.50) {
+    if (entropy > ENTROPY_THRESHOLDS.mid) {
         if (philosophy === "editorial")
             return "clip_curtain_up";
         if (philosophy === "technical")
@@ -153,7 +154,7 @@ export function selectPageTransition(opts) {
         return "clip_wipe_right";
     }
     // Low-mid entropy
-    if (entropy > 0.30)
+    if (entropy > ENTROPY_THRESHOLDS.low)
         return "clip_wipe_right";
     return "view_transition_api";
 }

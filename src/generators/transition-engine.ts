@@ -21,7 +21,7 @@ export interface TransitionEngineOutput {
 export function generateTransitionOutput(genome: DesignGenome): TransitionEngineOutput {
     const sig = genome.chromosomes.ch12_signature;
     const ch8 = genome.chromosomes.ch8_motion;
-    const ch15 = genome.chromosomes.ch15_biomarker as any;
+    const ch15 = genome.chromosomes.ch15_biomarker;
 
     const philosophy = sig?.designPhilosophy ?? "editorial";
     const entropy = sig?.entropy ?? 0.5;

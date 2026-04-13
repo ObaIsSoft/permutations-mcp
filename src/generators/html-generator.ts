@@ -516,7 +516,7 @@ ${typographyCSS ? typographyCSS + "\n" : ""}${cursorCSS ? cursorCSS + "\n" : ""}
 
   function formatNum(n) { if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'; if (n >= 1000) return (n / 1000).toFixed(1) + 'K'; return String(n); }
 
-  document.addEventListener('DOMContentLoaded', () => { initScrollAnimations(); initMobileNav(); initSmoothScroll(); initCounters(); console.log('[Genome] Page loaded | Physics: ${v.motionPhysics} | Choreography: ${v.choreographyStyle}'); });
+  document.addEventListener('DOMContentLoaded', () => { initScrollAnimations(); initMobileNav(); initSmoothScroll(); initCounters(); });
 })();
 ${phaseDJS}
 `;

@@ -1,6 +1,7 @@
 import { ComplexityAnalyzer } from "./complexity-analyzer.js";
 import { sequenceCivilizationGenome } from "./civilization-sequencer.js";
 import { getLimits } from '../config/limits.js';
+import { CIVILIZATION_COMPLEXITY_THRESHOLDS, CIVILIZATION_COMPONENT_COUNTS, CIVILIZATION_MODULES } from '../constants.js';
 // ── Civilization genome → architecture mappings ──────────────────────────────
 const GOVERNANCE_TO_STATE = {
     centralized: 'local',
@@ -31,8 +32,8 @@ export class CivilizationGenerator {
             ? this.complexityAnalyzer.forceMinimumTier(intent, context, traits, civMinTier)
             : this.complexityAnalyzer.analyze(intent, context, traits);
         // Civilization requires at least tribal tier (0.81+)
-        if (analysis.finalComplexity < 0.81) {
-            throw new Error(`Complexity ${analysis.finalComplexity.toFixed(2)} is below civilization threshold (0.81). ` +
+        if (analysis.finalComplexity < CIVILIZATION_COMPLEXITY_THRESHOLDS.tribal) {
+            throw new Error(`Complexity ${analysis.finalComplexity.toFixed(2)} is below civilization threshold (${CIVILIZATION_COMPLEXITY_THRESHOLDS.tribal}). ` +
                 `Current tier: ${analysis.tier}. ` +
                 `Add sophistication keywords (dashboard, platform, real-time, collaborative) ` +
                 `or specify minTier: 'tribal' to force it.`);
@@ -92,13 +93,13 @@ export class CivilizationGenerator {
             complexity: analysis.finalComplexity,
             architecture: {
                 pattern: 'component-based',
-                modules: 3,
+                modules: CIVILIZATION_MODULES.tribal,
                 stateTopology: this.resolveStateTopology(genome, ['local']),
                 routingPattern: this.resolveRoutingPattern(genome, ['single_page', 'multi_page']),
                 tokenInheritance: this.resolveTokenInheritance(genome, ['flat', 'semantic'])
             },
             components: {
-                count: [8, 14],
+                count: asTierRange(CIVILIZATION_COMPONENT_COUNTS.tribal),
                 list: this.generateComponentLibrary('tribal')
             },
             animations: {
@@ -130,13 +131,13 @@ export class CivilizationGenerator {
             architecture: {
                 pattern: 'component-based',
                 layers: ['view', 'logic'],
-                modules: 5,
+                modules: CIVILIZATION_MODULES.cityState,
                 stateTopology: this.resolveStateTopology(genome, ['local', 'shared_context']),
                 routingPattern: this.resolveRoutingPattern(genome, ['single_page', 'multi_page', 'protected']),
                 tokenInheritance: this.resolveTokenInheritance(genome, ['flat', 'semantic'])
             },
             components: {
-                count: [14, 22],
+                count: asTierRange(CIVILIZATION_COMPONENT_COUNTS.cityState),
                 list: this.generateComponentLibrary('city_state')
             },
             animations: {
@@ -168,13 +169,13 @@ export class CivilizationGenerator {
             architecture: {
                 pattern: 'layered',
                 layers: ['presentation', 'domain', 'data'],
-                modules: 8,
+                modules: CIVILIZATION_MODULES.nationState,
                 stateTopology: this.resolveStateTopology(genome, ['local', 'shared_context', 'reactive_store']),
                 routingPattern: this.resolveRoutingPattern(genome, ['multi_page', 'protected', 'platform']),
                 tokenInheritance: this.resolveTokenInheritance(genome, ['flat', 'semantic', 'component'])
             },
             components: {
-                count: [22, 35],
+                count: asTierRange(CIVILIZATION_COMPONENT_COUNTS.nationState),
                 list: this.generateComponentLibrary('nation_state')
             },
             animations: {
@@ -206,14 +207,14 @@ export class CivilizationGenerator {
             architecture: {
                 pattern: 'micro-frontend',
                 layers: ['shell', 'feature', 'shared', 'platform'],
-                modules: 12,
+                modules: CIVILIZATION_MODULES.empire,
                 stateTopology: this.resolveStateTopology(genome, ['shared_context', 'reactive_store', 'distributed']),
                 routingPattern: this.resolveRoutingPattern(genome, ['protected', 'platform', 'federated']),
                 tokenInheritance: this.resolveTokenInheritance(genome, ['semantic', 'component', 'governed']),
                 edge: true
             },
             components: {
-                count: [35, 52],
+                count: asTierRange(CIVILIZATION_COMPONENT_COUNTS.empire),
                 list: this.generateComponentLibrary('empire')
             },
             animations: {
@@ -246,14 +247,14 @@ export class CivilizationGenerator {
             architecture: {
                 pattern: 'micro-frontend',
                 layers: ['shell', 'feature', 'shared', 'platform', 'edge'],
-                modules: 18,
+                modules: CIVILIZATION_MODULES.network,
                 stateTopology: this.resolveStateTopology(genome, ['reactive_store', 'distributed', 'federated']),
                 routingPattern: this.resolveRoutingPattern(genome, ['platform', 'federated']),
                 tokenInheritance: this.resolveTokenInheritance(genome, ['component', 'governed', 'cross_system']),
                 edge: true
             },
             components: {
-                count: [52, 72],
+                count: asTierRange(CIVILIZATION_COMPONENT_COUNTS.network),
                 list: this.generateComponentLibrary('network')
             },
             animations: {
@@ -263,7 +264,7 @@ export class CivilizationGenerator {
                 reducedMotion: 'alternative'
             },
             designSystem: {
-                count: [100, 160],
+                count: asTierRange(CIVILIZATION_COMPONENT_COUNTS.singularity),
                 themes: [3, 6],
                 modes: ['light', 'dark', 'high-contrast', 'print', 'motion-reduced'],
                 semanticTokens: true,
@@ -630,4 +631,12 @@ export class CivilizationGenerator {
             accessibility: { role: 'combobox', ariaProps: ['aria-expanded', 'aria-haspopup', 'aria-activedescendant', 'aria-autocomplete'], keyboard: ['Enter', 'Space', 'ArrowKeys', 'Escape', 'Tab'] }
         };
     }
+}
+// Defensive: ensure all count arrays are exactly 2 elements for TierRange
+export function asTierRange(arr) {
+    if (arr.length === 2)
+        return [arr[0], arr[1]];
+    if (arr.length === 1)
+        return [arr[0], arr[0]];
+    return [0, 0];
 }

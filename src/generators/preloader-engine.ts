@@ -25,8 +25,8 @@ export interface PreloaderEngineOutput {
 export function generatePreloaderOutput(genome: DesignGenome): PreloaderEngineOutput {
     const sig = genome.chromosomes.ch12_signature;
     const ch8 = genome.chromosomes.ch8_motion;
-    const ch15 = genome.chromosomes.ch15_biomarker as any;
-    const copy = genome.chromosomes.ch25_copy_engine as any;
+    const ch15 = genome.chromosomes.ch15_biomarker as typeof genome.chromosomes.ch15_biomarker;
+    const copy = genome.chromosomes.ch25_copy_engine as typeof genome.chromosomes.ch25_copy_engine;
 
     const philosophy = sig?.designPhilosophy ?? "editorial";
     const entropy = sig?.entropy ?? 0.5;

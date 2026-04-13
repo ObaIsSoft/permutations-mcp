@@ -15,6 +15,7 @@
  * When a provider's API is unreachable, warmCache() rejects and the server
  * exits — genome generation requires a live font catalog.
  */
+import { logger } from "./logger.js";
 const FETCH_TIMEOUT_MS = 30_000; // Fontshare returns ~830KB; Google ~500KB
 const TTL_MS = 24 * 60 * 60 * 1000;
 // ── Charge → provider category tag mapping ───────────────────────────────────
@@ -85,7 +86,7 @@ export class FontCatalogService {
             // Lazy init: trigger load in background so next call may succeed
             this.load(src).catch(err => {
                 // Log but don't re-throw so caller gets the proper error message below
-                console.warn(`[FontCatalog] Background load failed for ${src}:`, err);
+                logger.warn(`Background load failed for ${src}`, "FontCatalog", err);
             });
             throw new Error(`Font catalog not loaded for provider "${src}" — call await fontCatalog.warmCache() before genome generation (load initiated)`);
         }

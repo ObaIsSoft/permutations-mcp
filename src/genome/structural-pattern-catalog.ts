@@ -143,7 +143,9 @@ export class PatternRegistry {
                             this.addPattern(pattern);
                         }
                     }).catch(err => {
-                        console.warn(`[PatternRegistry] Failed to fetch from ${source.name}: ${err.message}`);
+                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                        const { logger } = require('../logger.js');
+                        logger.warn(`Failed to fetch patterns`, 'PatternRegistry', { source: source.name, error: err });
                     })
                 );
             }
@@ -359,10 +361,12 @@ export class PatternComposer {
     }
 
     private validateComposition(sections: ComposedSection[]): void {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { logger } = require('../logger.js');
         for (const section of sections) {
             const rules = section.compositionRules;
             if (rules.maxChildren > 0 && section.children.length > rules.maxChildren) {
-                console.warn(`[PatternComposer] Section ${section.id} exceeds max children`);
+                logger.warn(`Section exceeds max children`, 'PatternComposer', { section: section.id });
             }
         }
     }

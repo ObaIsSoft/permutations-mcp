@@ -17,9 +17,21 @@
  */
 
 import { TypeCharge, FontProvider } from "./genome/types.js";
+import { logger } from "./logger.js";
 
 const FETCH_TIMEOUT_MS = 30_000; // Fontshare returns ~830KB; Google ~500KB
 const TTL_MS = 24 * 60 * 60 * 1000;
+
+// Type-safe API response structures
+interface FontshareResponse {
+    fonts?: Array<{ name: string; category?: string }>;
+    data?: Array<{ name: string; category?: string }>;
+}
+
+interface GoogleFontsResponse {
+    items?: Array<{ family: string; category?: string }>;
+    familyMetadataList?: Array<{ family: string; category?: string }>;
+}
 
 // ── Charge → provider category tag mapping ───────────────────────────────────
 //
@@ -102,7 +114,7 @@ export class FontCatalogService {
             // Lazy init: trigger load in background so next call may succeed
             this.load(src as FontProvider).catch(err => {
                 // Log but don't re-throw so caller gets the proper error message below
-                console.warn(`[FontCatalog] Background load failed for ${src}:`, err);
+                logger.warn(`Background load failed for ${src}`, "FontCatalog", err);
             });
             throw new Error(
                 `Font catalog not loaded for provider "${src}" — call await fontCatalog.warmCache() before genome generation (load initiated)`
@@ -167,8 +179,8 @@ export class FontCatalogService {
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json() as any;
-        const list: any[] = data.fonts ?? data.data ?? [];
+        const data = await res.json() as FontshareResponse;
+        const list = data.fonts ?? data.data ?? [];
 
         return list
             .filter((f: any) => !!f.name)
@@ -190,9 +202,9 @@ export class FontCatalogService {
         const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json() as any;
+        const data = await res.json() as GoogleFontsResponse;
         // Official API: { items: [...] } — Public metadata: { familyMetadataList: [...] }
-        const list: any[] = data.items ?? data.familyMetadataList ?? [];
+        const list = data.items ?? data.familyMetadataList ?? [];
 
         return list
             .filter((f: any) => !!f.family)

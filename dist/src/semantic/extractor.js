@@ -5,6 +5,19 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as crypto from "crypto";
 const LLM_TIMEOUT_MS = 30_000;
 const LLM_MAX_RETRIES = 3;
+/**
+ * Safely parse JSON with comprehensive error handling.
+ * Throws descriptive errors on failure to facilitate debugging.
+ */
+function safeJSONParse(json, context) {
+    try {
+        return JSON.parse(json);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`JSON parse failed in ${context}: ${message}. Input: "${json.substring(0, 100)}${json.length > 100 ? '...' : ''}"`);
+    }
+}
 function createLLMClient(provider, apiKey) {
     switch (provider) {
         case "groq": {
@@ -12,7 +25,7 @@ function createLLMClient(provider, apiKey) {
             return {
                 async chatJSON(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
-                    return JSON.parse(r.choices[0].message.content || "{}");
+                    return safeJSONParse(r.choices[0].message.content || "{}", "groq");
                 },
                 async chatText(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
@@ -25,7 +38,7 @@ function createLLMClient(provider, apiKey) {
             return {
                 async chatJSON(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
-                    return JSON.parse(r.choices[0].message.content || "{}");
+                    return safeJSONParse(r.choices[0].message.content || "{}", "openai");
                 },
                 async chatText(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
@@ -44,7 +57,7 @@ function createLLMClient(provider, apiKey) {
                     const m = t.text.match(/\{[\s\S]*\}/);
                     if (!m)
                         throw new Error("No JSON in response");
-                    return JSON.parse(m[0]);
+                    return safeJSONParse(m[0], "anthropic");
                 },
                 async chatText(p, opts) {
                     const r = await c.messages.create({ model: opts.model, max_tokens: opts.maxTokens, messages: [{ role: "user", content: p }] });
@@ -64,7 +77,7 @@ function createLLMClient(provider, apiKey) {
                     const j = t.match(/\{[\s\S]*\}/);
                     if (!j)
                         throw new Error("No JSON in response");
-                    return JSON.parse(j[0]);
+                    return safeJSONParse(j[0], "gemini");
                 },
                 async chatText(p, opts) {
                     const r = await gm.generateContent({ contents: [{ role: "user", parts: [{ text: p }] }], generationConfig: { temperature: opts.temperature } });
@@ -77,7 +90,7 @@ function createLLMClient(provider, apiKey) {
             return {
                 async chatJSON(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
-                    return JSON.parse(r.choices[0].message.content || "{}");
+                    return safeJSONParse(r.choices[0].message.content || "{}", "openrouter");
                 },
                 async chatText(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
@@ -90,7 +103,7 @@ function createLLMClient(provider, apiKey) {
             return {
                 async chatJSON(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], response_format: { type: "json_object" }, temperature: opts.temperature });
-                    return JSON.parse(r.choices[0].message.content || "{}");
+                    return safeJSONParse(r.choices[0].message.content || "{}", "hf-inference");
                 },
                 async chatText(p, opts) {
                     const r = await c.chat.completions.create({ model: opts.model, messages: [{ role: "user", content: p }], temperature: opts.temperature, max_tokens: opts.maxTokens });
@@ -202,12 +215,24 @@ export class SemanticTraitExtractor {
                     },
                     copyIntelligence: {
                         industryTerminology: result.copyIntelligence?.industryTerminology || [],
-                        emotionalRegister: result.copyIntelligence?.emotionalRegister || "professional",
+                        emotionalRegister: (typeof result.copyIntelligence?.emotionalRegister === 'string' &&
+                            ["clinical", "professional", "conversational", "playful", "luxury", "urgent"].includes(result.copyIntelligence.emotionalRegister))
+                            ? result.copyIntelligence.emotionalRegister
+                            : "professional",
                         formalityLevel: this.clamp(result.copyIntelligence?.formalityLevel ?? 0.5),
                         ctaAggression: this.clamp(result.copyIntelligence?.ctaAggression ?? 0.5),
-                        headlineStyle: result.copyIntelligence?.headlineStyle || "benefit_forward",
-                        vocabularyComplexity: result.copyIntelligence?.vocabularyComplexity || "moderate",
-                        sentenceStructure: result.copyIntelligence?.sentenceStructure || "balanced",
+                        headlineStyle: (typeof result.copyIntelligence?.headlineStyle === 'string' &&
+                            ["benefit_forward", "curiosity_gap", "social_proof", "how_to", "direct"].includes(result.copyIntelligence.headlineStyle))
+                            ? result.copyIntelligence.headlineStyle
+                            : "benefit_forward",
+                        vocabularyComplexity: (typeof result.copyIntelligence?.vocabularyComplexity === 'string' &&
+                            ["simple", "moderate", "technical", "specialized"].includes(result.copyIntelligence.vocabularyComplexity))
+                            ? result.copyIntelligence.vocabularyComplexity
+                            : "moderate",
+                        sentenceStructure: (typeof result.copyIntelligence?.sentenceStructure === 'string' &&
+                            ["balanced", "short_punchy", "complex_periodic"].includes(result.copyIntelligence.sentenceStructure))
+                            ? result.copyIntelligence.sentenceStructure
+                            : "balanced",
                         emojiUsage: result.copyIntelligence?.emojiUsage ?? false,
                         contractionUsage: result.copyIntelligence?.contractionUsage ?? true,
                     },

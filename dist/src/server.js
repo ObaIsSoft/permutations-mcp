@@ -25,6 +25,9 @@ import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError } fr
 import { SemanticTraitExtractor } from "./semantic/extractor.js";
 import { GenomeSequencer } from "./genome/sequencer.js";
 import { CSSGenerator } from "./css-generator.js";
+import { FILE_SECURITY_CONFIG, getFileSecurityConfig } from "./config/file-security.js";
+import { validateCredentialsOnStartup, printCredentialValidation } from "./config/credential-validation.js";
+import { logger } from "./logger.js";
 import { WebGLGenerator } from "./generators/webgl-generator.js";
 import { FXGenerator } from "./generators/fx-generator.js";
 import { SVGGenerator } from "./generators/svg-generator.js";
@@ -185,15 +188,9 @@ function createFullGenomeTracker(genome, ecosystemGenome, civilizationGenome) {
         }
     };
 }
-// ── Security Configuration (environment-overrideable) ───────────────────────
-const SECURITY_CONFIG = {
-    // Maximum file size for brand assets (default: 50MB, env overrideable)
-    maxAssetSizeBytes: parseInt(process.env.GENOME_MAX_ASSET_SIZE_MB || "50", 10) * 1024 * 1024,
-    // Maximum number of assets to process (default: 10)
-    maxAssetCount: parseInt(process.env.GENOME_MAX_ASSET_COUNT || "10", 10),
-    // Allowed file extensions for assets
-    allowedAssetExtensions: (process.env.GENOME_ALLOWED_ASSET_EXTENSIONS || ".png,.jpg,.jpeg,.svg,.pdf").split(",").map(s => s.trim().toLowerCase()),
-};
+// ── File Security Configuration ──────────────────────────────────────────────
+// Now located in src/config/file-security.ts for comprehensive validation
+// Including: symlink detection, MIME type checking, asset batching, PDF scanning
 // ── Ecosystem biomes: hash-selectable structural character per tier ─────────
 // Different seeds at same tier get different biome characters.
 // Intent + sector constrain which branches are valid; the hash picks the branch.
@@ -331,33 +328,53 @@ class DesignGenomeServer {
      * Validates and sanitizes asset file paths for security.
      * Returns null for invalid paths (rejected, not errors).
      * Configurable via environment variables - no hardcoded limits.
+     *
+     * Validates:
+     * - Path traversal attempts (../)
+     * - Symlink/symbolic link access
+     * - File type/extension
+     * - File size limits
      */
     validateAssetPath(inputPath) {
         // Reject paths with directory traversal attempts
-        const normalized = path.normalize(inputPath);
+        const normalized = path.resolve(inputPath);
         if (normalized.includes('..')) {
-            console.warn(`[Security] Rejected path with traversal: ${inputPath}`);
+            logger.warn(`Rejected path with traversal`, "Security", { path: inputPath });
+            return null;
+        }
+        // Reject symlinks to prevent unauthorized file access
+        try {
+            const stat = fsSync.lstatSync(normalized);
+            if (stat.isSymbolicLink()) {
+                const target = fsSync.readlinkSync(normalized);
+                logger.warn(`Rejected symbolic link`, "Security", { path: inputPath, target });
+                return null;
+            }
+        }
+        catch (err) {
+            logger.warn(`Cannot stat file (may not exist)`, "Security", { path: inputPath });
             return null;
         }
         // Validate extension
         const ext = path.extname(normalized).toLowerCase();
-        if (!SECURITY_CONFIG.allowedAssetExtensions.includes(ext)) {
-            console.warn(`[Security] Rejected file with invalid extension: ${inputPath}`);
+        if (!FILE_SECURITY_CONFIG.allowedExtensions.includes(ext)) {
+            logger.warn(`Rejected file with invalid extension`, "Security", { extension: ext, path: inputPath });
             return null;
         }
         // Validate file exists and check size (configurable limit)
         try {
             const stats = fsSync.statSync(normalized);
             if (!stats.isFile()) {
-                console.warn(`[Security] Rejected non-file path: ${inputPath}`);
+                logger.warn(`Rejected non-file path`, "Security", { path: inputPath });
                 return null;
             }
-            if (stats.size > SECURITY_CONFIG.maxAssetSizeBytes) {
-                console.warn(`[Security] Rejected file too large: ${inputPath} (${stats.size} bytes > ${SECURITY_CONFIG.maxAssetSizeBytes})`);
+            if (stats.size > FILE_SECURITY_CONFIG.maxAssetSizeBytes) {
+                logger.warn(`Rejected file too large`, "Security", { path: inputPath, size: stats.size, maxSize: FILE_SECURITY_CONFIG.maxAssetSizeBytes });
                 return null;
             }
         }
-        catch {
+        catch (err) {
+            logger.warn(`File validation failed`, "Security", { path: inputPath, error: err });
             return null;
         }
         return normalized;
@@ -424,7 +441,7 @@ class DesignGenomeServer {
         this.complexityAnalyzer = new ComplexityAnalyzer();
         // Pre-warm font catalogs at startup — genome generation requires these to be loaded
         fontCatalog.warmCache(["bunny", "google", "fontshare"]).catch(err => {
-            console.error(`[FontCatalog] Startup warm failed: ${err.message}`);
+            logger.error(`Startup warm failed`, "FontCatalog", err);
             process.exit(1);
         });
         this.setupHandlers();
@@ -740,7 +757,7 @@ class DesignGenomeServer {
                             }
                             catch (err) {
                                 // Log but don't fail - L1 can still generate without L0
-                                console.error("L0 Creator DNA generation failed (continuing without):", err);
+                                logger.error("L0 Creator DNA generation failed (continuing without)", "Creator", err);
                             }
                         }
                         // 1. Epigenetic Parsing (if assets provided)
@@ -748,7 +765,7 @@ class DesignGenomeServer {
                         if (args.brand_asset_paths && Array.isArray(args.brand_asset_paths) && args.brand_asset_paths.length > 0) {
                             // Validate and filter paths (security + configurability)
                             const validatedPaths = args.brand_asset_paths
-                                .slice(0, SECURITY_CONFIG.maxAssetCount)
+                                .slice(0, FILE_SECURITY_CONFIG.maxAssetCount)
                                 .map((p) => this.validateAssetPath(p))
                                 .filter((p) => p !== null);
                             if (validatedPaths.length > 0) {
@@ -915,7 +932,7 @@ class DesignGenomeServer {
                                 }
                                 catch (err) {
                                     // Log error for debugging but continue - ecosystem output is still valid
-                                    console.error('[Civilization] Generation failed:', err instanceof Error ? err.message : String(err));
+                                    logger.error('Generation failed', 'Civilization', err instanceof Error ? err.message : String(err));
                                 }
                             }
                         }
@@ -2226,7 +2243,7 @@ class DesignGenomeServer {
                                 };
                             }
                             catch (err) {
-                                console.error("Full pipeline generation failed:", err);
+                                logger.error("Full pipeline generation failed", "Pipeline", err);
                                 // Continue with just the extraction
                             }
                         }
@@ -2522,14 +2539,30 @@ class DesignGenomeServer {
     async run() {
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        console.error("Genome MCP server running on stdio");
+        logger.info("Genome MCP server running on stdio", "Startup");
     }
 }
 const server = new DesignGenomeServer();
-server.run().catch(console.error);
-// === Startup environment check ===
-if (!SemanticTraitExtractor.isAvailable()) {
-    console.error("[ERROR] No LLM API key found in environment. " +
-        "Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY.");
+server.run().catch(err => logger.error("Server crashed", "Server", err));
+// === Startup validation sequence ===
+// 1. Validate required credentials (LLM API keys, etc.)
+(async () => {
+    const credValidation = await validateCredentialsOnStartup();
+    printCredentialValidation(credValidation);
+    if (!credValidation.valid) {
+        process.exit(1);
+    }
+})().catch(err => {
+    logger.error("[Startup] Credential validation failed", "Startup", err);
     process.exit(1);
+});
+// 2. Legacy LLM check
+if (!SemanticTraitExtractor.isAvailable()) {
+    logger.error("[ERROR] No LLM API key found in environment. " +
+        "Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, or HUGGINGFACE_API_KEY.", "Startup");
+    process.exit(1);
+}
+// 3. Log security configuration at startup
+if (process.env.GENOME_DEBUG_SECURITY === 'true') {
+    logger.info("Security Config", "Startup", getFileSecurityConfig());
 }

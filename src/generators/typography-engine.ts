@@ -32,7 +32,8 @@ export function generateTypographyOutput(genome: DesignGenome): TypographyEngine
     const philosophy = sig?.designPhilosophy ?? "editorial";
     const entropy = sig?.entropy ?? 0.5;
     const physics = ch8?.physics ?? "none";
-    const isVariableFont = ch3?.isVariable ?? false;
+    // Defensive: allow isVariable to be present or not
+    const isVariableFont = typeof ch3?.isVariable === 'boolean' ? ch3.isVariable : false;
 
     const treatments = selectTypographyTreatments({ philosophy, entropy, physics, isVariableFont });
 
