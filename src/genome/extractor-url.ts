@@ -77,9 +77,16 @@ export class URLGenomeExtractor {
 
     async initBrowser(): Promise<void> {
         if (!this.browser) {
-            this.browser = await chromium.launch({
-                headless: true,
-            });
+            // Try connecting to Lightpanda via CDP first if it's available
+            try {
+                this.browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
+                logger.info("Connected to Lightpanda via CDP");
+            } catch {
+                // Fallback to standard Chromium launch
+                this.browser = await chromium.launch({
+                    headless: true,
+                });
+            }
         }
     }
 
@@ -90,9 +97,19 @@ export class URLGenomeExtractor {
         }
     }
 
-    async extract(url: string, options?: { useScrapy?: boolean }): Promise<ExtractedGenome> {
+    async extract(url: string, options?: { useScrapy?: boolean, useLightpanda?: boolean }): Promise<ExtractedGenome> {
         try {
             logger.info(`Extracting genome from URL: ${url}`);
+            
+            // Option 1: Lightpanda via CDP (if explicitly requested or available)
+            if (options?.useLightpanda) {
+                try {
+                    await this.initBrowser();
+                    // Connect logic is already inside initBrowser
+                } catch (lpError) {
+                    logger.warn("Lightpanda connection failed: " + (lpError instanceof Error ? lpError.message : String(lpError)));
+                }
+            }
             
             // Option 1: Use Scrapy if explicitly requested and available
             if (options?.useScrapy) {

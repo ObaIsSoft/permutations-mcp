@@ -8,7 +8,24 @@ The tool takes a natural language prompt + optional context/assets and outputs a
 
 ---
 
-## Installation
+## 🚀 Quick Start (Marketplace)
+
+To install and register the **Genome MCP** server automatically in your MCP client (Claude Desktop, etc.), run:
+
+```bash
+npx -y genome-setup
+```
+
+This interactive utility will:
+1.  **Configure API Keys**: Choose your provider (Groq, OpenAI, Anthropic, or Gemini).
+2.  **Install Playwright (Optional but Recommended)**: Installs the Chromium browser required for extracting designs from URLs.
+3.  **Auto-Register**: Automatically updates your `claude_desktop_config.json` to include the `genome` server.
+
+---
+
+## 🛠️ Manual Installation (For Contributors)
+
+If you prefer to build from source:
 
 ```bash
 # 1. Clone and install
@@ -16,21 +33,15 @@ git clone https://github.com/your-username/genome
 cd genome
 npm install
 
-# 2. Set your LLM API key (pick one)
-export GROQ_API_KEY=your_key_here
-# or
-export OPENAI_API_KEY=your_key_here
-# or  
-export ANTHROPIC_API_KEY=your_key_here
-
-# 3. Build the MCP server
+# 2. Build the project
 npm run build
 
-# 4. Register in Cursor / Claude Desktop / Windsurf
-# See MCP Config section below
+# 3. Add to your MCP Config
 ```
 
-### MCP Config (cursor_settings.json / claude_desktop_config.json)
+### MCP Config (claude_desktop_config.json)
+
+For manual configuration without the setup script, add this to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -50,13 +61,11 @@ npm run build
 
 | Provider | API Key Env Var | Notes |
 |---|---|---|
-| **Groq** (default, fastest) | `GROQ_API_KEY` | llama-4-scout-17b-16e-instruct |
-| **OpenAI** | `OPENAI_API_KEY` | gpt-4.1 |
-| **Anthropic** | `ANTHROPIC_API_KEY` | claude-3-7-sonnet-latest |
-| **Gemini** | `GEMINI_API_KEY` | gemini-2.5-pro-latest |
-| **OpenRouter** | `OPENROUTER_API_KEY` | meta-llama/llama-4-scout |
-| **HuggingFace** | `HUGGINGFACE_API_KEY` | meta-llama/Meta-Llama-3-8B-Instruct |
-| **Total** | **6 providers** | Fallback priority: Groq → OpenAI → Anthropic → Gemini → OpenRouter → HuggingFace |
+| **Groq** (default) | `GROQ_API_KEY` | Fastest generation times |
+| **OpenAI** | `OPENAI_API_KEY` | High reasoning capability |
+| **Anthropic** | `ANTHROPIC_API_KEY` | Best for complex design briefs |
+| **Gemini** | `GEMINI_API_KEY` | Largest context window |
+| **Total** | **6 providers** | Fallback priority: Groq → OpenAI → Anthropic → Gemini |
 
 ---
 
@@ -424,15 +433,24 @@ extract_genome_from_url(
 
 | Backend | When Used | Pros | Cons |
 |---------|-----------|------|------|
+| **Lightpanda** | `GENOME_USE_LIGHTPANDA=true` | Ultra-lightweight, high performance, uses CDP |
 | **Playwright** (default) | Browser installed | JavaScript-rendered sites, computed styles | Requires `npx playwright install` |
 | **Native fetch** (fallback) | No browser | Zero dependencies, fast | Static HTML only, no JS-rendered content |
 | **Scrapy** (optional) | Python available | Professional crawling, rate limiting, proxies | Requires Python + `pip install scrapy` |
 
-**Install Playwright (recommended):**
+**Option A: Install Playwright (Standard):**
 ```bash
-npm install
 npx playwright install chromium
 ```
+
+**Option B: Use Lightpanda (Ultra-lightweight):**
+Lightpanda is a high-performance, low-memory browser.
+1. [Download Lightpanda](https://github.com/lightpanda-io/lightpanda)
+2. Start it with CDP enabled:
+```bash
+lightpanda --cdp 9222
+```
+3. Set `GENOME_USE_LIGHTPANDA=true` in your MCP environment.
 
 **Capabilities:**
 - Color palette extraction (hex, rgb, hsl, named colors) → ch5, ch26

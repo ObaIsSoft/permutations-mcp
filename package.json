@@ -5,12 +5,14 @@
   "type": "module",
   "main": "dist/src/server.js",
   "bin": {
-    "genome": "./dist/src/server.js"
+    "genome": "./bin/genome.js",
+    "genome-setup": "./bin/setup.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node --env-file=.env dist/src/server.js",
     "dev": "tsc --watch",
+    "setup": "node dist/src/scripts/setup.js",
     "test": "source .env && node tests/run-all.mjs",
     "test:intent": "source .env && node tests/intent-epigenetics.test.mjs",
     "test:genome": "source .env && node tests/genome.test.mjs",
