@@ -10,7 +10,7 @@
     "tool_count": 12,
     "font_providers": 4,
     "genome_layers": 3,
-    "chromosome_count": 53,
+    "chromosome_count": 69,
     "design_space": {
       "seed_space": "2^256 ≈ 1.16 × 10^77 possible seeds (greater than estimated atoms in the observable universe, ~10^80)",
       "l1_perceptible_designs": "~7.22 × 10^17 perceptibly distinct L1 design genomes from chromosome combinatorics alone (720 quadrillion)",
@@ -54,7 +54,6 @@
       ]
     }
   },
-
   "evolution_timeline": {
     "v0_0_1_mvp": {
       "date": "Early 2026",
@@ -132,8 +131,29 @@
         "Added sector-profiles for industry-specific generation",
         "Added ecosystem/civilization bridge for organism-based websites"
       ],
-      "lines_of_code": 12361,
+      "lines_of_code": 119603,
       "test_coverage": "49 tests: Genome, Sequencer, Production, Ecosystem/Civilization"
+    },
+    "v0_0_8_mcp_integration": {
+      "date": "April 2026",
+      "theme": "MCP packaging for global installation and development workflow",
+      "features": [
+        "Package restructured as @obasoft/genome-mcp for npm distribution",
+        "12 MCP tools with STEP-prefixed workflow descriptions: generate_design_genome, validate_design, generate_ecosystem, generate_civilization, update_design_genome, generate_formats, generate_design_brief, generate_page_composition, extract_genome_from_url, generate_creator_genome, generate_persona, generate_design_through_persona",
+        "Creator Genome layer (L0): 16-chromosome designer persona DNA for simulated creative personalities",
+        "Persona layer (L0.5): LLM-decoded creative biographies with unique design voices",
+        "Design Brief Generator: synthesizes all genome layers into DESIGN_SYSTEM.md constitution",
+        "Page Composition Generator: structural blueprints from genome with library selections (Relume, Tailwind UI, Magic UI, Aceternity, Mobbin)",
+        "Format Export: Figma Tokens, Style Dictionary, styled-components, Emotion, Vue SFC, Svelte scopes",
+        "Global installation via `npx @obasoft/genome-mcp`"
+      ],
+      "architectural_changes": [
+        "creator/generator.ts: L0 layer - 16-chromosome creator genome sequencing",
+        "brief/generator.ts: L0.5 layer - persona decoding and L0.75 creative brief generation",
+        "generators/design-brief-generator.ts: L1 synthesis into design philosophy thesis",
+        "generators/format-generators.ts: multi-format token export engine",
+        "generators/civilization-generators.ts: React/TypeScript code generation (opt-in via generate_code flag)"
+      ]
     },
     "v0_0_7_full_rendering": {
       "date": "March 2026",
@@ -163,7 +183,7 @@
       "features": [
         "forbiddenRanges replaces hueRange in all 23 sector profiles — sectors define what's psychologically wrong, hash selects freely from the rest (technology now fully unrestricted: Cloudflare=orange, GitHub=dark, Stripe=purple — all valid)",
         "darkModeHex added to ch5_color_primary — primary at 22–35% lightness was invisible on dark surfaces; lifted variant (58–74%) emitted as --color-primary-interactive for buttons/links on dark backgrounds",
-        "14 tools reduced to 8 — removed: generate_from_archetype (merged via offline: true), list_archetypes, write_design_files, generate_preview, generate_component, mutate_genome",
+        "14 tools reduced to 12 — removed: generate_from_archetype (merged via offline: true), list_archetypes, write_design_files, generate_preview, generate_component, mutate_genome. Added: generate_creator_genome, generate_persona, generate_design_through_persona, generate_page_composition, update_design_genome, generate_formats",
         "generate_design_genome: added offline: boolean param (skips LLM, hash-based inference), added suggested_next array (dynamic workflow guide based on complexity score)",
         "generate_civilization: generate_code default flipped to false — returns architecture specs by default; code generation is explicit opt-in",
         "All 8 tool descriptions updated with workflow position (STEP 1, STEP 2, FINAL STEP, etc.)",
@@ -241,7 +261,7 @@
         "server.ts: structural extracted from analysis.structural, passed to complexityAnalyzer.analyze() as 4th argument."
       ],
       "lines_of_code": 14800,
-      "chromosome_count": "53 total: 32 design (L1) + 11 ecosystem (L2) + 10 civilization (L3)",
+      "chromosome_count": "69 total: 16 creator (L0) + 32 design (L1) + 11 ecosystem (L2) + 10 civilization (L3)",
       "test_coverage": "49 tests: all passing. Semantic test (live LLM): vocabulary-invariant tier verified across 4 plain/keyword product pairs."
     },
     "v1_0_0_post_fixes": {

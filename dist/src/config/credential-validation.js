@@ -7,16 +7,12 @@
 // ── Required credentials for production deployment ──────────────────────────
 export const REQUIRED_CREDENTIALS = [
     {
-        name: 'Anthropic API Key',
-        envVar: 'ANTHROPIC_API_KEY',
-        description: 'LLM service for design generation',
-        // Basic validation: keys typically start with sk-
+        name: 'LLM API Key',
+        envVar: 'GROQ_API_KEY',
+        description: 'LLM service for design generation (GROQ, OpenAI, Anthropic, Gemini, OpenRouter, or HuggingFace)',
         validate: (value) => {
             if (!value || value.length < 20) {
-                return { valid: false, error: 'Anthropic API key too short' };
-            }
-            if (!value.startsWith('sk-')) {
-                return { valid: false, error: 'Anthropic API key should start with sk-' };
+                return { valid: false, error: 'LLM API key too short' };
             }
             return { valid: true };
         },
