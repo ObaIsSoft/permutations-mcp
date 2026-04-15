@@ -1,5 +1,9 @@
 # Genome MCP Engine
 
+<p align="center">
+  <img src="assets/genome_visualization.png" alt="Genome Visualization - Digital Design DNA" width="800">
+</p>
+
 A Model Context Protocol (MCP) server that generates **unique, reproducible design systems** from a four-layer SHA-256 genome chain. Prevents AI-generated "slop" (identical Tailwind UI) by enforcing mathematical constraints at every layer — now with **simulated designer personas** for truly unique creative directions.
 
 **No Templates. No Slop. Only Math.**
